@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Galacticus install script.
-# v0.9.0
+# v0.9.1
 # © Andrew Benson 2011
 
 # Define a log file.
@@ -299,12 +299,12 @@ iPackage=$(expr $iPackage + 1)
         iFortran=$iPackage
          package[$iPackage]="gfortran"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash gfortran || hash gfortran-4.4"
+    testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.3.999"
-      maxVersion[$iPackage]="4.5.0"
-      yumInstall[$iPackage]="gcc-gfortran gcc-gfortran44"
-      aptInstall[$iPackage]="gfortran gfortran-4.4"
+      minVersion[$iPackage]="4.5.999"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="gcc-gfortran"
+      aptInstall[$iPackage]="gfortran"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
@@ -356,7 +356,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.4.6/gcc-4.4.6.tar.gz"
+       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.6.1/gcc-4.6.1.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -373,7 +373,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.4.6/gcc-4.4.6.tar.gz"
+       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.6.1/gcc-4.6.1.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -386,11 +386,11 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran || hash gfortran-4.4"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.3.999"
-      maxVersion[$iPackage]="4.5.0"
+      minVersion[$iPackage]="4.5.999"
+      maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.4.6/gcc-4.4.6.tar.gz"
+       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.6.1/gcc-4.6.1.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -1019,17 +1019,6 @@ do
 	    gotGCC=$?
 	    eval ${testPresence[$iGPP]} >& /dev/null
 	    gotGPP=$?
-	    # If we have a gfortran-4.4 binary, create a link to it as "gfortran".
-            if [[ $gotFortran -eq 0 ]]; then
-		hash gfortran >& /dev/null
-		if [[ $? -ne 0 ]]; then
-		    hash gfortran-4.4 >& /dev/null
-		    if [[ $? -eq 0 ]]; then
-			mkdir -p $toolInstallPath/bin
-			ln -sf `which gfortran-4.4` $toolInstallPath/bin/gfortran
-		    fi
-		fi
-            fi
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
                 # Check installed versions.
 		version=`eval ${getVersion[$iFortran]}`
@@ -1678,14 +1667,14 @@ do
 done
 
 # Retrieve Galacticus via Bazaar.
-galacticusInstallPath=$HOME/Galacticus/v0.9.0
+galacticusInstallPath=$HOME/Galacticus/v0.9.1
 read -p "Path to install Galacticus to [$galacticusInstallPath]: " RESPONSE
 if [ -n "$RESPONSE" ]; then
     galacticusInstallPath=$RESPONSE
 fi
 if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
-    bzr branch --stacked lp:galacticus/v0.9.0 $galacticusInstallPath
+    bzr branch --stacked lp:galacticus/v0.9.1 $galacticusInstallPath
     if [ $? -ne 0 ]; then
 	echo "failed to download Galacticus"
 	echo "failed to download Galacticus" >> $glcLogFile
@@ -1803,4 +1792,3 @@ echo
 echo "You can delete the \"galacticusInstallWork\" folder if you want"
 echo "You can delete the \"galacticusInstallWork\" folder if you want" >> $glcLogFile
 exit 0
-
