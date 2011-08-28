@@ -12,7 +12,7 @@ echo "Galacticus install log" > $glcLogFile
 
 # Write some useful machine info to the log file if possible.
 hash uname >& /dev/null
-if [ $? -eq 0]; then
+if [ $? -eq 0 ]; then
  uname -a >>$glcLogFile 2>&1
 fi
 
@@ -418,7 +418,7 @@ iPackage=$(expr $iPackage + 1)
            iFGSL=$iPackage
          package[$iPackage]="FGSL"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath -lfgsl_gfortran"
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath/lib -lfgsl_gfortran"
       getVersion[$iPackage]="echo \"program test; use fgsl; write (*,'(a)') fgsl_version; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -lfgsl_gfortran; ./a.out"
       minVersion[$iPackage]="0.9.2.999"
       maxVersion[$iPackage]="9.9.9"
@@ -451,7 +451,7 @@ iPackage=$(expr $iPackage + 1)
            iZLIB=$iPackage
          package[$iPackage]="zlib"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <zlib.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c -L$toolInstallPath -lz"
+    testPresence[$iPackage]="echo \"#include <zlib.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lz"
       getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <zlib.h>\" >> dummy.c; echo \"main() {printf(ZLIB_VERSION);printf(\\\"\\\\n\\\");}\" >> dummy.c; gcc dummy.c -lz ;./a.out"
       minVersion[$iPackage]="0.0.0"
       maxVersion[$iPackage]="9.9.9"
@@ -518,7 +518,7 @@ buildEnvironment[$iPackage]=""
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="OpenSSL"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c -L$toolInstallPath -lssl"
+    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c -L$toolInstallPath/lib -lssl"
       getVersion[$iPackage]="echo 1.0.0"
       minVersion[$iPackage]="0.9.9"
       maxVersion[$iPackage]="1.0.1"
@@ -535,7 +535,7 @@ iPackage=$(expr $iPackage + 1)
               iBZIP2=$iPackage
          package[$iPackage]="bzip2"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c -L$toolInstallPath -lbz2"
+    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c -L$toolInstallPath/lib -lbz2"
       getVersion[$iPackage]="echo 1.0.0"
       minVersion[$iPackage]="0.9.9"
       maxVersion[$iPackage]="1.0.1"
@@ -670,16 +670,20 @@ do
     # Test if this module should be installed at this level.
     if [ ${packageAtLevel[$i]} -le $installLevel ]; then
         # Check if package is installed.
+	echo " Testing presence of ${package[$i]}" >> $glcLogFile
         installPackage=1
         eval ${testPresence[$i]} >& /dev/null
         if [ $? -eq 0 ]; then
             # Check installed version.
+	    echo "  ${package[$i]} is present - testing version" >> $glcLogFile
             version=`eval ${getVersion[$i]}`
+	    echo "  Found version $version of ${package[$i]}" >> $glcLogFile
 	    testLow=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
 	    testHigh=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
 	    if [[ "$testLow" != "test" && "$testHigh" != "test" ]]; then
 	        installPackage=0
 	    fi
+	    echo "  Test results for ${package[$i]}: $testLow $testHigh" >> $glcLogFile
         fi
         # Install package if necessary.
         if [ $installPackage -eq 0 ]; then
@@ -784,25 +788,36 @@ do
 		    else
                         # Check that we have a virtual Python install
 			if [ ! -e $toolInstallPath/bin/python ]; then
-			    wget http://peak.telecommunity.com/dist/virtual-python.py >& /dev/null
+			    wget http://peak.telecommunity.com/dist/virtual-python.py >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed to download virtual-python.py"
 				echo "Failed to download virtual-python.py" >>$glcLogFile
+				exit 1
 			    fi
-			    python virtual-python.py --prefix $toolInstallPath >& /dev/null
+                            # Check if there is a site-packages folder.
+			    virtualPythonOptions=" "
+			    pythonSitePackages=`python -c "import sys, os; py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1]); print os.path.join(sys.prefix, 'lib', py_version,'site-packages')"`
+			    if [ ! -e $pythonSitePackages ]; then
+				virtualPythonOptions="$virtualPythonOptions --no-site-packages"
+				echo "No Python site-packages found - will run virtual-python.py with --no-site-packages options" >>$glcLogFile 2>&1
+			    fi
+			    python virtual-python.py --prefix $toolInstallPath $virtualPythonOptions >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed to install virtual-python.py"
 				echo "Failed to install virtual-python.py" >>$glcLogFile
+				exit 1
 			    fi
-			    wget http://peak.telecommunity.com/dist/ez_setup.py >& /dev/null
+			    wget http://peak.telecommunity.com/dist/ez_setup.py >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed to download ez_setup.py"
 				echo "Failed to download ez_setup.py" >>$glcLogFile
+				exit 1
 			    fi
-			    python ez_setup.py >& /dev/null
+			    python ez_setup.py >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed to install ez_setup.py"
 				echo "Failed to install ez_setup.py" >>$glcLogFile
+				exit 1
 			    fi
 			fi
 			# Install Python package as regular user.
@@ -1159,6 +1174,7 @@ do
 done
 
 # Specify the list of Perl modules and their requirements.
+gotPerlLocalLibEnv=0
 iPackage=-1
 # CPAN
 iPackage=$(expr $iPackage + 1)
@@ -1549,7 +1565,8 @@ do
         # Get the name of the module.
 	module=${modules[$i]}
         # Test if the module is already present.
-	perl -e "use $module" >& /dev/null
+	echo "Testing for Perl module $module" >>$glcLogFile
+	perl -e "use $module" >>$glcLogFile 2>&1
 	if [ $? -eq 0 ]; then
 	    # Module already exists.
 	    echo $module - found
@@ -1645,6 +1662,11 @@ do
 			    echo "Failed to install local-lib-1.008004" >>$glcLogFile
 			    exit
 			fi
+		    fi
+		    # Ensure that we're using the local::lib environment.
+		    if [ $gotPerlLocalLibEnv -eq 0 ]; then
+			eval `perl -Mlocal::lib`
+			gotPerlLocalLibEnv=1
 		    fi
 		    # Install as regular user.
 		    export PERL_MM_USE_DEFAULT=1
@@ -1760,6 +1782,7 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else" >> $HOME/.bashrc
     echo " export PERL5LIB=$HOME/perl5/lib/perl5" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
+    echo "eval \`perl -Mlocal::lib\` \\" >> $HOME/.bashrc
     echo "export GALACTICUS_FLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -L$toolInstallPath/lib\"" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
@@ -1790,6 +1813,7 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else \\" >> $HOME/.cshrc
     echo " setenv PERL5LIB $HOME/perl5/lib/perl5 \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
+    echo "eval \`perl -Mlocal::lib\` \\" >> $HOME/.cshrc
     if [ -n "${gfortranAlias:-x}" ]; then
 	echo "alias gfortran $gfortranAlias" >> $HOME/.bashrc
     fi 
