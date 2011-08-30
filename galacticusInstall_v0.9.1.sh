@@ -1654,7 +1654,7 @@ do
 		    fi
 		    # Ensure that we're using the local::lib environment.
 		    if [ $gotPerlLocalLibEnv -eq 0 ]; then
-			eval `perl -Mlocal::lib`
+			eval $(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)
 			gotPerlLocalLibEnv=1
 		    fi
 		    # Install as regular user.
@@ -1761,17 +1761,7 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else" >> $HOME/.bashrc
     echo " export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
-    echo "if [ -n \"\${PERLLIB}\" ]; then" >> $HOME/.bashrc
-    echo " export PERLLIB=$HOME/perl5/lib/perl5:\$PERLLIB" >> $HOME/.bashrc
-    echo "else" >> $HOME/.bashrc
-    echo " export PERLLIB=$HOME/perl5/lib/perl5" >> $HOME/.bashrc
-    echo "fi" >> $HOME/.bashrc
-    echo "if [ -n \"\${PERL5LIB}\" ]; then" >> $HOME/.bashrc
-    echo " export PERL5LIB=$HOME/perl5/lib/perl5:\$PERL5LIB" >> $HOME/.bashrc
-    echo "else" >> $HOME/.bashrc
-    echo " export PERL5LIB=$HOME/perl5/lib/perl5" >> $HOME/.bashrc
-    echo "fi" >> $HOME/.bashrc
-    echo "eval \`perl -Mlocal::lib\` \\" >> $HOME/.bashrc
+    echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib) \\" >> $HOME/.bashrc
     echo "export GALACTICUS_FLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -L$toolInstallPath/lib\"" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
@@ -1792,17 +1782,7 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else \\" >> $HOME/.cshrc
     echo " setenv PATH $toolInstallPath/bin \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
-    echo "if ( \$?PERLLIB ) then \\" >> $HOME/.cshrc
-    echo " setenv PERLLIB $HOME/perl5/lib/perl5:\$PERLLIB \\" >> $HOME/.cshrc
-    echo "else \\" >> $HOME/.cshrc
-    echo " setenv PERLLIB $HOME/perl5/lib/perl5 \\" >> $HOME/.cshrc
-    echo "endif \\" >> $HOME/.cshrc
-    echo "if ( \$?PERL5LIB ) then \\" >> $HOME/.cshrc
-    echo " setenv PERL5LIB $HOME/perl5/lib/perl5:\$PERL5LIB \\" >> $HOME/.cshrc
-    echo "else \\" >> $HOME/.cshrc
-    echo " setenv PERL5LIB $HOME/perl5/lib/perl5 \\" >> $HOME/.cshrc
-    echo "endif \\" >> $HOME/.cshrc
-    echo "eval \`perl -Mlocal::lib\` \\" >> $HOME/.cshrc
+    echo "eval \`perl -I$HOME/perl5/lib/perl5 -Mlocal::lib\` \\" >> $HOME/.cshrc
     if [ -n "${gfortranAlias:-x}" ]; then
 	echo "alias gfortran $gfortranAlias" >> $HOME/.bashrc
     fi 
