@@ -311,6 +311,23 @@ buildEnvironment[$iPackage]=""
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
 
+# svn (will only be installed if we need to compile any of the GNU Compiler Collection)
+iPackage=$(expr $iPackage + 1)
+            iSVN=$iPackage
+         package[$iPackage]="svn"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash svn"
+      getVersion[$iPackage]="svn --version --quiet"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99.99"
+      yumInstall[$iPackage]="subversion"
+      aptInstall[$iPackage]="subversion"
+       sourceURL[$iPackage]="http://subversion.tigris.org/downloads/subversion-1.6.17.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+
 # GMP (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
             iGMP=$iPackage
@@ -356,7 +373,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.6.1/gcc-4.6.1.tar.gz"
+       sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -373,7 +390,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.6.1/gcc-4.6.1.tar.gz"
+       sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -384,13 +401,13 @@ iPackage=$(expr $iPackage + 1)
   iFortranSource=$iPackage
          package[$iPackage]="gfortran"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash gfortran || hash gfortran-4.4"
+    testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.5.999"
+      minVersion[$iPackage]="4.6.999"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gcc/gcc-4.6.1/gcc-4.6.1.tar.gz"
+       sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -749,7 +766,11 @@ do
 	    if [[ $installDone -eq 0 && ${sourceURL[$i]} != "null" ]]; then
 		echo "   Installing from source"
 		echo "   Installing from source" >>$glcLogFile
-		wget "${sourceURL[$i]}" >>$glcLogFile 2>&1
+		if [[ ${sourceURL[$i]} =~ "svn:" ]]; then
+		    svn checkout "${sourceURL[$i]}" >>$glcLogFile 2>&1
+		else
+		    wget "${sourceURL[$i]}" >>$glcLogFile 2>&1
+		fi
 		if [ $? -ne 0 ]; then
 		    echo "Could not download ${package[$i]}"
 		    echo "Could not download ${package[$i]}" >>$glcLogFile
@@ -1056,7 +1077,8 @@ do
 		fi
 	    fi
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
-		# We have all GNU Compiler Collection components, so we don't need GMP or MPFR.
+		# We have all GNU Compiler Collection components, so we don't need svn, GMP or MPFR.
+		packageAtLevel[$iSVN]=100
 		packageAtLevel[$iGMP]=100
 		packageAtLevel[$iMPFR]=100
 	    else
