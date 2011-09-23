@@ -21,7 +21,21 @@ mkdir -p galacticusInstallWork
 cd galacticusInstallWork
 
 # Do we want to install as root, or as a regular user?
-installAsRoot=-1
+if [[ $UID -eq 0 ]]; then
+    echo "Script is being run as root."
+    echo "Script is being run as root." >> $glcLogFile
+    installAsRoot=1
+    runningAsRoot=1
+    # Set up a suitable install path.
+    toolInstallPath=/usr/local/galacticus
+    read -p "Path to install tools to as root [$toolInstallPath]: " RESPONSE
+    if [ -n "$RESPONSE" ]; then
+        toolInstallPath=$RESPONSE
+    fi
+else
+    installAsRoot=-1
+    runningAsRoot=0
+fi
 while [ $installAsRoot -eq -1 ]
 do
     read -p "Install required libraries and Perl modules as root (requires root password)? [no/yes]: " RESPONSE
@@ -184,13 +198,13 @@ iPackage=-1
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="sort"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash sort"
+    testPresence[$iPackage]="hash sort && (echo 1.2.3 | sort --version-sort) "
       getVersion[$iPackage]="versionString=(\`sort --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="0.0"
+      minVersion[$iPackage]="6.99"
       maxVersion[$iPackage]="9.99"
       yumInstall[$iPackage]="coreutils"
       aptInstall[$iPackage]="coreutils"
-       sourceURL[$iPackage]="null"
+       sourceURL[$iPackage]="http://ftp.gnu.org/gnu/coreutils/coreutils-8.13.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
@@ -340,6 +354,23 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="mpfr-devel"
       aptInstall[$iPackage]="libmpfr-dev"
        sourceURL[$iPackage]="http://www.mpfr.org/mpfr-current/mpfr-3.0.1.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+
+# MPC (will only be installed if we need to compile any of the GNU Compiler Collection)
+iPackage=$(expr $iPackage + 1)
+            iMPC=$iPackage
+         package[$iPackage]="mpc"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="echo \"#include <mpc.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lmpc"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpc.h>\" >> dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",MPC_VERSION_STRING);}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lmpc; ./a.out"
+      minVersion[$iPackage]="0.7.9999"
+      maxVersion[$iPackage]="99.99.99"
+      yumInstall[$iPackage]="libmpc-devel"
+      aptInstall[$iPackage]="libmpc-dev"
+       sourceURL[$iPackage]="http://www.multiprecision.org/mpc/download/mpc-0.9.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -509,6 +540,22 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="graphviz"
       aptInstall[$iPackage]="graphviz"
        sourceURL[$iPackage]="http://www.graphviz.org/pub/graphviz/stable/SOURCES/graphviz-2.28.0.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+
+# ImageMagick
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="ImageMagick"
+  packageAtLevel[$iPackage]=2
+    testPresence[$iPackage]="hash convert"
+      getVersion[$iPackage]="versionString=(\`convert -version 2>&1\`); echo \${versionString[2]}"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="ImageMagick"
+      aptInstall[$iPackage]="imagemagick"
+       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.2-7.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -699,7 +746,7 @@ do
 		for yumPackage in ${yumInstall[$i]}
 		do
 		    if [ $installDone -eq 0 ]; then
-			versionString=(`yum -q -y list $yumPackage | tail -1`)
+			versionString=(`echo "$rootPassword" | $suCommand yum -q -y list $yumPackage $suClose | tail -1`)
 			if [ $? -eq 0 ]; then
 			    version=${versionString[1]}
 			    testLow=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
@@ -1026,7 +1073,7 @@ do
 	    fi
 	fi
         # Hardwired magic.        
-        # Check if GCC/G++/Fortran are installed - delist MPFR and GMP if so.
+        # Check if GCC/G++/Fortran are installed - delist MPFR, GMP and MPC if so.
 	if [ $i -eq $iFortran ]; then
 	    eval ${testPresence[$iFortran]} >& /dev/null
 	    gotFortran=$?
@@ -1067,9 +1114,10 @@ do
 		fi
 	    fi
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
-		# We have all GNU Compiler Collection components, so we don't need GMP or MPFR.
+		# We have all GNU Compiler Collection components, so we don't need GMP, MPFR or MPC.
 		packageAtLevel[$iGMP]=100
 		packageAtLevel[$iMPFR]=100
+		packageAtLevel[$iMPC]=100
 	    else
 		# We will need to install some GNU Compiler Collection components.
 		# Select those components now.
@@ -1122,6 +1170,7 @@ do
 	if [ $i -eq $iGMP ]; then
 	    if [ -e $toolInstallPath/lib/libgmp.so ]; then
 		configOptions[$iMPFR]="${configOptions[$iMPFR]} --with-gmp=$toolInstallPath"
+		configOptions[$iMPC]="${configOptions[$iMPC]} --with-gmp=$toolInstallPath"
 		configOptions[$iGCCsource]="${configOptions[$iGCCsource]} --with-gmp=$toolInstallPath"
 		configOptions[$iGPPsource]="${configOptions[$iGPPsource]} --with-gmp=$toolInstallPath"
 		configOptions[$iFortranSource]="${configOptions[$iFortranSource]} --with-gmp=$toolInstallPath"
@@ -1131,9 +1180,19 @@ do
         # If we installed MPFR from source then let the GNU Compiler Collection know about it.
 	if [ $i -eq $iMPFR ]; then
 	    if [ -e $toolInstallPath/lib/libmpfr.so ]; then
+		configOptions[$iMPC]="${configOptions[$iMPC]} --with-mpfr=$toolInstallPath"
 		configOptions[$iGCCsource]="${configOptions[$iGCCsource]} --with-mpfr=$toolInstallPath"
 		configOptions[$iGPPsource]="${configOptions[$iGPPsource]} --with-mpfr=$toolInstallPath"
 		configOptions[$iFortranSource]="${configOptions[$iFortranSource]} --with-mpfr=$toolInstallPath"
+	    fi
+	fi
+        # Hardwired magic.
+        # If we installed MPC from source then let the GNU Compiler Collection know about it.
+	if [ $i -eq $iMPC ]; then
+	    if [ -e $toolInstallPath/lib/libmpc.so ]; then
+		configOptions[$iGCCsource]="${configOptions[$iGCCsource]} --with-mpc=$toolInstallPath"
+		configOptions[$iGPPsource]="${configOptions[$iGPPsource]} --with-mpc=$toolInstallPath"
+		configOptions[$iFortranSource]="${configOptions[$iFortranSource]} --with-mpc=$toolInstallPath"
 	    fi
 	fi
         # Hardwired magic.
@@ -1579,7 +1638,7 @@ do
 	    # Try installing via yum.
 	    if [[ $installDone -eq 0 && $installViaYum -eq 1 && ${modulesYum[$i]} != "null" ]]; then
                 # Check for presence in yum repos.
-                yum -y list ${modulesYum[$i]} >& /dev/null
+                echo "$rootPassword" | $suCommand yum -y list ${modulesYum[$i]} $suClose >& /dev/null
                 if [ $? -eq 0 ]; then
 		    echo "   Installing via yum"
 		    echo "   Installing via yum" >> $glcLogFile
@@ -1700,6 +1759,9 @@ do
 done
 
 # Retrieve Galacticus via Bazaar.
+if [[ $runningAsRoot -eq 1 ]]; then
+    echo "Script is running as root - if you want to install Galacticus itself as a regular user, just quit (Ctrl-C) now."
+fi
 galacticusInstallPath=$HOME/Galacticus/v0.9.0
 read -p "Path to install Galacticus to [$galacticusInstallPath]: " RESPONSE
 if [ -n "$RESPONSE" ]; then
