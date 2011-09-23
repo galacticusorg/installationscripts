@@ -578,6 +578,38 @@ buildEnvironment[$iPackage]=""
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
 
+# lapack
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="lapack"
+  packageAtLevel[$iPackage]=2
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath/lib -llapack"
+      getVersion[$iPackage]="echo \"program dummy; integer major,minor,patch; call ilaver(major,minor,patch); write (*,'(i1,a1,i1,a1,i1)') major,'.',minor,'.',patch; end program\" > dummy.F90; gfortran dummy.F90 -ffree-line-length-none $moduleDirs -L$toolInstallPath/lib -llapack; ./a.out"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="lapack-devel"
+      aptInstall[$iPackage]="liblapack-dev"
+       sourceURL[$iPackage]=""
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+
+# blas
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="blas"
+  packageAtLevel[$iPackage]=2
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath/lib -lblas"
+      getVersion[$iPackage]="echo \"program dummy; integer major,minor,patch; call ilaver(major,minor,patch); write (*,'(i1,a1,i1,a1,i1)') major,'.',minor,'.',patch; end program\" > dummy.F90; gfortran dummy.F90 -ffree-line-length-none $moduleDirs -L$toolInstallPath/lib -llapack; ./a.out"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="blas-devel"
+      aptInstall[$iPackage]="libblas-dev"
+       sourceURL[$iPackage]=""
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+
 # OpenSSL (required for Bazaar)
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="OpenSSL"
@@ -1834,10 +1866,10 @@ cd -
 read -p "Add a Galacticus environment alias to .bashrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
     if [ -e $HOME/.bashrc ]; then
-	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.0") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"export GALACTICUS_FLAGS")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
+	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.1") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"export GALACTICUS_FLAGS")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
     fi
-    echo "# Alias to configure the environment to compile and run Galacticus v0.9.0" >> $HOME/.bashrc
+    echo "# Alias to configure the environment to compile and run Galacticus v0.9.1" >> $HOME/.bashrc
     echo "alias galacticus090='" >> $HOME/.bashrc
     echo "if [ -n \"\${LD_LIBRARY_PATH}\" ]; then" >> $HOME/.bashrc
     echo " export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
@@ -1856,11 +1888,11 @@ fi
 read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
     if [ -e $HOME/.cshrc ]; then
-	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.0") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"setenv GALACTICUS_FLAGS")) inGLC=0}' $HOME/.cshrc > $HOME/.cshrc.tmp
+	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.1") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"setenv GALACTICUS_FLAGS")) inGLC=0}' $HOME/.cshrc > $HOME/.cshrc.tmp
 	mv -f $HOME/.cshrc.tmp $HOME/.cshrc
     fi
-    echo "# Alias to configure the environment to compile and run Galacticus v0.9.0" >> $HOME/.cshrc
-    echo "alias galacticus090 'if ( \$?LD_LIBRARY_PATH ) then \\" >> $HOME/.cshrc
+    echo "# Alias to configure the environment to compile and run Galacticus v0.9.1" >> $HOME/.cshrc
+    echo "alias galacticus091 'if ( \$?LD_LIBRARY_PATH ) then \\" >> $HOME/.cshrc
     echo " setenv LD_LIBRARY_PATH $toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH \\" >> $HOME/.cshrc
     echo "else \\" >> $HOME/.cshrc
     echo " setenv LD_LIBRARY_PATH $toolInstallPath/lib:$toolInstallPath/lib64 \\" >> $HOME/.cshrc
