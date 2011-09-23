@@ -561,6 +561,38 @@ buildEnvironment[$iPackage]=""
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
 
+# lapack
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="lapack"
+  packageAtLevel[$iPackage]=2
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath/lib -llapack"
+      getVersion[$iPackage]="echo \"program dummy; integer major,minor,patch; call ilaver(major,minor,patch); write (*,'(i1,a1,i1,a1,i1)') major,'.',minor,'.',patch; end program\" > dummy.F90; gfortran dummy.F90 -ffree-line-length-none $moduleDirs -L$toolInstallPath/lib -llapack; ./a.out"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="lapack-devel"
+      aptInstall[$iPackage]="liblapack-dev"
+       sourceURL[$iPackage]=""
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+
+# blas
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="blas"
+  packageAtLevel[$iPackage]=2
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath/lib -lblas"
+      getVersion[$iPackage]="echo \"program dummy; integer major,minor,patch; call ilaver(major,minor,patch); write (*,'(i1,a1,i1,a1,i1)') major,'.',minor,'.',patch; end program\" > dummy.F90; gfortran dummy.F90 -ffree-line-length-none $moduleDirs -L$toolInstallPath/lib -llapack; ./a.out"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="blas-devel"
+      aptInstall[$iPackage]="libblas-dev"
+       sourceURL[$iPackage]=""
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+
 # OpenSSL (required for Bazaar)
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="OpenSSL"
