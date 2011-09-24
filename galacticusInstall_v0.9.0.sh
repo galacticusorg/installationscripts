@@ -8,7 +8,7 @@
 glcLogFile=`pwd`"/galacticusInstall.log"
 
 # Open the log file.
-echo "Galacticus install log" > $glcLogFile
+echo "Galacticus v0.9.0 install log" > $glcLogFile
 
 # Write some useful machine info to the log file if possible.
 hash uname >& /dev/null
@@ -207,7 +207,7 @@ iPackage=$(expr $iPackage + 1)
        sourceURL[$iPackage]="http://ftp.gnu.org/gnu/coreutils/coreutils-8.13.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]=""
 
 # wget
