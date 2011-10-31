@@ -1660,6 +1660,15 @@ modulesAtLevel[$iPackage]=2
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
+# List::MoreUtils
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="List::MoreUtils"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-List-MoreUtils"
+    modulesApt[$iPackage]="liblist-moreutils-perl"
+   interactive[$iPackage]=0
+
 # Install required Perl modules.
 echo "Checking for Perl modules..." 
 echo "Checking for Perl modules..." >> $glcLogFile
