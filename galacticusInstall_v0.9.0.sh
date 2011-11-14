@@ -62,7 +62,7 @@ do
 
         # Get the root password.
         read -s -p "Please enter the $pName password:" rootPassword
-	echo "$rootPassword" | $suCommand echo worked $suClose >& /dev/null
+	echo "$rootPassword" | eval $suCommand echo worked $suClose >& /dev/null
 	echo
 	if [ $? -ne 0 ] ; then
 	    echo "$pName password was incorrect, exiting"
@@ -112,14 +112,14 @@ else
     export C_INCLUDE_PATH=$toolInstallPath/include
 fi
 if [ -n "${PERLLIB}" ]; then
-    export PERLLIB=$HOME/perl5/lib/perl5:$PERLLIB
+    export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$PERLLIB
 else
-    export PERLLIB=$HOME/perl5/lib/perl5
+    export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5
 fi
 if [ -n "${PERL5LIB}" ]; then
-    export PERL5LIB=$HOME/perl5/lib/perl5:$PERL5LIB
+    export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$PERL5LIB
 else
-    export PERL5LIB=$HOME/perl5/lib/perl5
+    export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5
 fi
 
 # Minimal, typical or full install?
@@ -178,7 +178,7 @@ installViaApt=0
 if [[ $installAsRoot -eq 1 && $usePackageManager -eq 1 ]]; then
     if hash apt-get >& /dev/null; then
 	installViaApt=1
-        echo "$rootPassword" | $suCommand apt-get update $suClose
+        echo "$rootPassword" | eval $suCommand apt-get update $suClose
     fi
 fi
 installViaCPAN=0
@@ -263,7 +263,7 @@ iPackage=$(expr $iPackage + 1)
          package[$iPackage]="grep"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash grep"
-      getVersion[$iPackage]="versionString=(\`grep --version | sed -r s/\".*([0-9]+\\.[0-9]+\\.[0-9]+)\"/\"\\1\"/\`); echo \${versionString[0]}"
+      getVersion[$iPackage]="versionString=(\`grep --version | sed -r s/\"[^0-9]*(([0-9]+\\.)+[0-9]+)\"/\"\\1\"/\`); echo \${versionString[0]}"
       minVersion[$iPackage]="0.0"
       maxVersion[$iPackage]="9.99"
       yumInstall[$iPackage]="grep"
@@ -740,6 +740,23 @@ buildEnvironment[$iPackage]="python"
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
 
+# PDL::IO::HDF5 (Perl module installed here because we use a custom version and so install from source
+# rather than installing from CPAN)
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="PDL::IO::HDF5"
+  packageAtLevel[$iPackage]=1
+    testPresence[$iPackage]="perl -e \"use PDL::IO::HDF5\""
+      getVersion[$iPackage]="perl -e \"eval 'require PDL::IO::HDF5'; print PDL::IO::HDF5->VERSION\""
+      minVersion[$iPackage]="0.6.2"
+      maxVersion[$iPackage]="0.6.4"
+      yumInstall[$iPackage]="null"
+      aptInstall[$iPackage]="null"
+       sourceURL[$iPackage]="http://www.ctcp.caltech.edu/galacticus/tools/PDL-IO-HDF5-0.6.tar.gz"
+buildEnvironment[$iPackage]="perl"
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]="test"
+
 # Install packages.
 echo "Checking for required tools and libraries..." 
 echo "Checking for required tools and libraries..." >> $glcLogFile
@@ -778,7 +795,7 @@ do
 		for yumPackage in ${yumInstall[$i]}
 		do
 		    if [ $installDone -eq 0 ]; then
-			versionString=(`echo "$rootPassword" | $suCommand yum -q -y list $yumPackage $suClose | tail -1`)
+			versionString=(`echo "$rootPassword" | eval $suCommand yum -q -y list $yumPackage $suClose | tail -1`)
 			if [ $? -eq 0 ]; then
 			    version=${versionString[1]}
 			    testLow=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
@@ -786,7 +803,7 @@ do
 			    if [[ "$testLow" != "test" && "$testHigh" != "test" ]]; then
 				echo "   Installing via yum"
 				echo "   Installing via yum" >> $glcLogFile
-				echo "$rootPassword" | $suCommand yum -y install $yumPackage $suClose >>$glcLogFile 2>&1
+				echo "$rootPassword" | eval $suCommand yum -y install $yumPackage $suClose >>$glcLogFile 2>&1
 				if ! eval ${testPresence[$i]} >& /dev/null; then
 				    echo "   ...failed"
 				    exit 1
@@ -813,7 +830,7 @@ do
 			    if [[ "$testLow" != "test" && "$testHigh" != "test" ]]; then
 				echo "   Installing via apt-get"
 				echo "   Installing via apt-get" >> $glcLogFile
-				echo "$rootPassword" | $suCommand apt-get -y install $aptPackage $suClose >>$glcLogFile 2>&1
+				echo "$rootPassword" | eval $suCommand apt-get -y install $aptPackage $suClose >>$glcLogFile 2>&1
 				if ! eval ${testPresence[$i]} >& /dev/null; then
 				    echo "   ...failed"
 				    exit 1
@@ -852,11 +869,17 @@ do
 		# Check for Python package.
 		if [ -z "${buildEnvironment[$i]}" ]; then
 		    isPython=0
+		    isPerl=0
 		else
 		    if [ "${buildEnvironment[$i]}" = "python" ]; then
 			isPython=1
 		    else
 			isPython=0
+		    fi
+		    if [ "${buildEnvironment[$i]}" = "perl" ]; then
+			isPerl=1
+		    else
+			isPerl=0
 		    fi
 		fi
 		if [ $isPython -eq 1 ]; then
@@ -977,20 +1000,39 @@ do
 			fi
 		    fi
 		    # Configure the source.
-		    eval ${buildEnvironment[$i]}
-                    if [ -e ../$dirName/configure ]; then
-			../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
-                    elif [ -e ../$dirName/config ]; then
-			../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
-                    elif [[ ${configOptions[$i]} -ne "skip" ]]; then
-			echo "Can not locate configure script for ${package[$i]}"
-			echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
-			exit 1
-                    fi
-		    if [ $? -ne 0 ]; then
-			echo "Could not configure ${package[$i]}"
-			echo "Could not configure ${package[$i]}" >>$glcLogFile
-			exit 1
+		    if [ $isPerl -eq 1 ]; then
+			if [ -e ../$dirName/Makefile.PL ]; then
+			    if [ $installAsRoot -eq 1 ]; then
+				perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
+			    else
+				perl ../$dirName/Makefile.PL PREFIX=$toolInstallPath >>$glcLogFile 2>&1
+			    fi
+			else
+			    echo "Can not locate Makefile.PL for ${package[$i]}"
+			    echo "Can not locate Makefile.PL for ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
+			if [ $? -ne 0 ]; then
+			    echo "Could not build Makefile for ${package[$i]}"
+			    echo "Could not build Makefile for ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
+		    else
+			eval ${buildEnvironment[$i]}
+			if [ -e ../$dirName/configure ]; then
+			    ../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
+			elif [ -e ../$dirName/config ]; then
+			    ../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
+			elif [[ ${configOptions[$i]} -ne "skip" ]]; then
+			    echo "Can not locate configure script for ${package[$i]}"
+			    echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
+			if [ $? -ne 0 ]; then
+			    echo "Could not configure ${package[$i]}"
+			    echo "Could not configure ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
 		    fi
 		    # Make the package.
 		    make >>$glcLogFile 2>&1
@@ -1008,7 +1050,7 @@ do
 		    fi
 		    # Install the package.
 		    if [ $installAsRoot -eq 1 ]; then
-			echo "$rootPassword" | $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
+			echo "$rootPassword" | eval $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
 		    else
 			make install ${makeInstall[$i]} >>$glcLogFile 2>&1
 		    fi
@@ -1021,25 +1063,25 @@ do
                     # For bzip2 we have to compile and install shared libraries manually......
 		    if [ $i -eq $iBZIP2 ]; then
  			if [ $installAsRoot -eq 1 ]; then
-			    echo "$rootPassword" | $suCommand make clean $suClose >>$glcLogFile 2>&1
+			    echo "$rootPassword" | eval $suCommand make clean $suClose >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed building shared libraries for ${package[$i]} at stage 1"
 				echo "Failed building shared libraries for ${package[$i]} at stage 1" >>$glcLogFile
 				exit 1
 			    fi
-			    echo "$rootPassword" | $suCommand make -f Makefile-libbz2_so $suClose >>$glcLogFile 2>&1
+			    echo "$rootPassword" | eval $suCommand make -f Makefile-libbz2_so $suClose >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed building shared libraries for ${package[$i]} at stage 2"
 				echo "Failed building shared libraries for ${package[$i]} at stage 2" >>$glcLogFile
 				exit 1
 			    fi
-			    echo "$rootPassword" | $suCommand cp libbz2.so* $toolInstallPath/lib/ $suClose >>$glcLogFile 2>&1
+			    echo "$rootPassword" | eval $suCommand cp libbz2.so* $toolInstallPath/lib/ $suClose >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed building shared libraries for ${package[$i]} at stage 3"
 				echo "Failed building shared libraries for ${package[$i]} at stage 3" >>$glcLogFile
 				exit 1
 			    fi
-			    echo "$rootPassword" | $suCommand chmod a+r $toolInstallPath/lib/libbz2.so* $suClose >>$glcLogFile 2>&1
+			    echo "$rootPassword" | eval $suCommand chmod a+r $toolInstallPath/lib/libbz2.so* $suClose >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed building shared libraries for ${package[$i]} at stage 4"
 				echo "Failed building shared libraries for ${package[$i]} at stage 4" >>$glcLogFile
@@ -1175,7 +1217,7 @@ do
 		    if [ ! -e /usr/include/asm/errno.h ]; then
                         # gcc-multilib is not installed. If we don't have root access, we have a problem.
 			if [ $installAsRoot -eq 1 ]; then
-			    echo "$rootPassword" | $suCommand apt-get -y install gcc-multilib $suClose >>$glcLogFile 2>&1
+			    echo "$rootPassword" | eval $suCommand apt-get -y install gcc-multilib $suClose >>$glcLogFile 2>&1
 			    if [ ! -e /usr/include/asm/errno.h ]; then
 				echo "Failed to install gcc-multilib needed for compiling GNU Compiler Collection."
 				echo "Failed to install gcc-multilib needed for compiling GNU Compiler Collection." >>$glcLogFile
@@ -1670,11 +1712,11 @@ do
 	    # Try installing via yum.
 	    if [[ $installDone -eq 0 && $installViaYum -eq 1 && ${modulesYum[$i]} != "null" ]]; then
                 # Check for presence in yum repos.
-                echo "$rootPassword" | $suCommand yum -y list ${modulesYum[$i]} $suClose >& /dev/null
+                echo "$rootPassword" | eval $suCommand yum -y list ${modulesYum[$i]} $suClose >& /dev/null
                 if [ $? -eq 0 ]; then
 		    echo "   Installing via yum"
 		    echo "   Installing via yum" >> $glcLogFile
-		    echo "$rootPassword" | $suCommand yum -y install ${modulesYum[$i]} $suClose >>$glcLogFile 2>&1
+		    echo "$rootPassword" | eval $suCommand yum -y install ${modulesYum[$i]} $suClose >>$glcLogFile 2>&1
 		    perl -e "use $module" >& /dev/null
 		    if [ $? -ne 0 ]; then
 			echo "   ...failed"
@@ -1687,7 +1729,7 @@ do
 	    if [[ $installDone -eq 0 &&  $installViaApt -eq 1 && ${modulesApt[$i]} != "null" ]]; then
 		echo "   Installing via apt-get"
 		echo "   Installing via apt-get" >> $glcLogFile
-		echo "$rootPassword" | $suCommand apt-get -y install ${modulesApt[$i]} $suClose >>$glcLogFile 2>&1
+		echo "$rootPassword" | eval $suCommand apt-get -y install ${modulesApt[$i]} $suClose >>$glcLogFile 2>&1
 		perl -e "use $module" >& /dev/null
 		if [ $? -ne 0 ]; then
 		    echo "   ...failed"
@@ -1708,9 +1750,9 @@ do
 		    # Install as root.
                     export PERL_MM_USE_DEFAULT=1
 		    if [ ${interactive[$i]} -eq 0 ]; then
-			echo "$rootPassword" | $suCommand perl -MCPAN -e "$cpanInstall" $suClose >>$glcLogFile 2>&1
+			echo "$rootPassword" | eval $suCommand perl -MCPAN -e "$cpanInstall" $suClose >>$glcLogFile 2>&1
 		    else
-			echo "$rootPassword" | $suCommand perl -MCPAN -e "$cpanInstall" $suClose
+			echo "$rootPassword" | eval $suCommand perl -MCPAN -e "$cpanInstall" $suClose
 		    fi
 		else		    
                     # Check for local::lib.
@@ -1819,7 +1861,7 @@ if [ $? -eq 0 ]; then
     stdcppLib=${stdcppLibInfo[2]}
     if [ ! -e $toolInstallPath/lib/lidstdc++.so ]; then
 	if [ $installAsRoot -eq 1 ]; then
-	    echo "$rootPassword" | $suCommand ln -sf $stdcppLib $toolInstallPath/lib/lidstdc++.so >>$glcLogFile 2>&1
+	    echo "$rootPassword" | eval $suCommand ln -sf $stdcppLib $toolInstallPath/lib/lidstdc++.so >>$glcLogFile 2>&1
 	else
 	    ln -sf $stdcppLib $toolInstallPath/lib/libstdc++.so
 	fi
