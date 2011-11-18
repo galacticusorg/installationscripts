@@ -353,7 +353,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="mpfr-devel"
       aptInstall[$iPackage]="libmpfr-dev"
-       sourceURL[$iPackage]="http://www.mpfr.org/mpfr-current/mpfr-3.0.1.tar.gz"
+       sourceURL[$iPackage]="http://www.mpfr.org/mpfr-3.1.0/mpfr-3.1.0.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -1116,6 +1116,8 @@ do
 		    fi
 		fi
 		cd ..
+		# Re-export the PATH so that the newly installed executable gets picked up.
+		export PATH=$PATH
 		installDone=1
             fi
 	    # No install methods worked - nothing else we can do (unless this was an
