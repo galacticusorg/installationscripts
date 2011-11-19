@@ -740,23 +740,6 @@ buildEnvironment[$iPackage]="python"
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
 
-# PDL::IO::HDF5 (Perl module installed here because we use a custom version and so install from source
-# rather than installing from CPAN)
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="PDL::IO::HDF5"
-  packageAtLevel[$iPackage]=1
-    testPresence[$iPackage]="perl -e \"use PDL::IO::HDF5\""
-      getVersion[$iPackage]="perl -e \"eval 'require PDL::IO::HDF5'; print PDL::IO::HDF5->VERSION\""
-      minVersion[$iPackage]="0.6.2"
-      maxVersion[$iPackage]="0.6.4"
-      yumInstall[$iPackage]="null"
-      aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="http://www.ctcp.caltech.edu/galacticus/tools/PDL-IO-HDF5-0.6.tar.gz"
-buildEnvironment[$iPackage]="perl"
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
-        makeTest[$iPackage]="test"
-
 # Install packages.
 echo "Checking for required tools and libraries..." 
 echo "Checking for required tools and libraries..." >> $glcLogFile
@@ -1833,6 +1816,97 @@ do
     fi
     
 done
+
+# Install PDL::IO::HDF5
+# Installed here because we use a custom version and so install from source
+# rather than installing from CPAN.
+# Test if this module should be installed at this level.
+if [ 1 -le $installLevel ]; then
+    # Check if package is installed.
+    echo Testing presence of PDL::IO::HDF5 >> $glcLogFile
+    installPackage=1
+    perl -e "use PDL::IO::HDF5" >& /dev/null
+    if [ $? -eq 0 ]; then
+        # Check installed version.
+	echo "  PDL::IO::HDF5 is present - testing version" >> $glcLogFile
+        version=`perl -e "eval 'require PDL::IO::HDF5'; print PDL::IO::HDF5->VERSION"`
+	echo "  Found version $version of PDL::IO::HDF5" >> $glcLogFile
+	testLow=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
+	testHigh=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
+	if [[ "$testLow" != "test" && "$testHigh" != "test" ]]; then
+	    installPackage=0
+	fi
+	echo "  Test results for PDL::IO::HDF5: $testLow $testHigh" >> $glcLogFile
+    fi
+    # Install package if necessary.
+    if [ $installPackage -eq 0 ]; then
+	echo PDL::IO::HDF5 - found
+	echo PDL::IO::HDF5 - found >> $glcLogFile
+    else
+	echo PDL::IO::HDF5 - not found - will be installed
+	echo PDL::IO::HDF5 - not found - will be installed >> $glcLogFile
+	echo "   Installing from source"
+	echo "   Installing from source" >>$glcLogFile
+	wget "http://www.ctcp.caltech.edu/galacticus/tools/PDL-IO-HDF5-0.6.tar.gz" >>$glcLogFile 2>&1
+	if [ $? -ne 0 ]; then
+	    echo "Could not download PDL::IO::HDF5"
+	    echo "Could not download PDL::IO::HDF5" >>$glcLogFile
+	    exit 1
+	fi
+	baseName="PDL-IO-HDF5-0.6.tar.gz"
+	unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tar//`
+	tar xvf$unpack $baseName >>$glcLogFile 2>&1
+	if [ $? -ne 0 ]; then
+	    echo "Could not unpack PDL::IO::HDF5"
+	    echo "Could not unpack PDL::IO::HDF5" >>$glcLogFile
+	    exit 1
+	fi
+	dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
+    fi
+    cd $dirName
+    # Configure the source.
+    if [ -e ../$dirName/Makefile.PL ]; then
+	if [ $installAsRoot -eq 1 ]; then
+	    perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
+	else
+	    perl ../$dirName/Makefile.PL PREFIX=$toolInstallPath >>$glcLogFile 2>&1
+	fi
+    else
+	echo "Can not locate Makefile.PL for PDL::IO::HDF5"
+	echo "Can not locate Makefile.PL for PDL::IO::HDF5" >>$glcLogFile
+	exit 1
+    fi
+    if [ $? -ne 0 ]; then
+	echo "Could not build Makefile for PDL::IO::HDF5"
+	echo "Could not build Makefile for PDL::IO::HDF5" >>$glcLogFile
+	exit 1
+    fi
+    # Make the package.
+    make >>$glcLogFile 2>&1
+    if [ $? -ne 0 ]; then
+	echo "Could not make PDL::IO::HDF5"
+	echo "Could not make PDL::IO::HDF5" >>$glcLogFile
+	exit 1
+    fi
+    # Run any tests of the package.
+    make ${makeTest[$i]} >>$glcLogFile 2>&1
+    if [ $? -ne 0 ]; then
+	echo "Testing PDL::IO::HDF5 failed"
+	echo "Testing PDL::IO::HDF5 failed" >>$glcLogFile
+	exit 1
+    fi
+    # Install the package.
+    if [ $installAsRoot -eq 1 ]; then
+	echo "$rootPassword" | eval $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
+    else
+	make install ${makeInstall[$i]} >>$glcLogFile 2>&1
+    fi
+    if [ $? -ne 0 ]; then
+	echo "Could not install PDL::IO::HDF5"
+	echo "Could not install PDL::IO::HDF5" >>$glcLogFile
+	exit 1
+    fi
+fi
 
 # Retrieve Galacticus via Bazaar.
 if [[ $runningAsRoot -eq 1 ]]; then
