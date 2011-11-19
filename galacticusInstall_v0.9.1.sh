@@ -522,7 +522,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="hdf5-devel"
       aptInstall[$iPackage]="hdf5-tools"
-       sourceURL[$iPackage]="http://www.hdfgroup.org/ftp/HDF5/current/src/hdf5-1.8.7.tar.gz"
+       sourceURL[$iPackage]="http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.8/src/hdf5-1.8.8.tar.gz"
 buildEnvironment[$iPackage]="export F9X=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-fortran --enable-production"
