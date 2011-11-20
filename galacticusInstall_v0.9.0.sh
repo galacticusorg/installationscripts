@@ -112,16 +112,15 @@ else
     export C_INCLUDE_PATH=$toolInstallPath/include
 fi
 if [ -n "${PERLLIB}" ]; then
-    export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$PERLLIB
+    export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl:$PERLLIB
 else
-    export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5
+    export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl
 fi
 if [ -n "${PERL5LIB}" ]; then
-    export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$PERL5LIB
+    export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl:$PERL5LIB
 else
-    export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5
+    export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl
 fi
-
 # Minimal, typical or full install?
 installLevel=-1
 while [ $installLevel -eq -1 ]
@@ -198,7 +197,7 @@ iPackage=-1
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="sort"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash sort && (echo 1.2.3 | sort --version-sort) "
+    testPresence[$iPackage]="hash sort && (echo 1.2.3 | sort --version-sort)"
       getVersion[$iPackage]="versionString=(\`sort --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]="6.99"
       maxVersion[$iPackage]="9.99"
@@ -1831,12 +1830,9 @@ if [ 1 -le $installLevel ]; then
 	echo "  PDL::IO::HDF5 is present - testing version" >> $glcLogFile
         version=`perl -e "eval 'require PDL::IO::HDF5'; print PDL::IO::HDF5->VERSION"`
 	echo "  Found version $version of PDL::IO::HDF5" >> $glcLogFile
-	testLow=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
-	testHigh=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
-	if [[ "$testLow" != "test" && "$testHigh" != "test" ]]; then
+	if [[ "$version" != "0.63_glc" ]]; then
 	    installPackage=0
 	fi
-	echo "  Test results for PDL::IO::HDF5: $testLow $testHigh" >> $glcLogFile
     fi
     # Install package if necessary.
     if [ $installPackage -eq 0 ]; then
@@ -1862,49 +1858,49 @@ if [ 1 -le $installLevel ]; then
 	    exit 1
 	fi
 	dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
-    fi
-    cd $dirName
-    # Configure the source.
-    if [ -e ../$dirName/Makefile.PL ]; then
-	if [ $installAsRoot -eq 1 ]; then
-	    perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
+	cd $dirName
+        # Configure the source.
+	if [ -e ../$dirName/Makefile.PL ]; then
+	    if [ $installAsRoot -eq 1 ]; then
+		perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
+	    else
+		perl ../$dirName/Makefile.PL PREFIX=$toolInstallPath >>$glcLogFile 2>&1
+	    fi
 	else
-	    perl ../$dirName/Makefile.PL PREFIX=$toolInstallPath >>$glcLogFile 2>&1
+	    echo "Can not locate Makefile.PL for PDL::IO::HDF5"
+	    echo "Can not locate Makefile.PL for PDL::IO::HDF5" >>$glcLogFile
+	    exit 1
 	fi
-    else
-	echo "Can not locate Makefile.PL for PDL::IO::HDF5"
-	echo "Can not locate Makefile.PL for PDL::IO::HDF5" >>$glcLogFile
+	if [ $? -ne 0 ]; then
+	    echo "Could not build Makefile for PDL::IO::HDF5"
+	    echo "Could not build Makefile for PDL::IO::HDF5" >>$glcLogFile
+	    exit 1
+	fi
+        # Make the package.
+	make >>$glcLogFile 2>&1
+	if [ $? -ne 0 ]; then
+	    echo "Could not make PDL::IO::HDF5"
+	    echo "Could not make PDL::IO::HDF5" >>$glcLogFile
+	    exit 1
+	fi
+        # Run any tests of the package.
+	make ${makeTest[$i]} >>$glcLogFile 2>&1
+	if [ $? -ne 0 ]; then
+	    echo "Testing PDL::IO::HDF5 failed"
+	    echo "Testing PDL::IO::HDF5 failed" >>$glcLogFile
 	exit 1
-    fi
-    if [ $? -ne 0 ]; then
-	echo "Could not build Makefile for PDL::IO::HDF5"
-	echo "Could not build Makefile for PDL::IO::HDF5" >>$glcLogFile
-	exit 1
-    fi
-    # Make the package.
-    make >>$glcLogFile 2>&1
-    if [ $? -ne 0 ]; then
-	echo "Could not make PDL::IO::HDF5"
-	echo "Could not make PDL::IO::HDF5" >>$glcLogFile
-	exit 1
-    fi
-    # Run any tests of the package.
-    make ${makeTest[$i]} >>$glcLogFile 2>&1
-    if [ $? -ne 0 ]; then
-	echo "Testing PDL::IO::HDF5 failed"
-	echo "Testing PDL::IO::HDF5 failed" >>$glcLogFile
-	exit 1
-    fi
-    # Install the package.
-    if [ $installAsRoot -eq 1 ]; then
-	echo "$rootPassword" | eval $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
-    else
-	make install ${makeInstall[$i]} >>$glcLogFile 2>&1
-    fi
-    if [ $? -ne 0 ]; then
-	echo "Could not install PDL::IO::HDF5"
-	echo "Could not install PDL::IO::HDF5" >>$glcLogFile
-	exit 1
+	fi
+        # Install the package.
+	if [ $installAsRoot -eq 1 ]; then
+	    echo "$rootPassword" | eval $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
+	else
+	    make install ${makeInstall[$i]} >>$glcLogFile 2>&1
+	fi
+	if [ $? -ne 0 ]; then
+	    echo "Could not install PDL::IO::HDF5"
+	    echo "Could not install PDL::IO::HDF5" >>$glcLogFile
+	    exit 1
+	fi
     fi
 fi
 
@@ -1944,27 +1940,6 @@ if [ $? -eq 0 ]; then
     fi
 fi
 
-# Build Galacticus.
-cd $galacticusInstallPath
-if [ ! -e Galacticus.exe ]; then
-    export GALACTICUS_FLAGS=$moduleDirs
-    make Galacticus.exe >>$glcLogFile 2>&1
-    if [ $? -ne 0 ]; then
-	echo "failed to build Galacticus"
-	echo "failed to build Galacticus" >> $glcLogFile
-	exit 1
-    fi
-fi
-
-# Run a test case.
-./Galacticus.exe parameters.xml >>$glcLogFile 2>&1
-if [ $? -ne 0 ]; then
-    echo "failed to run Galacticus"
-    echo "failed to run Galacticus" >> $glcLogFile
-    exit 1
-fi
-cd -
-
 # Add commands to .bashrc and/or .cshrc.
 read -p "Add a Galacticus environment alias to .bashrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
@@ -1984,7 +1959,7 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else" >> $HOME/.bashrc
     echo " export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
-    echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib) \\" >> $HOME/.bashrc
+    echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
     echo "export GALACTICUS_FLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -L$toolInstallPath/lib\"" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
@@ -2011,6 +1986,27 @@ if [ "$RESPONSE" = yes ] ; then
     fi 
     echo "setenv GALACTICUS_FLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic- modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -L$toolInstallPath/lib\"'" >> $HOME/.cshrc
 fi
+
+# Build Galacticus.
+cd $galacticusInstallPath
+if [ ! -e Galacticus.exe ]; then
+    export GALACTICUS_FLAGS=$moduleDirs
+    make Galacticus.exe >>$glcLogFile 2>&1
+    if [ $? -ne 0 ]; then
+	echo "failed to build Galacticus"
+	echo "failed to build Galacticus" >> $glcLogFile
+	exit 1
+    fi
+fi
+
+# Run a test case.
+./Galacticus.exe parameters.xml >>$glcLogFile 2>&1
+if [ $? -ne 0 ]; then
+    echo "failed to run Galacticus"
+    echo "failed to run Galacticus" >> $glcLogFile
+    exit 1
+fi
+cd -
 
 # Write a final message.
 echo "Completed successfully"
