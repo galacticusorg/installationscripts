@@ -1968,7 +1968,7 @@ fi
 read -p "Add a Galacticus environment alias to .bashrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
     if [ -e $HOME/.bashrc ]; then
-	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.1") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"export GALACTICUS_FLAGS")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
+	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.1") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
     fi
     echo "# Alias to configure the environment to compile and run Galacticus v0.9.1" >> $HOME/.bashrc
@@ -1990,7 +1990,7 @@ fi
 read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
     if [ -e $HOME/.cshrc ]; then
-	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.1") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"setenv GALACTICUS_FLAGS")) inGLC=0}' $HOME/.cshrc > $HOME/.cshrc.tmp
+	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.1") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.cshrc > $HOME/.cshrc.tmp
 	mv -f $HOME/.cshrc.tmp $HOME/.cshrc
     fi
     echo "# Alias to configure the environment to compile and run Galacticus v0.9.1" >> $HOME/.cshrc
