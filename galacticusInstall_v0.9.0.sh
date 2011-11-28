@@ -554,7 +554,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="ImageMagick"
       aptInstall[$iPackage]="imagemagick"
-       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.2-7.tar.gz"
+       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.3-9.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
