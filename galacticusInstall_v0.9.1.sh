@@ -571,7 +571,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="ImageMagick"
       aptInstall[$iPackage]="imagemagick"
-       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.2-7.tar.gz"
+       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.3-9.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -910,7 +910,7 @@ do
 				virtualPythonOptions="$virtualPythonOptions --no-site-packages"
 				echo "No Python site-packages found - will run virtual-python.py with --no-site-packages options" >>$glcLogFile 2>&1
 			    fi
-			    python virtual-python.py --prefix $toolInstallPath >>$glcLogFile 2>&1
+			    python virtual-python.py --prefix $toolInstallPath $virtualPythonOptions >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed to install virtual-python.py"
 				echo "Failed to install virtual-python.py" >>$glcLogFile
