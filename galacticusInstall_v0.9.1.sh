@@ -13,7 +13,7 @@ echo "Galacticus v0.9.1 install log" > $glcLogFile
 # Write some useful machine info to the log file if possible.
 hash uname >& /dev/null
 if [ $? -eq 0 ]; then
- uname -a >>$glcLogFile 2>&1
+    uname -a >>$glcLogFile 2>&1
 fi
 
 # Create an install folder, and move into it.
@@ -96,6 +96,11 @@ do
 done
 
 # Export various environment variables with our install path prepended.
+if [ -n "${PKG_CONFIG_PATH}" ]; then
+    export PKG_CONFIG_PATH=$toolInstallPath/lib/pkgconfig:$PKG_CONFIG_PATH
+else
+    export PKG_CONFIG_PATH=$toolInstallPath/lib/pkgconfig
+fi
 if [ -n "${PATH}" ]; then
     export PATH=$toolInstallPath/bin:$PATH
 else
@@ -106,10 +111,25 @@ if [ -n "${LD_LIBRARY_PATH}" ]; then
 else
     export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64
 fi
+if [ -n "${LD_RUN_PATH}" ]; then
+    export LD_RUN_PATH=$toolInstallPath/lib:$toolInstallPath/lib64:$LD_RUN_PATH
+else
+    export LD_RUN_PATH=$toolInstallPath/lib:$toolInstallPath/lib64
+fi
+if [ -n "${LDFLAGS}" ]; then
+    export LDFLAGS=$toolInstallPath/lib:$toolInstallPath/lib64:$LDFLAGS_PATH
+else
+    export LDFLAGS=$toolInstallPath/lib:$toolInstallPath/lib64
+fi
 if [ -n "${C_INCLUDE_PATH}" ]; then
     export C_INCLUDE_PATH=$toolInstallPath/include:$C_INCLUDE_PATH
 else
     export C_INCLUDE_PATH=$toolInstallPath/include
+fi
+if [ -n "${PYTHONPATH}" ]; then
+    export PYTHONPATH=$toolInstallPath/py-lib:$PATH
+else
+    export PYTHONPATH=$toolInstallPath/py-lib
 fi
 if [ -n "${PERLLIB}" ]; then
     export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl:$PERLLIB
@@ -121,6 +141,12 @@ if [ -n "${PERL5LIB}" ]; then
 else
     export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl
 fi
+
+# Ensure that we use GNU compilers.
+export CC=gcc
+export CXX=g++
+export FC=gfortran
+
 # Minimal, typical or full install?
 installLevel=-1
 while [ $installLevel -eq -1 ]
@@ -189,7 +215,10 @@ if hash perl >& /dev/null; then
 fi
 
 # Specify a list of paths to search for Fortran modules and libraries.
-moduleDirs="-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -fintrinsic-modules-path /usr/local/finclude -fintrinsic-modules-path /usr/local/include/gfortran -fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/lib/gfortran/modules -fintrinsic-modules-path /usr/include/gfortran -fintrinsic-modules-path /usr/include -fintrinsic-modules-path /usr/finclude -fintrinsic-modules-path /usr/lib64/gfortran/modules -L$toolInstallPath/lib"
+moduleDirs="-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -fintrinsic-modules-path /usr/local/finclude -fintrinsic-modules-path /usr/local/include/gfortran -fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/lib/gfortran/modules -fintrinsic-modules-path /usr/include/gfortran -fintrinsic-modules-path /usr/include -fintrinsic-modules-path /usr/finclude -fintrinsic-modules-path /usr/lib64/gfortran/modules -L$toolInstallPath/lib -L$toolInstallPath/lib64"
+
+# Specify a list of paths to search for library files.
+libDirs="-L$toolInstallPath/lib -L$toolInstallPath/lib64"
 
 # Define packages.
 iPackage=-1
@@ -346,8 +375,8 @@ iPackage=$(expr $iPackage + 1)
             iGMP=$iPackage
          package[$iPackage]="gmp"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <gmp.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lgmp"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <gmp.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL);}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lgmp; ./a.out"
+    testPresence[$iPackage]="echo \"#include <gmp.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lgmp"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <gmp.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL);}\" >> dummy.c; gcc dummy.c $libDirs -lgmp; ./a.out"
       minVersion[$iPackage]="4.3.1"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="gmp-devel"
@@ -363,8 +392,8 @@ iPackage=$(expr $iPackage + 1)
            iMPFR=$iPackage
          package[$iPackage]="mpfr"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <mpfr.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lmpfr"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpfr.h>\" >> dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",MPFR_VERSION_STRING);}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lmpfr; ./a.out"
+    testPresence[$iPackage]="echo \"#include <mpfr.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lmpfr"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpfr.h>\" >> dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",MPFR_VERSION_STRING);}\" >> dummy.c; gcc dummy.c $libDirs -lmpfr; ./a.out"
       minVersion[$iPackage]="2.3.0999"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="mpfr-devel"
@@ -380,8 +409,8 @@ iPackage=$(expr $iPackage + 1)
             iMPC=$iPackage
          package[$iPackage]="mpc"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <mpc.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lmpc"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpc.h>\" >> dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",MPC_VERSION_STRING);}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lmpc; ./a.out"
+    testPresence[$iPackage]="echo \"#include <mpc.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lmpc"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpc.h>\" >> dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",MPC_VERSION_STRING);}\" >> dummy.c; gcc dummy.c $libDirs -lmpc; ./a.out"
       minVersion[$iPackage]="0.7.9999"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="libmpc-devel"
@@ -465,8 +494,8 @@ iPackage=$(expr $iPackage + 1)
            iFGSL=$iPackage
          package[$iPackage]="FGSL"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath/lib -lfgsl_gfortran"
-      getVersion[$iPackage]="echo \"program test; use fgsl; write (*,'(a)') fgsl_version; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -lfgsl_gfortran; ./a.out"
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lfgsl_gfortran"
+      getVersion[$iPackage]="echo \"program test; use fgsl; write (*,'(a)') fgsl_version; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lfgsl_gfortran; ./a.out"
       minVersion[$iPackage]="0.9.2.999"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
@@ -481,13 +510,13 @@ buildEnvironment[$iPackage]=""
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="FoX"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -lFoX_dom"
-      getVersion[$iPackage]="echo \"program test; use FoX_common; write (*,'(a)') FoX_version; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -lfgsl_gfortran; ./a.out"
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lFoX_dom"
+      getVersion[$iPackage]="echo \"program test; use FoX_common; write (*,'(a)') FoX_version; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lFoX_dom; ./a.out"
       minVersion[$iPackage]="4.0.3.999"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="http://www1.gly.bris.ac.uk/~walker/FoX/source/FoX-4.1.0-full.tar.gz"
+       sourceURL[$iPackage]="http://www1.gly.bris.ac.uk/~walker/FoX/source/FoX-4.1.1-full.tar.gz"
 buildEnvironment[$iPackage]="export FC=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -498,8 +527,8 @@ iPackage=$(expr $iPackage + 1)
            iZLIB=$iPackage
          package[$iPackage]="zlib"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <zlib.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lz"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <zlib.h>\" >> dummy.c; echo \"main() {printf(ZLIB_VERSION);printf(\\\"\\\\n\\\");}\" >> dummy.c; gcc dummy.c -lz ;./a.out"
+    testPresence[$iPackage]="echo \"#include <zlib.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lz"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <zlib.h>\" >> dummy.c; echo \"main() {printf(ZLIB_VERSION);printf(\\\"\\\\n\\\");}\" >> dummy.c; gcc dummy.c $libDirs -lz ;./a.out"
       minVersion[$iPackage]="0.0.0"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="zlib-devel"
@@ -515,8 +544,8 @@ iPackage=$(expr $iPackage + 1)
            iHDF5=$iPackage
          package[$iPackage]="hdf5"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"program test; use hdf5; end program test\" > dummy.F90; gfortran dummy.F90 $moduleDirs -lhdf5"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <H5public.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d.%d\\\\n\\\",H5_VERS_MAJOR,H5_VERS_MINOR,H5_VERS_RELEASE,H5_VERS_SUBRELEASE);}\" >> dummy.c; gcc dummy.c -L$toolInstallPath/lib -lhdf5 &> /dev/null;./a.out"
+    testPresence[$iPackage]="echo \"program test; use hdf5; end program test\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lhdf5"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <H5public.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d.%d\\\\n\\\",H5_VERS_MAJOR,H5_VERS_MINOR,H5_VERS_RELEASE,H5_VERS_SUBRELEASE);}\" >> dummy.c; gcc dummy.c $libDirs -lhdf5 &> /dev/null;./a.out"
       minVersion[$iPackage]="1.8.0"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="hdf5-devel"
@@ -571,23 +600,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="ImageMagick"
       aptInstall[$iPackage]="imagemagick"
-       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.3-9.tar.gz"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath"
-        makeTest[$iPackage]="check"
-
-# lapack
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="lapack"
-  packageAtLevel[$iPackage]=2
-    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath/lib -llapack"
-      getVersion[$iPackage]="echo \"program dummy; integer major,minor,patch; call ilaver(major,minor,patch); write (*,'(i1,a1,i1,a1,i1)') major,'.',minor,'.',patch; end program\" > dummy.F90; gfortran dummy.F90 -ffree-line-length-none $moduleDirs -L$toolInstallPath/lib -llapack; ./a.out"
-      minVersion[$iPackage]="0.0.0"
-      maxVersion[$iPackage]="99.99"
-      yumInstall[$iPackage]="lapack-devel"
-      aptInstall[$iPackage]="liblapack-dev"
-       sourceURL[$iPackage]=""
+       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.4-0.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -595,25 +608,43 @@ buildEnvironment[$iPackage]=""
 
 # blas
 iPackage=$(expr $iPackage + 1)
+   iBLAS=$iPackage
          package[$iPackage]="blas"
   packageAtLevel[$iPackage]=2
-    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs -L$toolInstallPath/lib -lblas"
-      getVersion[$iPackage]="echo \"program dummy; integer major,minor,patch; call ilaver(major,minor,patch); write (*,'(i1,a1,i1,a1,i1)') major,'.',minor,'.',patch; end program\" > dummy.F90; gfortran dummy.F90 -ffree-line-length-none $moduleDirs -L$toolInstallPath/lib -llapack; ./a.out"
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lblas"
+      getVersion[$iPackage]="echo 1.0.0"
       minVersion[$iPackage]="0.0.0"
       maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="blas-devel"
       aptInstall[$iPackage]="libblas-dev"
-       sourceURL[$iPackage]=""
+       sourceURL[$iPackage]="http://netlib.org/blas/blas.tgz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath"
-        makeTest[$iPackage]="check"
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
+
+# lapack
+iPackage=$(expr $iPackage + 1)
+ iLAPACK=$iPackage
+         package[$iPackage]="lapack"
+  packageAtLevel[$iPackage]=2
+    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -llapack"
+      getVersion[$iPackage]="echo \"program dummy; integer major,minor,patch; call ilaver(major,minor,patch); write (*,'(i1,a1,i1,a1,i1)') major,'.',minor,'.',patch; end program\" > dummy.F90; gfortran dummy.F90 -ffree-line-length-none $moduleDirs $libDirs -llapack; ./a.out"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="lapack-devel"
+      aptInstall[$iPackage]="liblapack-dev"
+       sourceURL[$iPackage]="http://www.netlib.org/lapack/lapack-3.4.0.tgz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
 
 # OpenSSL (required for Bazaar)
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="OpenSSL"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c -L$toolInstallPath/lib -lssl"
+    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lssl"
       getVersion[$iPackage]="echo 1.0.0"
       minVersion[$iPackage]="0.9.9"
       maxVersion[$iPackage]="1.0.1"
@@ -630,7 +661,7 @@ iPackage=$(expr $iPackage + 1)
               iBZIP2=$iPackage
          package[$iPackage]="bzip2"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c -L$toolInstallPath/lib -lbz2"
+    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lbz2"
       getVersion[$iPackage]="echo 1.0.0"
       minVersion[$iPackage]="0.9.9"
       maxVersion[$iPackage]="1.0.1"
@@ -765,13 +796,13 @@ do
     # Test if this module should be installed at this level.
     if [ ${packageAtLevel[$i]} -le $installLevel ]; then
         # Check if package is installed.
-	echo Testing presence of ${package[$i]} >> $glcLogFile
+	echo " Testing presence of ${package[$i]}" >> $glcLogFile
         installPackage=1
-        eval ${testPresence[$i]} >& /dev/null
+        eval ${testPresence[$i]} >>$glcLogFile 2>&1
         if [ $? -eq 0 ]; then
             # Check installed version.
 	    echo "  ${package[$i]} is present - testing version" >> $glcLogFile
-            version=`eval ${getVersion[$i]}`
+            version=`eval ${getVersion[$i]}` >>$glcLogFile 2>&1
 	    echo "  Found version $version of ${package[$i]}" >> $glcLogFile
 	    testLow=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
 	    testHigh=`echo "$version test:${minVersion[$i]}:${maxVersion[$i]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
@@ -858,7 +889,7 @@ do
 		if [[ ${sourceURL[$i]} =~ "svn:" ]]; then  
 		    dirName=$baseName
 		else
-		    unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tar//`
+		    unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
 		    tar xvf$unpack $baseName >>$glcLogFile 2>&1
 		    if [ $? -ne 0 ]; then
 			echo "Could not unpack ${package[$i]}"
@@ -922,7 +953,7 @@ do
 				echo "Failed to download ez_setup.py" >>$glcLogFile
 				exit 1
 			    fi
-			    python ez_setup.py >>$glcLogFile 2>&1
+			    $toolInstallPath/bin/python ez_setup.py >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
 				echo "Failed to install ez_setup.py"
 				echo "Failed to install ez_setup.py" >>$glcLogFile
@@ -930,7 +961,7 @@ do
 			    fi
 			fi
 			# Install Python package as regular user.
-			python setup.py install >>$glcLogFile 2>&1
+			$toolInstallPath/bin/python setup.py install --prefix=$toolInstallPath >>$glcLogFile 2>&1
 		    fi
 		    # Check that install succeeded.
 		    if [ $? -ne 0 ]; then
@@ -938,6 +969,153 @@ do
 			echo "Could not install ${package[$i]}" >>$glcLogFile
 			exit 1
 		    fi
+		elif [[ $i -eq $iBLAS ]]; then
+		    patch -p1 <<EOF
+*** BLAS/make.inc       2011-04-19 12:08:00.000000000 -0700
+--- BLAS1/make.inc      2011-12-01 07:24:51.671999364 -0800
+***************
+*** 16,24 ****
+  #  desired load options for your machine.
+  #
+  FORTRAN  = gfortran
+! OPTS     = -O3
+  DRVOPTS  = \$(OPTS)
+! NOOPT    =
+  LOADER   = gfortran
+  LOADOPTS =
+  #
+--- 16,24 ----
+  #  desired load options for your machine.
+  #
+  FORTRAN  = gfortran
+! OPTS     = -O3 -fPIC
+  DRVOPTS  = \$(OPTS)
+! NOOPT    = -fPIC
+  LOADER   = gfortran
+  LOADOPTS =
+  #
+EOF
+  if [ $? -ne 0 ]; then
+      echo "Failed to patch make.inc in blas"
+      echo "Failed to patch make.inc in blas" >>$glcLogFile
+      exit 1
+  fi
+  patch -p1 <<EOF
+*** BLAS/Makefile       2007-04-05 13:59:57.000000000 -0700
+--- BLAS1/Makefile      2011-12-01 07:23:50.768481902 -0800
+***************
+*** 55,61 ****
+  #
+  #######################################################################
+  
+! all: \$(BLASLIB)
+   
+  #---------------------------------------------------------
+  #  Comment out the next 6 definitions if you already have
+--- 55,61 ----
+  #
+  #######################################################################
+  
+! all: \$(BLASLIB) libblas.so
+   
+  #---------------------------------------------------------
+  #  Comment out the next 6 definitions if you already have
+***************
+*** 141,146 ****
+--- 141,149 ----
+        \$(ARCH) \$(ARCHFLAGS) \$@ \$(ALLOBJ)
+        \$(RANLIB) \$@
+  
++ libblas.so: \$(ALLOBJ)
++@X@cc -shared -Wl,-soname,libblas.so -o libblas.so \$(ALLOBJ)
++ 
+  single: \$(SBLAS1) \$(ALLBLAS) \$(SBLAS2) \$(SBLAS3)
+        \$(ARCH) \$(ARCHFLAGS) \$(BLASLIB) \$(SBLAS1) \$(ALLBLAS) \\
+        \$(SBLAS2) \$(SBLAS3)
+EOF
+	if [ $? -ne 0 ]; then
+	    echo "Failed to patch Makefile in blas"
+	    echo "Failed to patch Makefile in blas" >>$glcLogFile
+	    exit 1
+	fi
+	sed -i~ -r s/"@X@"/"\t"/g Makefile >>$glcLogFile 2>&1
+	make libblas.so >>$glcLogFile 2>&1
+	if [ $? -ne 0 ]; then
+	    echo "Failed to make libblas.so"
+	    echo "Failed to make libblas.so" >>$glcLogFile
+	    exit 1
+	fi
+	mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
+	cp -f libblas.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
+		elif [[ $i -eq $iLAPACK ]]; then
+		    if [ ! -e $toolInstallPath/lib/libblas.so ]; then
+			echo "Source install of lapack currently supported only if blas was also installed from source"
+			echo "Source install of lapack currently supported only if blas was also installed from source" >>$glcLogFile
+			exit 1
+		    fi
+		    cp make.inc.example make.inc >>$glcLogFile 2>&1
+		    patch -p1 <<EOF
+*** lapack-3.4.0/make.inc       2011-12-01 07:47:04.696001005 -0800
+--- lapack-3.4.0A/make.inc      2011-12-01 07:53:10.866744759 -0800
+***************
+*** 13,21 ****
+  #  desired load options for your machine.
+  #
+  FORTRAN  = gfortran 
+! OPTS     = -O2
+  DRVOPTS  = \$(OPTS)
+! NOOPT    = -O0
+  LOADER   = gfortran
+  LOADOPTS =
+  #
+--- 13,21 ----
+  #  desired load options for your machine.
+  #
+  FORTRAN  = gfortran 
+! OPTS     = -O2 -fPIC
+  DRVOPTS  = \$(OPTS)
+! NOOPT    = -O0 -fPIC
+  LOADER   = gfortran
+  LOADOPTS =
+  #
+***************
+*** 53,58 ****
+  #  machine-specific, optimized BLAS library should be used whenever
+  #  possible.)
+  #
+! BLASLIB      = ../../librefblas.a
+! LAPACKLIB    = liblapack.a
+! TMGLIB       = libtmglib.a
+--- 53,58 ----
+  #  machine-specific, optimized BLAS library should be used whenever
+  #  possible.)
+  #
+! BLASLIB      = ../../librefblas.so
+! LAPACKLIB    = liblapack.so
+! TMGLIB       = libtmglib.so
+EOF
+  if [ $? -ne 0 ]; then
+      echo "Failed to patch make.inc in lapack"
+      echo "Failed to patch make.inc in lapack" >>$glcLogFile
+      exit 1
+  fi
+  echo s\#BLASLIB\\s*=\\s*..\\/..\\/librefblas.so\#BLASLIB = $toolInstallPath\\/lib\\/libblas.so\# > rule.sed
+  sed -i~ -r -f rule.sed make.inc >>$glcLogFile 2>&1
+  if [ $? -ne 0 ]; then
+      echo "Failed to modify blas path in make.inc in lapack"
+      echo "Failed to modify blas path in make.inc in lapack" >>$glcLogFile
+      exit 1
+  fi
+  rm -f rule.sed
+  make >>$glcLogFile 2>&1
+  if [ $? -ne 0 ]; then
+      echo "Failed to make lapack"
+      echo "Failed to make lapack" >>$glcLogFile
+      exit 1
+  fi
+  mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
+  cp -f liblapack.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
+  cp -f libtmglib.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
 		else
                     # This is a regular (configure|make|make install) package.
                     # Test whether we have an m4 installed.
@@ -1142,7 +1320,7 @@ do
 	fi
         # Hardwired magic.        
 	# If we installed (or already had) v1.13 or v1.14 of GSL then downgrade the version of FGSL that we want.
-	if [ ${package[$i]} = "gsl" ]; then
+	if [ $i -eq $iGSL ]; then
 	    gslVersion=`gsl-config --version`
 	    if [ $gslVersion = "1.13" ]; then
 		minVersion[$iFGSL]="0.9.1.9"
@@ -1353,6 +1531,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
+# File::Which
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="File::Which"
+modulesAtLevel[$iPackage]=2
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-File-Which"
+    modulesApt[$iPackage]="libfile-which-perl"
+   interactive[$iPackage]=0
+
 # File::Copy
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="File::Copy"
@@ -1486,6 +1673,15 @@ modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="perl-Data-Dump"
     modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
+# DateTime
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="DateTime"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-DateTime"
+    modulesApt[$iPackage]="libdatetime-perl"
    interactive[$iPackage]=0
 
 # Date::Format
@@ -1823,7 +2019,7 @@ do
 		    echo "   ...failed"
 		    exit 1
 		fi
-                installDone=1		
+                installDone=1
 	    fi
 	    # We were unable to install the module by any method.
 	    if [ $installDone -eq 0 ]; then
@@ -1883,12 +2079,16 @@ if [ 1 -le $installLevel ]; then
 	fi
 	dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
 	cd $dirName
+	# Detect local HDF5 install.
+	if [ -e $toolInstallPath."/include/hdf5.mod" ]; then
+	    export HDF5_PATH=$toolInstallPath
+	fi
         # Configure the source.
 	if [ -e ../$dirName/Makefile.PL ]; then
 	    if [ $installAsRoot -eq 1 ]; then
 		perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
 	    else
-		perl ../$dirName/Makefile.PL PREFIX=$toolInstallPath >>$glcLogFile 2>&1
+		perl -Mlocal::lib ../$dirName/Makefile.PL >>$glcLogFile 2>&1
 	    fi
 	else
 	    echo "Can not locate Makefile.PL for PDL::IO::HDF5"
@@ -1912,7 +2112,7 @@ if [ 1 -le $installLevel ]; then
 	if [ $? -ne 0 ]; then
 	    echo "Testing PDL::IO::HDF5 failed"
 	    echo "Testing PDL::IO::HDF5 failed" >>$glcLogFile
-	exit 1
+	    exit 1
 	fi
         # Install the package.
 	if [ $installAsRoot -eq 1 ]; then
@@ -1965,8 +2165,10 @@ if [ $? -eq 0 ]; then
 fi
 
 # Add commands to .bashrc and/or .cshrc.
+envSet=0
 read -p "Add a Galacticus environment alias to .bashrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
+    envSet=1
     if [ -e $HOME/.bashrc ]; then
 	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.1") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
@@ -1983,12 +2185,18 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else" >> $HOME/.bashrc
     echo " export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
+    echo "if [ -n \"\${PYTHONPATH}\" ]; then" >> $HOME/.bashrc
+    echo " export PYTHONPATH=$toolInstallPath/py-lib:\$PATH" >> $HOME/.bashrc
+    echo "else" >> $HOME/.bashrc
+    echo " export PYTHONPATH=$toolInstallPath/py-lib" >> $HOME/.bashrc
+    echo "fi" >> $HOME/.bashrc
     echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
-    echo "export GALACTICUS_FLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -L$toolInstallPath/lib\"" >> $HOME/.bashrc
+    echo "export GALACTICUS_FLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
 read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
+    envSet=1
     if [ -e $HOME/.cshrc ]; then
 	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.1") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.cshrc > $HOME/.cshrc.tmp
 	mv -f $HOME/.cshrc.tmp $HOME/.cshrc
@@ -2004,11 +2212,16 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else \\" >> $HOME/.cshrc
     echo " setenv PATH $toolInstallPath/bin \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
+    echo "if ( \$?PYTHONPATH ) then \\" >> $HOME/.cshrc
+    echo " setenv PYTHONPATH $toolInstallPath/py-lib:\$PATH \\" >> $HOME/.cshrc
+    echo "else \\" >> $HOME/.cshrc
+    echo " setenv PYTHONPATH $toolInstallPath/py-lib \\" >> $HOME/.cshrc
+    echo "endif \\" >> $HOME/.cshrc
     echo "eval \`perl -I$HOME/perl5/lib/perl5 -Mlocal::lib\` \\" >> $HOME/.cshrc
     if [ -n "${gfortranAlias:-x}" ]; then
 	echo "alias gfortran $gfortranAlias" >> $HOME/.bashrc
     fi 
-    echo "setenv GALACTICUS_FLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic- modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -L$toolInstallPath/lib\"'" >> $HOME/.cshrc
+    echo "setenv GALACTICUS_FLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"'" >> $HOME/.cshrc
 fi
 
 # Build Galacticus.
@@ -2038,4 +2251,17 @@ echo "Completed successfully" >> $glcLogFile
 echo
 echo "You can delete the \"galacticusInstallWork\" folder if you want"
 echo "You can delete the \"galacticusInstallWork\" folder if you want" >> $glcLogFile
+echo
+if [ $envSet -eq 1 ]; then
+    echo "You should execute the command \"galacticus090\" before attempting to use Galacticus to configure all environment variables, library paths etc."
+    echo "You should execute the command \"galacticus090\" before attempting to use Galacticus to configure all environment variables, library paths etc." >> $glcLogFile
+else
+    if [ $installAsRoot -eq 1 ]; then
+	echo "If you install Galacticus libraries and tools in a non-standard location you may need to set environment variables appropriately to find them."
+	echo "If you install Galacticus libraries and tools in a non-standard location you may need to set environment variables appropriately to find them." >> $glcLogFile
+    else
+	echo "You may need to set environment variables to permit libraries and tools installed to be found."
+	echo "You may need to set environment variables to permit libraries and tools installed to be found." >> $glcLogFile
+    fi
+fi
 exit 0
