@@ -787,6 +787,38 @@ buildEnvironment[$iPackage]="python"
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
 
+# pdflatex
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="pdflatex"
+  packageAtLevel[$iPackage]=1
+    testPresence[$iPackage]="hash pdflatex"
+      getVersion[$iPackage]="echo 1.0.0"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="texlive-latex"
+      aptInstall[$iPackage]="texlive-latex-base"
+       sourceURL[$iPackage]="fail:"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
+
+# pdfmerge
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="pdfmerge"
+  packageAtLevel[$iPackage]=1
+    testPresence[$iPackage]="hash pdfmerge"
+      getVersion[$iPackage]="echo 1.0.0"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="pdfmerge"
+      aptInstall[$iPackage]=""
+       sourceURL[$iPackage]="http://dmaphy.github.com/pdfmerge/pdfmerge-1.0.4.tar.bz2"
+buildEnvironment[$iPackage]="copy"
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
+
 # Install packages.
 echo "Checking for required tools and libraries..." 
 echo "Checking for required tools and libraries..." >> $glcLogFile
@@ -873,104 +905,123 @@ do
 	    fi
 	    # Try installing via source.
 	    if [[ $installDone -eq 0 && ${sourceURL[$i]} != "null" ]]; then
-		echo "   Installing from source"
-		echo "   Installing from source" >>$glcLogFile
-		if [[ ${sourceURL[$i]} =~ "svn:" ]]; then
-		    svn checkout "${sourceURL[$i]}" >>$glcLogFile 2>&1
-		else
-		    wget "${sourceURL[$i]}" >>$glcLogFile 2>&1
-		fi
-		if [ $? -ne 0 ]; then
-		    echo "Could not download ${package[$i]}"
-		    echo "Could not download ${package[$i]}" >>$glcLogFile
+		if [[ ${sourceURL[$i]} =~ "fail:" ]]; then
+		    echo "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer."
 		    exit 1
-		fi
-		baseName=`basename ${sourceURL[$i]}`
-		if [[ ${sourceURL[$i]} =~ "svn:" ]]; then  
-		    dirName=$baseName
 		else
-		    unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
-		    tar xvf$unpack $baseName >>$glcLogFile 2>&1
+		    echo "   Installing from source"
+		    echo "   Installing from source" >>$glcLogFile
+		    if [[ ${sourceURL[$i]} =~ "svn:" ]]; then
+			svn checkout "${sourceURL[$i]}" >>$glcLogFile 2>&1
+		    else
+			wget "${sourceURL[$i]}" >>$glcLogFile 2>&1
+		    fi
 		    if [ $? -ne 0 ]; then
-			echo "Could not unpack ${package[$i]}"
-			echo "Could not unpack ${package[$i]}" >>$glcLogFile
+			echo "Could not download ${package[$i]}"
+			echo "Could not download ${package[$i]}" >>$glcLogFile
 			exit 1
 		    fi
-		    dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
-		fi
-		if [ ${buildInOwnDir[$i]} -eq 1 ]; then
-		    mkdir -p $dirName-build
-		    cd $dirName-build
-		else
-		    cd $dirName
-		fi
-		# Check for Python package.
-		if [ -z "${buildEnvironment[$i]}" ]; then
-		    isPython=0
-		    isPerl=0
-		else
-		    if [ "${buildEnvironment[$i]}" = "python" ]; then
-			isPython=1
+		    baseName=`basename ${sourceURL[$i]}`
+		    if [[ ${sourceURL[$i]} =~ "svn:" ]]; then  
+			dirName=$baseName
 		    else
-			isPython=0
-		    fi
-		    if [ "${buildEnvironment[$i]}" = "perl" ]; then
-			isPerl=1
-		    else
-			isPerl=0
-		    fi
-		fi
-		if [ $isPython -eq 1 ]; then
-		    # This is a Python package.
-		    if [ $installAsRoot -eq 1 ]; then
-			# Install Python package as root.
-			echo "$rootPassword" | $suCommand python setup.py install $suClose >>$glcLogFile 2>&1
-		    else
-                        # Check that we have a virtual Python install
-			if [ ! -e $toolInstallPath/bin/python ]; then
-			    wget http://peak.telecommunity.com/dist/virtual-python.py >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to download virtual-python.py"
-				echo "Failed to download virtual-python.py" >>$glcLogFile
-				exit 1
-			    fi
-                            # Check if there is a site-packages folder.
-			    virtualPythonOptions=" "
-			    pythonSitePackages=`python -c "import sys, os; py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1]); print os.path.join(sys.prefix, 'lib', py_version,'site-packages')"`
-			    if [ ! -e $pythonSitePackages ]; then
-				virtualPythonOptions="$virtualPythonOptions --no-site-packages"
-				echo "No Python site-packages found - will run virtual-python.py with --no-site-packages options" >>$glcLogFile 2>&1
-			    fi
-			    python virtual-python.py --prefix $toolInstallPath $virtualPythonOptions >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to install virtual-python.py"
-				echo "Failed to install virtual-python.py" >>$glcLogFile
-				exit 1
-			    fi
-			    wget http://peak.telecommunity.com/dist/ez_setup.py >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to download ez_setup.py"
-				echo "Failed to download ez_setup.py" >>$glcLogFile
-				exit 1
-			    fi
-			    $toolInstallPath/bin/python ez_setup.py >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to install ez_setup.py"
-				echo "Failed to install ez_setup.py" >>$glcLogFile
-				exit 1
-			    fi
+			unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
+			tar xvf$unpack $baseName >>$glcLogFile 2>&1
+			if [ $? -ne 0 ]; then
+			    echo "Could not unpack ${package[$i]}"
+			    echo "Could not unpack ${package[$i]}" >>$glcLogFile
+			    exit 1
 			fi
-			# Install Python package as regular user.
-			$toolInstallPath/bin/python setup.py install --prefix=$toolInstallPath >>$glcLogFile 2>&1
+			dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
 		    fi
-		    # Check that install succeeded.
-		    if [ $? -ne 0 ]; then
-			echo "Could not install ${package[$i]}"
-			echo "Could not install ${package[$i]}" >>$glcLogFile
-			exit 1
+		    if [ ${buildInOwnDir[$i]} -eq 1 ]; then
+			mkdir -p $dirName-build
+			cd $dirName-build
+		    else
+			cd $dirName
 		    fi
-		elif [[ $i -eq $iBLAS ]]; then
-		    patch -p1 <<EOF
+   		    # Check for Python package.
+		    if [ -z "${buildEnvironment[$i]}" ]; then
+			isPython=0
+			isPerl=0
+			isCopy=0
+		    else
+			if [ "${buildEnvironment[$i]}" = "python" ]; then
+			    isPython=1
+			else
+			    isPython=0
+			fi
+			if [ "${buildEnvironment[$i]}" = "perl" ]; then
+			    isPerl=1
+			else
+			    isPerl=0
+			fi
+			if [ "${buildEnvironment[$i]}" = "copy" ]; then
+			    isCopy=1
+			else
+			    isCopy=0
+			fi
+		    fi
+		    if [ $isPython -eq 1 ]; then
+		        # This is a Python package.
+			if [ $installAsRoot -eq 1 ]; then
+			    # Install Python package as root.
+			    echo "$rootPassword" | $suCommand python setup.py install $suClose >>$glcLogFile 2>&1
+			else
+                            # Check that we have a virtual Python install
+			    if [ ! -e $toolInstallPath/bin/python ]; then
+				wget http://peak.telecommunity.com/dist/virtual-python.py >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to download virtual-python.py"
+				    echo "Failed to download virtual-python.py" >>$glcLogFile
+				    exit 1
+				fi
+                                # Check if there is a site-packages folder.
+				virtualPythonOptions=" "
+				pythonSitePackages=`python -c "import sys, os; py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1]); print os.path.join(sys.prefix, 'lib', py_version,'site-packages')"`
+				if [ ! -e $pythonSitePackages ]; then
+				    virtualPythonOptions="$virtualPythonOptions --no-site-packages"
+				    echo "No Python site-packages found - will run virtual-python.py with --no-site-packages options" >>$glcLogFile 2>&1
+				fi
+				python virtual-python.py --prefix $toolInstallPath $virtualPythonOptions >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to install virtual-python.py"
+				    echo "Failed to install virtual-python.py" >>$glcLogFile
+				    exit 1
+				fi
+				wget http://peak.telecommunity.com/dist/ez_setup.py >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to download ez_setup.py"
+				    echo "Failed to download ez_setup.py" >>$glcLogFile
+				    exit 1
+				fi
+				$toolInstallPath/bin/python ez_setup.py >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to install ez_setup.py"
+				    echo "Failed to install ez_setup.py" >>$glcLogFile
+				    exit 1
+				fi
+			    fi
+			    # Install Python package as regular user.
+			    $toolInstallPath/bin/python setup.py install --prefix=$toolInstallPath >>$glcLogFile 2>&1
+			fi
+		        # Check that install succeeded.
+			if [ $? -ne 0 ]; then
+			    echo "Could not install ${package[$i]}"
+			    echo "Could not install ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
+		    elif [ $isCopy -eq 1 ]; then
+		        # This is a package that we simply copy.
+			if [ $installAsRoot -eq 1 ]; then
+			    # Copy executable as root.
+			    echo "$rootPassword" | $suCommand cp ${package[$i]} $toolInstallPath/bin/ $suClose >>$glcLogFile 2>&1
+			else
+			    # Copy executable as regular user.
+			    cp ${package[$i]} $toolInstallPath/bin/ >>$glcLogFile 2>&1
+			fi
+		    elif [[ $i -eq $iBLAS ]]; then
+			patch -p1 <<EOF
 *** BLAS/make.inc       2011-04-19 12:08:00.000000000 -0700
 --- BLAS1/make.inc      2011-12-01 07:24:51.671999364 -0800
 ***************
@@ -995,12 +1046,12 @@ do
   LOADOPTS =
   #
 EOF
-  if [ $? -ne 0 ]; then
-      echo "Failed to patch make.inc in blas"
-      echo "Failed to patch make.inc in blas" >>$glcLogFile
-      exit 1
-  fi
-  patch -p1 <<EOF
+                        if [ $? -ne 0 ]; then
+			    echo "Failed to patch make.inc in blas"
+			    echo "Failed to patch make.inc in blas" >>$glcLogFile
+			    exit 1
+			fi
+			patch -p1 <<EOF
 *** BLAS/Makefile       2007-04-05 13:59:57.000000000 -0700
 --- BLAS1/Makefile      2011-12-01 07:23:50.768481902 -0800
 ***************
@@ -1033,28 +1084,28 @@ EOF
         \$(ARCH) \$(ARCHFLAGS) \$(BLASLIB) \$(SBLAS1) \$(ALLBLAS) \\
         \$(SBLAS2) \$(SBLAS3)
 EOF
-	if [ $? -ne 0 ]; then
-	    echo "Failed to patch Makefile in blas"
-	    echo "Failed to patch Makefile in blas" >>$glcLogFile
-	    exit 1
-	fi
-	sed -i~ -r s/"@X@"/"\t"/g Makefile >>$glcLogFile 2>&1
-	make libblas.so >>$glcLogFile 2>&1
-	if [ $? -ne 0 ]; then
-	    echo "Failed to make libblas.so"
-	    echo "Failed to make libblas.so" >>$glcLogFile
-	    exit 1
-	fi
-	mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
-	cp -f libblas.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
-		elif [[ $i -eq $iLAPACK ]]; then
-		    if [ ! -e $toolInstallPath/lib/libblas.so ]; then
-			echo "Source install of lapack currently supported only if blas was also installed from source"
-			echo "Source install of lapack currently supported only if blas was also installed from source" >>$glcLogFile
-			exit 1
-		    fi
-		    cp make.inc.example make.inc >>$glcLogFile 2>&1
-		    patch -p1 <<EOF
+	                if [ $? -ne 0 ]; then
+			    echo "Failed to patch Makefile in blas"
+			    echo "Failed to patch Makefile in blas" >>$glcLogFile
+			    exit 1
+			fi
+			sed -i~ -r s/"@X@"/"\t"/g Makefile >>$glcLogFile 2>&1
+			make libblas.so >>$glcLogFile 2>&1
+			if [ $? -ne 0 ]; then
+			    echo "Failed to make libblas.so"
+			    echo "Failed to make libblas.so" >>$glcLogFile
+			    exit 1
+			fi
+			mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
+			cp -f libblas.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
+		    elif [[ $i -eq $iLAPACK ]]; then
+			if [ ! -e $toolInstallPath/lib/libblas.so ]; then
+			    echo "Source install of lapack currently supported only if blas was also installed from source"
+			    echo "Source install of lapack currently supported only if blas was also installed from source" >>$glcLogFile
+			    exit 1
+			fi
+			cp make.inc.example make.inc >>$glcLogFile 2>&1
+			patch -p1 <<EOF
 *** lapack-3.4.0/make.inc       2011-12-01 07:47:04.696001005 -0800
 --- lapack-3.4.0A/make.inc      2011-12-01 07:53:10.866744759 -0800
 ***************
@@ -1094,208 +1145,209 @@ EOF
 ! LAPACKLIB    = liblapack.so
 ! TMGLIB       = libtmglib.so
 EOF
-  if [ $? -ne 0 ]; then
-      echo "Failed to patch make.inc in lapack"
-      echo "Failed to patch make.inc in lapack" >>$glcLogFile
-      exit 1
-  fi
-  echo s\#BLASLIB\\s*=\\s*..\\/..\\/librefblas.so\#BLASLIB = $toolInstallPath\\/lib\\/libblas.so\# > rule.sed
-  sed -i~ -r -f rule.sed make.inc >>$glcLogFile 2>&1
-  if [ $? -ne 0 ]; then
-      echo "Failed to modify blas path in make.inc in lapack"
-      echo "Failed to modify blas path in make.inc in lapack" >>$glcLogFile
-      exit 1
-  fi
-  rm -f rule.sed
-  make >>$glcLogFile 2>&1
-  if [ $? -ne 0 ]; then
-      echo "Failed to make lapack"
-      echo "Failed to make lapack" >>$glcLogFile
-      exit 1
-  fi
-  mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
-  cp -f liblapack.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
-  cp -f libtmglib.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
-		else
-                    # This is a regular (configure|make|make install) package.
-                    # Test whether we have an m4 installed.
-		    hash m4 >& /dev/null
-		    if [ $? -ne 0 ]; then
-			echo "No m4 is present - will attempt to install prior to configuring"
-			echo "No m4 is present - will attempt to install prior to configuring" >>$glcLogFile
-			m4InstallDone=0
-			# Try installing via yum.
-			if [[ $m4InstallDone -eq 0 && $installViaYum -eq 1 ]]; then
-			    echo "$rootPassword" | $suCommand yum -y install m4 $suClose >>$glcLogFile 2>&1
-			    hash m4 >& /dev/null
-			    if [ $? -ne 0 ]; then
-				m4InstallDone=1
+                       if [ $? -ne 0 ]; then
+			   echo "Failed to patch make.inc in lapack"
+			   echo "Failed to patch make.inc in lapack" >>$glcLogFile
+			   exit 1
+		       fi
+		       echo s\#BLASLIB\\s*=\\s*..\\/..\\/librefblas.so\#BLASLIB = $toolInstallPath\\/lib\\/libblas.so\# > rule.sed
+		       sed -i~ -r -f rule.sed make.inc >>$glcLogFile 2>&1
+		       if [ $? -ne 0 ]; then
+			   echo "Failed to modify blas path in make.inc in lapack"
+			   echo "Failed to modify blas path in make.inc in lapack" >>$glcLogFile
+			   exit 1
+		       fi
+		       rm -f rule.sed
+		       make >>$glcLogFile 2>&1
+		       if [ $? -ne 0 ]; then
+			   echo "Failed to make lapack"
+			   echo "Failed to make lapack" >>$glcLogFile
+			   exit 1
+		       fi
+		       mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
+		       cp -f liblapack.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
+		       cp -f libtmglib.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
+		    else
+                        # This is a regular (configure|make|make install) package.
+                        # Test whether we have an m4 installed.
+			hash m4 >& /dev/null
+			if [ $? -ne 0 ]; then
+			    echo "No m4 is present - will attempt to install prior to configuring"
+			    echo "No m4 is present - will attempt to install prior to configuring" >>$glcLogFile
+			    m4InstallDone=0
+			    # Try installing via yum.
+			    if [[ $m4InstallDone -eq 0 && $installViaYum -eq 1 ]]; then
+				echo "$rootPassword" | $suCommand yum -y install m4 $suClose >>$glcLogFile 2>&1
+				hash m4 >& /dev/null
+				if [ $? -ne 0 ]; then
+				    m4InstallDone=1
+				fi
+			    fi
+			    # Try installing via apt-get.
+			    if [[ $m4InstallDone -eq 0 && $installViaApt -eq 1 ]]; then
+				echo "$rootPassword" | $suCommand apt-get -y install m4 $suClose >>$glcLogFile 2>&1
+				hash m4 >& /dev/null
+				if [ $? -ne 0 ]; then
+				    m4InstallDone=1
+				fi
+			    fi
+			    # Try installing from source.
+			    if [[ $m4InstallDone -eq 0 ]]; then
+				currentDir=`pwd`
+				cd ..
+				wget http://ftp.gnu.org/gnu/m4/m4-1.4.16.tar.gz >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to download m4 source"
+				    echo "Failed to download m4 source" >>$glcLogFile
+				    exit 1
+				fi
+				tar xvfz m4-1.4.16.tar.gz >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to unpack m4 source"
+				    echo "Failed to unpack m4 source" >>$glcLogFile
+				    exit 1
+				fi
+				cd m4-1.4.16
+				./configure --prefix=$toolInstallPath >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to configure m4 source"
+				    echo "Failed to configure m4 source" >>$glcLogFile
+				    exit 1
+				fi
+				make >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to make m4"
+				    echo "Failed to make m4" >>$glcLogFile
+				    exit 1
+				fi
+				make check >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to check m4"
+				    echo "Failed to check m4" >>$glcLogFile
+				    exit 1
+				fi
+				make install >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed to install m4"
+				    echo "Failed to install m4" >>$glcLogFile
+				    exit 1
+				fi
+				cd $currentDir
 			    fi
 			fi
-			# Try installing via apt-get.
-			if [[ $m4InstallDone -eq 0 && $installViaApt -eq 1 ]]; then
-			    echo "$rootPassword" | $suCommand apt-get -y install m4 $suClose >>$glcLogFile 2>&1
-			    hash m4 >& /dev/null
-			    if [ $? -ne 0 ]; then
-				m4InstallDone=1
-			    fi
-			fi
-			# Try installing from source.
-			if [[ $m4InstallDone -eq 0 ]]; then
-			    currentDir=`pwd`
-			    cd ..
-			    wget http://ftp.gnu.org/gnu/m4/m4-1.4.16.tar.gz >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to download m4 source"
-				echo "Failed to download m4 source" >>$glcLogFile
-				exit 1
-			    fi
-			    tar xvfz m4-1.4.16.tar.gz >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to unpack m4 source"
-				echo "Failed to unpack m4 source" >>$glcLogFile
-				exit 1
-			    fi
-			    cd m4-1.4.16
-			    ./configure --prefix=$toolInstallPath >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to configure m4 source"
-				echo "Failed to configure m4 source" >>$glcLogFile
-				exit 1
-			    fi
-			    make >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to make m4"
-				echo "Failed to make m4" >>$glcLogFile
-				exit 1
-			    fi
-			    make check >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to check m4"
-				echo "Failed to check m4" >>$glcLogFile
-				exit 1
-			    fi
-			    make install >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed to install m4"
-				echo "Failed to install m4" >>$glcLogFile
-				exit 1
-			    fi
-			    cd $currentDir
-			fi
-		    fi
-		    # Configure the source.
-		    if [ $isPerl -eq 1 ]; then
-			if [ -e ../$dirName/Makefile.PL ]; then
-			    if [ $installAsRoot -eq 1 ]; then
-				perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
+		        # Configure the source.
+			if [ $isPerl -eq 1 ]; then
+			    if [ -e ../$dirName/Makefile.PL ]; then
+				if [ $installAsRoot -eq 1 ]; then
+				    perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
+				else
+				    perl ../$dirName/Makefile.PL PREFIX=$toolInstallPath >>$glcLogFile 2>&1
+				fi
 			    else
-				perl ../$dirName/Makefile.PL PREFIX=$toolInstallPath >>$glcLogFile 2>&1
-			    fi
-			else
-			    echo "Can not locate Makefile.PL for ${package[$i]}"
-			    echo "Can not locate Makefile.PL for ${package[$i]}" >>$glcLogFile
-			    exit 1
-			fi
-			if [ $? -ne 0 ]; then
-			    echo "Could not build Makefile for ${package[$i]}"
-			    echo "Could not build Makefile for ${package[$i]}" >>$glcLogFile
-			    exit 1
-			fi
-		    else
-			eval ${buildEnvironment[$i]}
-			if [ -e ../$dirName/configure ]; then
-			    ../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
-			elif [ -e ../$dirName/config ]; then
-			    ../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
-			elif [[ ${configOptions[$i]} -ne "skip" ]]; then
-			    echo "Can not locate configure script for ${package[$i]}"
-			    echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
-			    exit 1
-			fi
-			if [ $? -ne 0 ]; then
-			    echo "Could not configure ${package[$i]}"
-			    echo "Could not configure ${package[$i]}" >>$glcLogFile
-			    exit 1
-			fi
-		    fi
-		    # Make the package.
-		    make >>$glcLogFile 2>&1
-		    if [ $? -ne 0 ]; then
-			echo "Could not make ${package[$i]}"
-			echo "Could not make ${package[$i]}" >>$glcLogFile
-			exit 1
-		    fi
-		    # Run any tests of the package.
-		    make ${makeTest[$i]} >>$glcLogFile 2>&1
-		    if [ $? -ne 0 ]; then
-			echo "Testing ${package[$i]} failed"
-			echo "Testing ${package[$i]} failed" >>$glcLogFile
-			exit 1
-		    fi
-		    # Install the package.
-		    if [ $installAsRoot -eq 1 ]; then
-			echo "$rootPassword" | eval $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
-		    else
-			make install ${makeInstall[$i]} >>$glcLogFile 2>&1
-		    fi
-		    if [ $? -ne 0 ]; then
-			echo "Could not install ${package[$i]}"
-			echo "Could not install ${package[$i]}" >>$glcLogFile
-			exit 1
-		    fi
-                    # Hardwired magic.
-                    # For bzip2 we have to compile and install shared libraries manually......
-		    if [ $i -eq $iBZIP2 ]; then
- 			if [ $installAsRoot -eq 1 ]; then
-			    echo "$rootPassword" | eval $suCommand make clean $suClose >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed building shared libraries for ${package[$i]} at stage 1"
-				echo "Failed building shared libraries for ${package[$i]} at stage 1" >>$glcLogFile
+				echo "Can not locate Makefile.PL for ${package[$i]}"
+				echo "Can not locate Makefile.PL for ${package[$i]}" >>$glcLogFile
 				exit 1
 			    fi
-			    echo "$rootPassword" | eval $suCommand make -f Makefile-libbz2_so $suClose >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
-				echo "Failed building shared libraries for ${package[$i]} at stage 2"
-				echo "Failed building shared libraries for ${package[$i]} at stage 2" >>$glcLogFile
-				exit 1
-			    fi
-			    echo "$rootPassword" | eval $suCommand cp libbz2.so* $toolInstallPath/lib/ $suClose >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed building shared libraries for ${package[$i]} at stage 3"
-				echo "Failed building shared libraries for ${package[$i]} at stage 3" >>$glcLogFile
-				exit 1
-			    fi
-			    echo "$rootPassword" | eval $suCommand chmod a+r $toolInstallPath/lib/libbz2.so* $suClose >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed building shared libraries for ${package[$i]} at stage 4"
-				echo "Failed building shared libraries for ${package[$i]} at stage 4" >>$glcLogFile
+				echo "Could not build Makefile for ${package[$i]}"
+				echo "Could not build Makefile for ${package[$i]}" >>$glcLogFile
 				exit 1
 			    fi
 			else
-			    make clean >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed building shared libraries for ${package[$i]} at stage 1"
-				echo "Failed building shared libraries for ${package[$i]} at stage 1" >>$glcLogFile
+			    eval ${buildEnvironment[$i]}
+			    if [ -e ../$dirName/configure ]; then
+				../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
+			    elif [ -e ../$dirName/config ]; then
+				../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
+			    elif [[ ${configOptions[$i]} -ne "skip" ]]; then
+				echo "Can not locate configure script for ${package[$i]}"
+				echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
 				exit 1
 			    fi
-			    make -f Makefile-libbz2_so >>$glcLogFile 2>&1
 			    if [ $? -ne 0 ]; then
-				echo "Failed building shared libraries for ${package[$i]} at stage 2"
-				echo "Failed building shared libraries for ${package[$i]} at stage 2" >>$glcLogFile
+				echo "Could not configure ${package[$i]}"
+				echo "Could not configure ${package[$i]}" >>$glcLogFile
 				exit 1
 			    fi
-			    cp libbz2.so* $toolInstallPath/lib/ >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed building shared libraries for ${package[$i]} at stage 3"
-				echo "Failed building shared libraries for ${package[$i]} at stage 3" >>$glcLogFile
-				exit 1
-			    fi
-			    chmod a+r $toolInstallPath/lib/libbz2.so*  >>$glcLogFile 2>&1
-			    if [ $? -ne 0 ]; then
-				echo "Failed building shared libraries for ${package[$i]} at stage 4"
-				echo "Failed building shared libraries for ${package[$i]} at stage 4" >>$glcLogFile
-				exit 1
+			fi
+		        # Make the package.
+			make >>$glcLogFile 2>&1
+			if [ $? -ne 0 ]; then
+			    echo "Could not make ${package[$i]}"
+			    echo "Could not make ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
+		        # Run any tests of the package.
+			make ${makeTest[$i]} >>$glcLogFile 2>&1
+			if [ $? -ne 0 ]; then
+			    echo "Testing ${package[$i]} failed"
+			    echo "Testing ${package[$i]} failed" >>$glcLogFile
+			    exit 1
+			fi
+		        # Install the package.
+			if [ $installAsRoot -eq 1 ]; then
+			    echo "$rootPassword" | eval $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
+			else
+			    make install ${makeInstall[$i]} >>$glcLogFile 2>&1
+			fi
+			if [ $? -ne 0 ]; then
+			    echo "Could not install ${package[$i]}"
+			    echo "Could not install ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
+                        # Hardwired magic.
+                        # For bzip2 we have to compile and install shared libraries manually......
+			if [ $i -eq $iBZIP2 ]; then
+ 			    if [ $installAsRoot -eq 1 ]; then
+				echo "$rootPassword" | eval $suCommand make clean $suClose >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed building shared libraries for ${package[$i]} at stage 1"
+				    echo "Failed building shared libraries for ${package[$i]} at stage 1" >>$glcLogFile
+				    exit 1
+				fi
+				echo "$rootPassword" | eval $suCommand make -f Makefile-libbz2_so $suClose >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed building shared libraries for ${package[$i]} at stage 2"
+				    echo "Failed building shared libraries for ${package[$i]} at stage 2" >>$glcLogFile
+				    exit 1
+				fi
+				echo "$rootPassword" | eval $suCommand cp libbz2.so* $toolInstallPath/lib/ $suClose >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed building shared libraries for ${package[$i]} at stage 3"
+				    echo "Failed building shared libraries for ${package[$i]} at stage 3" >>$glcLogFile
+				    exit 1
+				fi
+				echo "$rootPassword" | eval $suCommand chmod a+r $toolInstallPath/lib/libbz2.so* $suClose >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed building shared libraries for ${package[$i]} at stage 4"
+				    echo "Failed building shared libraries for ${package[$i]} at stage 4" >>$glcLogFile
+				    exit 1
+				fi
+			    else
+				make clean >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed building shared libraries for ${package[$i]} at stage 1"
+				    echo "Failed building shared libraries for ${package[$i]} at stage 1" >>$glcLogFile
+				    exit 1
+				fi
+				make -f Makefile-libbz2_so >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed building shared libraries for ${package[$i]} at stage 2"
+				    echo "Failed building shared libraries for ${package[$i]} at stage 2" >>$glcLogFile
+				    exit 1
+				fi
+				cp libbz2.so* $toolInstallPath/lib/ >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed building shared libraries for ${package[$i]} at stage 3"
+				    echo "Failed building shared libraries for ${package[$i]} at stage 3" >>$glcLogFile
+				    exit 1
+				fi
+				chmod a+r $toolInstallPath/lib/libbz2.so*  >>$glcLogFile 2>&1
+				if [ $? -ne 0 ]; then
+				    echo "Failed building shared libraries for ${package[$i]} at stage 4"
+				    echo "Failed building shared libraries for ${package[$i]} at stage 4" >>$glcLogFile
+				    exit 1
+				fi
 			    fi
 			fi
 		    fi
@@ -1502,6 +1554,15 @@ modulesAtLevel[$iPackage]=1
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="perl-Text-Table"
     modulesApt[$iPackage]="libtext-table-perl"
+   interactive[$iPackage]=0
+
+# Text::Wrap
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Text::Wrap"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]=""
+    modulesApt[$iPackage]=""
    interactive[$iPackage]=0
 
 # Sort::Topological
