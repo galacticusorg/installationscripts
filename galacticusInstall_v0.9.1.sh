@@ -117,9 +117,9 @@ else
     export LD_RUN_PATH=$toolInstallPath/lib:$toolInstallPath/lib64
 fi
 if [ -n "${LDFLAGS}" ]; then
-    export LDFLAGS=$toolInstallPath/lib:$toolInstallPath/lib64:$LDFLAGS_PATH
+    export LDFLAGS="-L$toolInstallPath/lib:$toolInstallPath/lib64:$LDFLAGS_PATH"
 else
-    export LDFLAGS=$toolInstallPath/lib:$toolInstallPath/lib64
+    export LDFLAGS="-L$toolInstallPath/lib:$toolInstallPath/lib64"
 fi
 if [ -n "${C_INCLUDE_PATH}" ]; then
     export C_INCLUDE_PATH=$toolInstallPath/include:$C_INCLUDE_PATH
@@ -353,6 +353,23 @@ buildEnvironment[$iPackage]=""
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
 
+# SQLite (will only be installed if we need to compile any of the GNU Compiler Collection)
+iPackage=$(expr $iPackage + 1)
+         iSQLite=$iPackage
+         package[$iPackage]="sqlite"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash sqlite3"
+      getVersion[$iPackage]="versionString=(\`sqlite3 -version\`); echo \${versionString[0]}"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99.99"
+      yumInstall[$iPackage]="sqlite"
+      aptInstall[$iPackage]="sqlite"
+       sourceURL[$iPackage]="http://www.sqlite.org/sqlite-autoconf-3071100.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath --enable-threadsafe"
+        makeTest[$iPackage]=""
+
 # svn (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
             iSVN=$iPackage
@@ -516,7 +533,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="http://www1.gly.bris.ac.uk/~walker/FoX/source/FoX-4.1.1-full.tar.gz"
+       sourceURL[$iPackage]="http://www1.gly.bris.ac.uk/~walker/FoX/source/FoX-4.1.2-full.tar.gz"
 buildEnvironment[$iPackage]="export FC=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -600,7 +617,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="ImageMagick"
       aptInstall[$iPackage]="imagemagick"
-       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.4-0.tar.bz2"
+       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.6-1.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -1385,6 +1402,11 @@ EOF
 		sourceURL[$iFGSL]="http://www.lrz.de/services/software/mathematik/gsl/fortran/fgsl-0.9.3.tar.gz"
 	    fi
 	fi
+	# Hardwired magic.
+	# If we installed SQLite, force SVN to use it.
+	if [ $i -eq $iSQLite ]; then
+	    configOptions[$iSVN]="${configOptions[$iSVN]} --with-sqlite=$toolInstallPath"
+	fi
         # Hardwired magic.        
         # Check if GCC/G++/Fortran are installed - delist MPFR, GMP and MPC if so.
 	if [ $i -eq $iFortran ]; then
@@ -1417,6 +1439,7 @@ EOF
 	    fi
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
 		# We have all GNU Compiler Collection components, so we don't need svn, GMP, MPFR or MPC.
+		packageAtLevel[$iSQLite]=100
 		packageAtLevel[$iSVN]=100
 		packageAtLevel[$iGMP]=100
 		packageAtLevel[$iMPFR]=100
@@ -2162,14 +2185,14 @@ if [ 1 -le $installLevel ]; then
 	    exit 1
 	fi
         # Make the package.
-	make >>$glcLogFile 2>&1
+	make -j >>$glcLogFile 2>&1
 	if [ $? -ne 0 ]; then
 	    echo "Could not make PDL::IO::HDF5"
 	    echo "Could not make PDL::IO::HDF5" >>$glcLogFile
 	    exit 1
 	fi
         # Run any tests of the package.
-	make ${makeTest[$i]} >>$glcLogFile 2>&1
+	make -j ${makeTest[$i]} >>$glcLogFile 2>&1
 	if [ $? -ne 0 ]; then
 	    echo "Testing PDL::IO::HDF5 failed"
 	    echo "Testing PDL::IO::HDF5 failed" >>$glcLogFile
@@ -2314,8 +2337,8 @@ echo "You can delete the \"galacticusInstallWork\" folder if you want"
 echo "You can delete the \"galacticusInstallWork\" folder if you want" >> $glcLogFile
 echo
 if [ $envSet -eq 1 ]; then
-    echo "You should execute the command \"galacticus090\" before attempting to use Galacticus to configure all environment variables, library paths etc."
-    echo "You should execute the command \"galacticus090\" before attempting to use Galacticus to configure all environment variables, library paths etc." >> $glcLogFile
+    echo "You should execute the command \"galacticus091\" before attempting to use Galacticus to configure all environment variables, library paths etc."
+    echo "You should execute the command \"galacticus091\" before attempting to use Galacticus to configure all environment variables, library paths etc." >> $glcLogFile
 else
     if [ $installAsRoot -eq 1 ]; then
 	echo "If you install Galacticus libraries and tools in a non-standard location you may need to set environment variables appropriately to find them."
