@@ -343,7 +343,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.5.999"
+      minVersion[$iPackage]="4.6.999"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="gcc-gfortran"
       aptInstall[$iPackage]="gfortran"
@@ -369,6 +369,40 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-threadsafe"
         makeTest[$iPackage]=""
+
+# Apache Portable Runtime library (will only be installed if we need to compile any of the GNU Compiler Collection)
+iPackage=$(expr $iPackage + 1)
+            iAPR=$iPackage
+         package[$iPackage]="apr"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lapr"
+      getVersion[$iPackage]="echo \"#include <apr_version.h>\" > dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",apr_version_t::major,apr_version_t::minor,apr_version_t::patch);}\" >> dummy.c; gcc dummy.c $libDirs -lapr; ./a.out"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99.99"
+      yumInstall[$iPackage]="apr"
+      aptInstall[$iPackage]="apr"
+       sourceURL[$iPackage]="http://download.nextag.com/apache//apr/apr-1.4.6.tar.bz2"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="test"
+
+# Apache Portable Runtime utility (will only be installed if we need to compile any of the GNU Compiler Collection)
+iPackage=$(expr $iPackage + 1)
+        iAPRutil=$iPackage
+         package[$iPackage]="apr-util"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lapu"
+      getVersion[$iPackage]="echo \"#include <apr_version.h>\" > dummy.c; echo \"#include <apu.h>\" > dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",apu_version_string());}\" >> dummy.c; gcc dummy.c $libDirs -lapu; ./a.out"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99.99"
+      yumInstall[$iPackage]="apr-util"
+      aptInstall[$iPackage]="apr-util"
+       sourceURL[$iPackage]="http://download.nextag.com/apache//apr/apr-util-1.4.1.tar.bz2"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="test"
 
 # svn (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
@@ -1440,6 +1474,8 @@ EOF
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
 		# We have all GNU Compiler Collection components, so we don't need svn, GMP, MPFR or MPC.
 		packageAtLevel[$iSQLite]=100
+		packageAtLevel[$iAPR]=100
+		packageAtLevel[$iAPRutil]=100
 		packageAtLevel[$iSVN]=100
 		packageAtLevel[$iGMP]=100
 		packageAtLevel[$iMPFR]=100
@@ -2275,7 +2311,7 @@ if [ "$RESPONSE" = yes ] ; then
     echo " export PYTHONPATH=$toolInstallPath/py-lib" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
     echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
-    echo "export GALACTICUS_FLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
+    echo "export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
 read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
@@ -2305,13 +2341,13 @@ if [ "$RESPONSE" = yes ] ; then
     if [ -n "${gfortranAlias:-x}" ]; then
 	echo "alias gfortran $gfortranAlias" >> $HOME/.bashrc
     fi 
-    echo "setenv GALACTICUS_FLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"'" >> $HOME/.cshrc
+    echo "setenv GALACTICUS_FCFLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"'" >> $HOME/.cshrc
 fi
 
 # Build Galacticus.
 cd $galacticusInstallPath
 if [ ! -e Galacticus.exe ]; then
-    export GALACTICUS_FLAGS=$moduleDirs
+    export GALACTICUS_FCFLAGS=$moduleDirs
     make Galacticus.exe >>$glcLogFile 2>&1
     if [ $? -ne 0 ]; then
 	echo "failed to build Galacticus"
