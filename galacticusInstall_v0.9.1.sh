@@ -127,9 +127,9 @@ else
     export C_INCLUDE_PATH=$toolInstallPath/include
 fi
 if [ -n "${PYTHONPATH}" ]; then
-    export PYTHONPATH=$toolInstallPath/py-lib:$PATH
+    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.6/site-packages:$toolInstallPath/lib64/python2.6/site-packages:$PATH
 else
-    export PYTHONPATH=$toolInstallPath/py-lib
+    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.6/site-packages:$toolInstallPath/lib64/python2.6/site-packages
 fi
 if [ -n "${PERLLIB}" ]; then
     export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl:$PERLLIB
@@ -375,8 +375,8 @@ iPackage=$(expr $iPackage + 1)
             iAPR=$iPackage
          package[$iPackage]="apr"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lapr"
-      getVersion[$iPackage]="echo \"#include <apr_version.h>\" > dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",apr_version_t::major,apr_version_t::minor,apr_version_t::patch);}\" >> dummy.c; gcc dummy.c $libDirs -lapr; ./a.out"
+    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lapr-1"
+      getVersion[$iPackage]="echo \"#include <apr-1/apr_version.h>\" > dummy.c; echo \"#include <stdio.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",APR_MAJOR_VERSION,APR_MINOR_VERSION,APR_PATCH_VERSION);}\" >> dummy.c; gcc dummy.c $libDirs -lapr-1; ./a.out"
       minVersion[$iPackage]="0.0.0"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr"
@@ -392,8 +392,8 @@ iPackage=$(expr $iPackage + 1)
         iAPRutil=$iPackage
          package[$iPackage]="apr-util"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lapu"
-      getVersion[$iPackage]="echo \"#include <apr_version.h>\" > dummy.c; echo \"#include <apu.h>\" > dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",apu_version_string());}\" >> dummy.c; gcc dummy.c $libDirs -lapu; ./a.out"
+    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -laprutil-1"
+      getVersion[$iPackage]="echo \"#include <apr-1/apr_version.h>\" > dummy.c; echo \"#include <stdio.h>\" >> dummy.c; echo \"#include <apr-1/apu_version.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",APU_MAJOR_VERSION,APU_MINOR_VERSION,APU_PATCH_VERSION);}\" >> dummy.c; gcc dummy.c $libDirs -laprutil-1; ./a.out"
       minVersion[$iPackage]="0.0.0"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-util"
@@ -401,7 +401,7 @@ iPackage=$(expr $iPackage + 1)
        sourceURL[$iPackage]="http://download.nextag.com/apache//apr/apr-util-1.4.1.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath"
+   configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
         makeTest[$iPackage]="test"
 
 # svn (will only be installed if we need to compile any of the GNU Compiler Collection)
@@ -428,7 +428,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="echo \"#include <gmp.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lgmp"
       getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <gmp.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL);}\" >> dummy.c; gcc dummy.c $libDirs -lgmp; ./a.out"
-      minVersion[$iPackage]="4.3.1"
+      minVersion[$iPackage]="4.3.2"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="gmp-devel"
       aptInstall[$iPackage]="libgmp3-dev"
@@ -1700,7 +1700,7 @@ modulesAtLevel[$iPackage]=1
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Switch"
 modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
+  modulesForce[$iPackage]=1
     modulesYum[$iPackage]="null"
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
