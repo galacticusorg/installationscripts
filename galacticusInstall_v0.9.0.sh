@@ -2030,7 +2030,7 @@ if [ 1 -le $installLevel ]; then
 	echo PDL::IO::HDF5 - not found - will be installed >> $glcLogFile
 	echo "   Installing from source"
 	echo "   Installing from source" >>$glcLogFile
-	wget "http://www.ctcp.caltech.edu/galacticus/tools/PDL-IO-HDF5-0.6.tar.gz" >>$glcLogFile 2>&1
+	wget "http://users.obs.carnegiescience.edu/galacticus/tools/PDL-IO-HDF5-0.6.tar.gz" >>$glcLogFile 2>&1
 	if [ $? -ne 0 ]; then
 	    echo "Could not download PDL::IO::HDF5"
 	    echo "Could not download PDL::IO::HDF5" >>$glcLogFile
