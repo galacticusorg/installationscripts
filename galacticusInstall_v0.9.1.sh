@@ -127,7 +127,7 @@ else
     export C_INCLUDE_PATH=$toolInstallPath/include
 fi
 if [ -n "${PYTHONPATH}" ]; then
-    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.6/site-packages:$toolInstallPath/lib64/python2.6/site-packages:$PATH
+    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.6/site-packages:$toolInstallPath/lib64/python2.6/site-packages:$PYTHONPATH
 else
     export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.6/site-packages:$toolInstallPath/lib64/python2.6/site-packages
 fi
@@ -2306,7 +2306,7 @@ if [ "$RESPONSE" = yes ] ; then
     echo " export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
     echo "if [ -n \"\${PYTHONPATH}\" ]; then" >> $HOME/.bashrc
-    echo " export PYTHONPATH=$toolInstallPath/py-lib:\$PATH" >> $HOME/.bashrc
+    echo " export PYTHONPATH=$toolInstallPath/py-lib:\$PYTHONPATH" >> $HOME/.bashrc
     echo "else" >> $HOME/.bashrc
     echo " export PYTHONPATH=$toolInstallPath/py-lib" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
@@ -2333,7 +2333,7 @@ if [ "$RESPONSE" = yes ] ; then
     echo " setenv PATH $toolInstallPath/bin \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
     echo "if ( \$?PYTHONPATH ) then \\" >> $HOME/.cshrc
-    echo " setenv PYTHONPATH $toolInstallPath/py-lib:\$PATH \\" >> $HOME/.cshrc
+    echo " setenv PYTHONPATH $toolInstallPath/py-lib:\$PYTHONPATH \\" >> $HOME/.cshrc
     echo "else \\" >> $HOME/.cshrc
     echo " setenv PYTHONPATH $toolInstallPath/py-lib \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
