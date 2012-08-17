@@ -1209,7 +1209,7 @@ EOF
 			   exit 1
 		       fi
 		       rm -f rule.sed
-		       make >>$glcLogFile 2>&1
+		       make all >>$glcLogFile 2>&1
 		       if [ $? -ne 0 ]; then
 			   echo "Failed to make lapack"
 			   echo "Failed to make lapack" >>$glcLogFile
