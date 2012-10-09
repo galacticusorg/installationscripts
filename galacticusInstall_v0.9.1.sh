@@ -360,7 +360,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash sqlite3"
       getVersion[$iPackage]="versionString=(\`sqlite3 -version\`); echo \${versionString[0]}"
-      minVersion[$iPackage]="0.0.0"
+      minVersion[$iPackage]="3.4.0"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="sqlite"
       aptInstall[$iPackage]="sqlite"
@@ -601,7 +601,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="hdf5-devel"
       aptInstall[$iPackage]="hdf5-tools"
-       sourceURL[$iPackage]="http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.8/src/hdf5-1.8.8.tar.gz"
+       sourceURL[$iPackage]="http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.9/src/hdf5-1.8.9.tar.gz"
 buildEnvironment[$iPackage]="export F9X=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-fortran --enable-production"
@@ -1420,6 +1420,19 @@ EOF
 		    exit 1
 		fi
             fi
+ 	    # Hardwired magic.
+	    # If we installed SQLite, force SVN to use it.
+	    if [ $i -eq $iSQLite ]; then
+		configOptions[$iSVN]="${configOptions[$iSVN]} --with-sqlite=$toolInstallPath"
+	    fi
+	    # If we installed APR, force SVN to use it.
+	    if [ $i -eq $iAPR ]; then
+		configOptions[$iSVN]="${configOptions[$iSVN]} --with-apr=$toolInstallPath"
+	    fi
+	    # If we installed APR utils, force SVN to use it.
+	    if [ $i -eq $iAPRutil ]; then
+		configOptions[$iSVN]="${configOptions[$iSVN]} --with-apr-util=$toolInstallPath"
+	    fi
 	fi
         # Hardwired magic.        
 	# If we installed (or already had) v1.13 or v1.14 of GSL then downgrade the version of FGSL that we want.
@@ -1435,11 +1448,6 @@ EOF
 		maxVersion[$iFGSL]="0.9.3.1"
 		sourceURL[$iFGSL]="http://www.lrz.de/services/software/mathematik/gsl/fortran/fgsl-0.9.3.tar.gz"
 	    fi
-	fi
-	# Hardwired magic.
-	# If we installed SQLite, force SVN to use it.
-	if [ $i -eq $iSQLite ]; then
-	    configOptions[$iSVN]="${configOptions[$iSVN]} --with-sqlite=$toolInstallPath"
 	fi
         # Hardwired magic.        
         # Check if GCC/G++/Fortran are installed - delist MPFR, GMP and MPC if so.
@@ -2294,7 +2302,7 @@ if [ "$RESPONSE" = yes ] ; then
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
     fi
     echo "# Alias to configure the environment to compile and run Galacticus v0.9.1" >> $HOME/.bashrc
-    echo "alias galacticus090='" >> $HOME/.bashrc
+    echo "alias galacticus091='" >> $HOME/.bashrc
     echo "if [ -n \"\${LD_LIBRARY_PATH}\" ]; then" >> $HOME/.bashrc
     echo " export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
     echo "else" >> $HOME/.bashrc
@@ -2306,9 +2314,9 @@ if [ "$RESPONSE" = yes ] ; then
     echo " export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
     echo "if [ -n \"\${PYTHONPATH}\" ]; then" >> $HOME/.bashrc
-    echo " export PYTHONPATH=$toolInstallPath/py-lib:\$PYTHONPATH" >> $HOME/.bashrc
+    echo " export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib:\$PYTHONPATH" >> $HOME/.bashrc
     echo "else" >> $HOME/.bashrc
-    echo " export PYTHONPATH=$toolInstallPath/py-lib" >> $HOME/.bashrc
+    echo " export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
     echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
     echo "export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
@@ -2333,9 +2341,9 @@ if [ "$RESPONSE" = yes ] ; then
     echo " setenv PATH $toolInstallPath/bin \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
     echo "if ( \$?PYTHONPATH ) then \\" >> $HOME/.cshrc
-    echo " setenv PYTHONPATH $toolInstallPath/py-lib:\$PYTHONPATH \\" >> $HOME/.cshrc
+    echo " setenv PYTHONPATH $toolInstallPath/python:$toolInstallPath/py-lib:\$PYTHONPATH \\" >> $HOME/.cshrc
     echo "else \\" >> $HOME/.cshrc
-    echo " setenv PYTHONPATH $toolInstallPath/py-lib \\" >> $HOME/.cshrc
+    echo " setenv PYTHONPATH $toolInstallPath/python:$toolInstallPath/py-lib \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
     echo "eval \`perl -I$HOME/perl5/lib/perl5 -Mlocal::lib\` \\" >> $HOME/.cshrc
     if [ -n "${gfortranAlias:-x}" ]; then
