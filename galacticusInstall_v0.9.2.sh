@@ -4,6 +4,20 @@
 # v0.9.2
 # © Andrew Benson 2012
 
+# Functions
+function contains() {
+    local n=$#
+    local value=${!n}
+    for ((i=1;i < $#;i++)) {
+        if [ "${!i}" == "${value}" ]; then
+            echo "y"
+            return 0
+        fi
+    }
+    echo "n"
+    return 1
+}
+
 # Define a log file.
 glcLogFile=`pwd`"/galacticusInstall.log"
 
@@ -343,7 +357,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.6.999"
+      minVersion[$iPackage]="4.7.999"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="gcc-gfortran"
       aptInstall[$iPackage]="gfortran"
@@ -462,11 +476,11 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="echo \"#include <mpc.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lmpc"
       getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpc.h>\" >> dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",MPC_VERSION_STRING);}\" >> dummy.c; gcc dummy.c $libDirs -lmpc; ./a.out"
-      minVersion[$iPackage]="0.7.9999"
+      minVersion[$iPackage]="1.0.0"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="libmpc-devel"
       aptInstall[$iPackage]="libmpc-dev"
-       sourceURL[$iPackage]="http://www.multiprecision.org/mpc/download/mpc-0.9.tar.gz"
+       sourceURL[$iPackage]="http://www.multiprecision.org/mpc/download/mpc-1.0.1.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -513,7 +527,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.6.999"
+      minVersion[$iPackage]="4.7.999"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
@@ -554,7 +568,7 @@ iPackage=$(expr $iPackage + 1)
        sourceURL[$iPackage]="http://www.lrz.de/services/software/mathematik/gsl/fortran/fgsl-0.9.4.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix $toolInstallPath --f90 gfortran"
+   configOptions[$iPackage]="--prefix $toolInstallPath --f90 gfortran --gsl `gsl-config --prefix`"
         makeTest[$iPackage]="test"
 
 # FoX
@@ -894,6 +908,11 @@ do
 	    fi
 	    echo "  Test results for ${package[$i]}: $testLow $testHigh" >> $glcLogFile
         fi
+        # Check if installation is to be forced for this package.
+	test $(contains "$@" "--force-${package[$i]}") == "y"
+	if [ $? -eq 0 ]; then
+	    installPackage=1
+	fi
         # Install package if necessary.
         if [ $installPackage -eq 0 ]; then
 	    echo ${package[$i]} - found
@@ -1452,11 +1471,11 @@ EOF
         # Hardwired magic.        
         # Check if GCC/G++/Fortran are installed - delist MPFR, GMP and MPC if so.
 	if [ $i -eq $iFortran ]; then
-	    eval ${testPresence[$iFortran]} >& /dev/null
+	    eval ${testPresence[$iFortran]} | test $(contains "$@" "--force-gfortran") == "y" >& /dev/null
 	    gotFortran=$?
-	    eval ${testPresence[$iGCC]} >& /dev/null
+	    eval ${testPresence[$iGCC]} | test $(contains "$@" "--force-gcc") == "y" >& /dev/null
 	    gotGCC=$?
-	    eval ${testPresence[$iGPP]} >& /dev/null
+	    eval ${testPresence[$iGPP]} | test $(contains "$@" "--force-g++") == "y" >& /dev/null
 	    gotGPP=$?
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
                 # Check installed versions.
@@ -2191,7 +2210,7 @@ if [ 1 -le $installLevel ]; then
 	echo PDL::IO::HDF5 - not found - will be installed >> $glcLogFile
 	echo "   Installing from source"
 	echo "   Installing from source" >>$glcLogFile
-	wget "http://www.ctcp.caltech.edu/galacticus/tools/PDL-IO-HDF5-0.6.tar.gz" >>$glcLogFile 2>&1
+	wget "http://users.obs.carnegiescience.edu/abenson/galacticus/tools/PDL-IO-HDF5-0.6.tar.gz" >>$glcLogFile 2>&1
 	if [ $? -ne 0 ]; then
 	    echo "Could not download PDL::IO::HDF5"
 	    echo "Could not download PDL::IO::HDF5" >>$glcLogFile
