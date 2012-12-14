@@ -2038,6 +2038,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="liblist-moreutils-perl"
    interactive[$iPackage]=0
 
+# Image::ExifTool
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Image::ExifTool"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-Image-ExifTool"
+    modulesApt[$iPackage]="libimage-exiftool-perl"
+   interactive[$iPackage]=0
+
 # Install required Perl modules.
 echo "Checking for Perl modules..." 
 echo "Checking for Perl modules..." >> $glcLogFile
