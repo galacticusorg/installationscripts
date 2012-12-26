@@ -742,100 +742,20 @@ buildEnvironment[$iPackage]=""
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="test"
 
-# cElementTree (required for Bazaar)
+# hg
 iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="cElementTree"
+         package[$iPackage]="hg"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="python -c 'import xml.etree.cElementTree'"
-      getVersion[$iPackage]="echo 1.0.0"
-      minVersion[$iPackage]="0.9.9"
-      maxVersion[$iPackage]="1.1.1"
-      yumInstall[$iPackage]="python-celementtree"
-      aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="http://effbot.org/media/downloads/cElementTree-1.0.5-20051216.tar.gz"
-buildEnvironment[$iPackage]="python"
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
-        makeTest[$iPackage]=""
-
-# Pyrex (required for Bazaar)
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="Pyrex"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="python -c 'import Pyrex'"
-      getVersion[$iPackage]="echo 1.0.0"
-      minVersion[$iPackage]="0.9.9"
-      maxVersion[$iPackage]="1.1.1"
-      yumInstall[$iPackage]="Pyrex"
-      aptInstall[$iPackage]="python-pyrex"
-       sourceURL[$iPackage]="http://www.cosc.canterbury.ac.nz/greg.ewing/python/Pyrex/Pyrex-0.9.9.tar.gz"
-buildEnvironment[$iPackage]="python"
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
-        makeTest[$iPackage]=""
-
-# pycrypto (required for Bazaar)
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="pycrypto"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="python -c 'import Crypto'"
-      getVersion[$iPackage]="echo 1.0.0"
-      minVersion[$iPackage]="0.9.9"
-      maxVersion[$iPackage]="1.1.1"
-      yumInstall[$iPackage]="python-crypto"
-      aptInstall[$iPackage]="python-crypto"
-       sourceURL[$iPackage]="http://ftp.dlitz.net/pub/dlitz/crypto/pycrypto/pycrypto-2.3.tar.gz"
-buildEnvironment[$iPackage]="python"
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
-        makeTest[$iPackage]=""
-
-# paramiko (required for Bazaar)
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="paramiko"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="python -c 'import paramiko'"
-      getVersion[$iPackage]="echo 1.0.0"
-      minVersion[$iPackage]="0.9.9"
-      maxVersion[$iPackage]="1.1.1"
-      yumInstall[$iPackage]="python-paramiko"
-      aptInstall[$iPackage]="python-paramiko"
-       sourceURL[$iPackage]="http://www.lag.net/paramiko/download/paramiko-1.7.7.1.tar.gz"
-buildEnvironment[$iPackage]="python"
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
-        makeTest[$iPackage]=""
-
-# bzr
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="bzr"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash bzr"
-      getVersion[$iPackage]="versionString=(\`bzr --version\`); echo \${versionString[2]}"
+    testPresence[$iPackage]="hash hg"
+      getVersion[$iPackage]="versionString=(\`hg version\`); echo \${versionString[4]}"
       minVersion[$iPackage]="2.0.0"
       maxVersion[$iPackage]="9.9.9"
-      yumInstall[$iPackage]="bzr"
-      aptInstall[$iPackage]="bzr"
-       sourceURL[$iPackage]="http://launchpad.net/bzr/2.4/2.4b5/+download/bzr-2.4b5.tar.gz"
-buildEnvironment[$iPackage]="python"
+      yumInstall[$iPackage]="hg"
+      aptInstall[$iPackage]="hg"
+       sourceURL[$iPackage]="http://mercurial.selenic.com/release/mercurial-2.4.1.tar.gz"
+buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
-        makeTest[$iPackage]=""
-
-# bzrtools
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="bzrtools"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="bzr plugins | grep bzrtools"
-      getVersion[$iPackage]="versionString=(\`bzr plugins | grep bzrtools\`); echo \${versionString[1]}"
-      minVersion[$iPackage]="2.0.0"
-      maxVersion[$iPackage]="9.9.9"
-      yumInstall[$iPackage]="bzrtools"
-      aptInstall[$iPackage]="bzrtools"
-       sourceURL[$iPackage]="http://launchpad.net/bzrtools/stable/2.4.0/+download/bzrtools-2.4.0.tar.gz"
-buildEnvironment[$iPackage]="python"
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
+   configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
 
 # pdflatex
@@ -2267,7 +2187,7 @@ if [ -n "$RESPONSE" ]; then
 fi
 if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
-    bzr branch --stacked lp:galacticus/v0.9.1 $galacticusInstallPath
+    hg clone https://abensonca@bitbucket.org/abensonca/galacticus_v0.9.1 $galacticusInstallPath/v0.9.1
     if [ $? -ne 0 ]; then
 	echo "failed to download Galacticus"
 	echo "failed to download Galacticus" >> $glcLogFile
