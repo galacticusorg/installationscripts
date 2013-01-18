@@ -756,8 +756,25 @@ buildEnvironment[$iPackage]=""
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="test"
 
+# docutils
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="docutils"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="python -c 'import docutils'"
+      getVersion[$iPackage]="python -c 'import docutils; print docutils.__version__'"
+      minVersion[$iPackage]="0.10"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="python-docutils"
+      aptInstall[$iPackage]="python-docutils"
+       sourceURL[$iPackage]="http://downloads.sourceforge.net/project/docutils/docutils/0.10/docutils-0.10.tar.gz"
+buildEnvironment[$iPackage]="python"
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="skip"
+        makeTest[$iPackage]=""
+
 # hg
 iPackage=$(expr $iPackage + 1)
+             iHG=$iPackage
          package[$iPackage]="hg"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash hg"
@@ -1157,6 +1174,31 @@ EOF
 		       mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
 		       cp -f liblapack.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
 		       cp -f libtmglib.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
+		    elif [[ $i -eq $iHG ]]; then
+			# Save a copy of the version file.
+			cp mercurial/__version__.py mercurial/__version__.py.SAFE 
+			# Make local version.
+			make local >>$glcLogFile 2>&1
+			if [ $? -ne 0 ]; then
+			    echo "Could not make ${package[$i]}"
+			    echo "Could not make ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
+		        # Install the package.
+			if [ $installAsRoot -eq 1 ]; then
+			    echo "$rootPassword" | eval $suCommand make install PREFIX=$toolInstallPath $suClose >>$glcLogFile 2>&1
+			else
+			    make install PREFIX=$toolInstallPath >>$glcLogFile 2>&1
+			fi
+			if [ $? -ne 0 ]; then
+			    echo "Could not install ${package[$i]}"
+			    echo "Could not install ${package[$i]}" >>$glcLogFile
+			    exit 1
+			fi
+			# Version file gets clobbered (due to bug in package).
+			if [ ! -e $toolInstallPath/lib/python2.7/site-packages/mercurial/__version__.py ]; then
+			    cp mercurial/__version__.py.SAFE $toolInstallPath/lib/python2.7/site-packages/mercurial/
+			fi
 		    else
                         # This is a regular (configure|make|make install) package.
                         # Test whether we have an m4 installed.
@@ -1556,7 +1598,7 @@ modulesAtLevel[$iPackage]=0
 # Text::Table
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Text::Table"
-modulesAtLevel[$iPackage]=1
+modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="perl-Text-Table"
     modulesApt[$iPackage]="libtext-table-perl"
@@ -2215,7 +2257,7 @@ if [ -n "$RESPONSE" ]; then
 fi
 if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
-    hg clone https://abensonca@bitbucket.org/abensonca/galacticus_v0.9.2 $galacticusInstallPath/v0.9.2
+    hg clone https://abensonca@bitbucket.org/abensonca/galacticus_v0.9.2 $galacticusInstallPath
     if [ $? -ne 0 ]; then
 	echo "failed to download Galacticus"
 	echo "failed to download Galacticus" >> $glcLogFile
