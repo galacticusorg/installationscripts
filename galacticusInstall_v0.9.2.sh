@@ -2257,7 +2257,7 @@ if [ -n "$RESPONSE" ]; then
 fi
 if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
-    hg clone https://abensonca@bitbucket.org/abensonca/galacticus_v0.9.2 $galacticusInstallPath
+    hg clone https://abensonca@bitbucket.org/abensonca/galacticus $galacticusInstallPath
     if [ $? -ne 0 ]; then
 	echo "failed to download Galacticus"
 	echo "failed to download Galacticus" >> $glcLogFile
