@@ -789,6 +789,22 @@ buildEnvironment[$iPackage]=""
    configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
 
+# poppler
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="poppler"
+  packageAtLevel[$iPackage]=1
+    testPresence[$iPackage]="hash pdfinfo"
+      getVersion[$iPackage]="versionString=(\`pdfinfo -v 2>&1 | head -1\`); echo \${versionString[2]}"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="poppler-utils"
+      aptInstall[$iPackage]="poppler-utils"
+       sourceURL[$iPackage]="http://poppler.freedesktop.org/poppler-0.22.2.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]="check"
+
 # pdflatex
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="pdflatex"
