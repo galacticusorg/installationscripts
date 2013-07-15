@@ -2007,6 +2007,33 @@ modulesAtLevel[$iPackage]=2
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
+# List::Uniq
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="List::Uniq"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
+# XML::Validator::Schema
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="XML::Validator::Schema"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
+# XML::SAX
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="XML::SAX"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="libxml-sax-perl"
+   interactive[$iPackage]=0
+
 # List::MoreUtils
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="List::MoreUtils"
