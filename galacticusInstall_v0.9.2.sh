@@ -1890,15 +1890,6 @@ modulesAtLevel[$iPackage]=2
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
-# Graphics::GnuplotIF
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Graphics::GnuplotIF"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="libgraphics-gnuplotif-perl"
-   interactive[$iPackage]=0
-
 # threads
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="threads"
