@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Galacticus install script.
-# v0.9.2
+# v0.9.3
 # © Andrew Benson 2012
 
 # Functions
@@ -22,7 +22,7 @@ function contains() {
 glcLogFile=`pwd`"/galacticusInstall.log"
 
 # Open the log file.
-echo "Galacticus v0.9.2 install log" > $glcLogFile
+echo "Galacticus v0.9.3 install log" > $glcLogFile
 
 # Write some useful machine info to the log file if possible.
 hash uname >& /dev/null
@@ -2284,14 +2284,14 @@ fi
 if [[ $runningAsRoot -eq 1 ]]; then
     echo "Script is running as root - if you want to install Galacticus itself as a regular user, just quit (Ctrl-C) now."
 fi
-galacticusInstallPath=$HOME/Galacticus/v0.9.2
+galacticusInstallPath=$HOME/Galacticus/v0.9.3
 read -p "Path to install Galacticus to [$galacticusInstallPath]: " RESPONSE
 if [ -n "$RESPONSE" ]; then
     galacticusInstallPath=$RESPONSE
 fi
 if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
-    hg clone -u v0.9.2 https://abensonca@bitbucket.org/abensonca/galacticus $galacticusInstallPath
+    hg clone https://abensonca@bitbucket.org/abensonca/galacticus $galacticusInstallPath
     if [ $? -ne 0 ]; then
 	echo "failed to download Galacticus"
 	echo "failed to download Galacticus" >> $glcLogFile
@@ -2322,10 +2322,10 @@ read -p "Add a Galacticus environment alias to .bashrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
     envSet=1
     if [ -e $HOME/.bashrc ]; then
-	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.2") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
+	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.3") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
     fi
-    echo "# Alias to configure the environment to compile and run Galacticus v0.9.2" >> $HOME/.bashrc
+    echo "# Alias to configure the environment to compile and run Galacticus v0.9.3" >> $HOME/.bashrc
     echo "alias galacticus092='" >> $HOME/.bashrc
     echo "if [ -n \"\${LD_LIBRARY_PATH}\" ]; then" >> $HOME/.bashrc
     echo " export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
@@ -2350,10 +2350,10 @@ read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
 if [ "$RESPONSE" = yes ] ; then
     envSet=1
     if [ -e $HOME/.cshrc ]; then
-	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.2") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.cshrc > $HOME/.cshrc.tmp
+	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus v0.9.3") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.cshrc > $HOME/.cshrc.tmp
 	mv -f $HOME/.cshrc.tmp $HOME/.cshrc
     fi
-    echo "# Alias to configure the environment to compile and run Galacticus v0.9.2" >> $HOME/.cshrc
+    echo "# Alias to configure the environment to compile and run Galacticus v0.9.3" >> $HOME/.cshrc
     echo "alias galacticus092 'if ( \$?LD_LIBRARY_PATH ) then \\" >> $HOME/.cshrc
     echo " setenv LD_LIBRARY_PATH $toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH \\" >> $HOME/.cshrc
     echo "else \\" >> $HOME/.cshrc
