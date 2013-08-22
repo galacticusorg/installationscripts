@@ -1307,11 +1307,23 @@ EOF
 				exit 1
 			    fi
 			else
+			    # Hardwired magic.
+			    # For HDF5 on older kernel versions we need to reduce optimization to prevent bug HDFFV-7829 
+			    # from occuring during testing.
+			    preConfig=" "
+			    if [ $i -eq $iHDF5 ]; then
+				version=`uname -r`
+				testLow=`echo "$version test:3.4.999:9.9.9" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
+				testHigh=`echo "$version test:3.4.999:9.9.9" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
+				if [[ "$testLow" == "test" ]]; then
+				    preConfig="env CFLAGS=-O0 "
+				fi
+			    fi
 			    eval ${buildEnvironment[$i]}
 			    if [ -e ../$dirName/configure ]; then
-				../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
+				$preConfig ../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
 			    elif [ -e ../$dirName/config ]; then
-				../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
+				$preConfig ../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
 			    elif [[ ${configOptions[$i]} -ne "skip" ]]; then
 				echo "Can not locate configure script for ${package[$i]}"
 				echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
@@ -2285,7 +2297,7 @@ if [ 1 -le $installLevel ]; then
     fi
 fi
 
-# Retrieve Galacticus via Bazaar.
+# Retrieve Galacticus via Mercurial.
 if [[ $runningAsRoot -eq 1 ]]; then
     echo "Script is running as root - if you want to install Galacticus itself as a regular user, just quit (Ctrl-C) now."
 fi
