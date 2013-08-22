@@ -206,6 +206,26 @@ else
     usePackageManager=0
 fi
 
+# Use multiple cores to compile.
+coresAvailable=`grep -c ^processor /proc/cpuinfo`
+coreCount=-1
+while [ $coreCount -eq -1 ]
+do
+    read -p "How many cores should I use when compiling? ($coresAvailable available): " RESPONSE
+    if ! [[ "$RESPONSE" =~ ^[0-9]+$ ]] ; then
+	    echo "Please enter an integer"
+    else
+	if [ "$RESPONSE" > 0 ] ; then
+            coreCount=$RESPONSE
+	    echo "Will use $coreCount cores for compiling"
+	    echo "Will use $coreCount cores for compiling" >> $glcLogFile
+	else
+	    echo "Please enter a number greater than 0"
+	fi
+    fi
+done
+
+
 # Figure out which install options are available to us.
 installViaYum=0
 if [[ $installAsRoot -eq 1 && $usePackageManager -eq 1 ]]; then
@@ -251,6 +271,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # wget
 iPackage=$(expr $iPackage + 1)
@@ -267,6 +288,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # sed
 iPackage=$(expr $iPackage + 1)
@@ -283,6 +305,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # make
 iPackage=$(expr $iPackage + 1)
@@ -299,6 +322,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # grep
 iPackage=$(expr $iPackage + 1)
@@ -315,6 +339,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # gcc (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
@@ -332,6 +357,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # g++ (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
@@ -349,6 +375,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # GFortran (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
@@ -366,6 +393,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # SQLite (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
@@ -383,6 +411,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-threadsafe"
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=1
 
 # Apache Portable Runtime library (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
@@ -400,6 +429,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="test"
+   parallelBuild[$iPackage]=1
 
 # Apache Portable Runtime utility (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
@@ -417,6 +447,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
         makeTest[$iPackage]="test"
+   parallelBuild[$iPackage]=1
 
 # svn (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
@@ -434,6 +465,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # GMP (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
@@ -451,6 +483,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # MPFR (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
@@ -468,6 +501,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # MPC (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
@@ -485,6 +519,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # gcc (second attempt - install from source)
 iPackage=$(expr $iPackage + 1)
@@ -502,6 +537,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=1
 
 # g++ (second attempt - install from source)
 iPackage=$(expr $iPackage + 1)
@@ -519,6 +555,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=1
 
 # GFortran (second attempt - install from source)
 iPackage=$(expr $iPackage + 1)
@@ -536,6 +573,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=1
 
 # GSL
 iPackage=$(expr $iPackage + 1)
@@ -553,6 +591,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # FGSL
 iPackage=$(expr $iPackage + 1)
@@ -570,6 +609,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix $toolInstallPath --f90 gfortran --gsl `gsl-config --prefix`"
         makeTest[$iPackage]="test"
+   parallelBuild[$iPackage]=1
 
 # FoX
 iPackage=$(expr $iPackage + 1)
@@ -586,6 +626,7 @@ buildEnvironment[$iPackage]="export FC=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # Zlib
 iPackage=$(expr $iPackage + 1)
@@ -603,6 +644,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # HDF5
 iPackage=$(expr $iPackage + 1)
@@ -620,6 +662,7 @@ buildEnvironment[$iPackage]="export F9X=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-fortran --enable-production"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # GnuPlot
 iPackage=$(expr $iPackage + 1)
@@ -637,6 +680,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # GraphViz
 iPackage=$(expr $iPackage + 1)
@@ -654,6 +698,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # ImageMagick
 iPackage=$(expr $iPackage + 1)
@@ -670,6 +715,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # blas
 iPackage=$(expr $iPackage + 1)
@@ -687,6 +733,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # lapack
 iPackage=$(expr $iPackage + 1)
@@ -704,8 +751,9 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
-# OpenSSL (required for Bazaar)
+# OpenSSL (required for Mercurial)
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="OpenSSL"
   packageAtLevel[$iPackage]=0
@@ -720,8 +768,9 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath shared"
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=1
 
-# bzip2 (required for Bazaar)
+# bzip2
 iPackage=$(expr $iPackage + 1)
               iBZIP2=$iPackage
          package[$iPackage]="bzip2"
@@ -738,6 +787,7 @@ buildEnvironment[$iPackage]=""
    configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
      makeInstall[$iPackage]="PREFIX=$toolInstallPath"
+   parallelBuild[$iPackage]=0
 
 # Python
 iPackage=$(expr $iPackage + 1)
@@ -755,6 +805,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="test"
+   parallelBuild[$iPackage]=1
 
 # docutils
 iPackage=$(expr $iPackage + 1)
@@ -771,6 +822,7 @@ buildEnvironment[$iPackage]="python"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # hg
 iPackage=$(expr $iPackage + 1)
@@ -788,6 +840,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # poppler
 iPackage=$(expr $iPackage + 1)
@@ -804,6 +857,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]="check"
+   parallelBuild[$iPackage]=1
 
 # pdflatex
 iPackage=$(expr $iPackage + 1)
@@ -820,6 +874,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # pdfmerge
 iPackage=$(expr $iPackage + 1)
@@ -836,6 +891,7 @@ buildEnvironment[$iPackage]="copy"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+   parallelBuild[$iPackage]=0
 
 # Install packages.
 echo "Checking for required tools and libraries..." 
@@ -1307,11 +1363,23 @@ EOF
 				exit 1
 			    fi
 			else
+			    # Hardwired magic.
+			    # For HDF5 on older kernel versions we need to reduce optimization to prevent bug HDFFV-7829 
+			    # from occuring during testing.
+			    preConfig=" "
+			    if [ $i -eq $iHDF5 ]; then
+				version=`uname -r`
+				testLow=`echo "$version test:3.4.999:9.9.9" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
+				testHigh=`echo "$version test:3.4.999:9.9.9" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
+				if [[ "$testLow" == "test" ]]; then
+				    preConfig="env CFLAGS=-O0 "
+				fi
+			    fi
 			    eval ${buildEnvironment[$i]}
 			    if [ -e ../$dirName/configure ]; then
-				../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
+				$preConfig ../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
 			    elif [ -e ../$dirName/config ]; then
-				../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
+				$preConfig ../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
 			    elif [[ ${configOptions[$i]} -ne "skip" ]]; then
 				echo "Can not locate configure script for ${package[$i]}"
 				echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
@@ -1324,7 +1392,11 @@ EOF
 			    fi
 			fi
 		        # Make the package.
-			make >>$glcLogFile 2>&1
+			makeOptions=" "
+			if [ ${parallelBuild[$i]} -eq 1 ]; then
+			    makeOptions=" -j$coreCount"
+			fi
+			make $makeOptions >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
 			    echo "Could not make ${package[$i]}"
 			    echo "Could not make ${package[$i]}" >>$glcLogFile
