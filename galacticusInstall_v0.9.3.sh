@@ -141,9 +141,9 @@ else
     export C_INCLUDE_PATH=$toolInstallPath/include
 fi
 if [ -n "${PYTHONPATH}" ]; then
-    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.6/site-packages:$toolInstallPath/lib64/python2.6/site-packages:$PYTHONPATH
+    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.7/site-packages:$toolInstallPath/lib64/python2.7/site-packages:$PYTHONPATH
 else
-    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.6/site-packages:$toolInstallPath/lib64/python2.6/site-packages
+    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.7/site-packages:$toolInstallPath/lib64/python2.7/site-packages
 fi
 if [ -n "${PERLLIB}" ]; then
     export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl:$PERLLIB
@@ -271,6 +271,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # wget
@@ -288,6 +289,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # sed
@@ -305,6 +307,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # make
@@ -322,6 +325,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # grep
@@ -339,6 +343,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # gcc (initial attempt - allow install via package manager only)
@@ -357,6 +362,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # g++ (initial attempt - allow install via package manager only)
@@ -375,6 +381,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # GFortran (initial attempt - allow install via package manager only)
@@ -393,6 +400,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # SQLite (will only be installed if we need to compile any of the GNU Compiler Collection)
@@ -400,17 +408,18 @@ iPackage=$(expr $iPackage + 1)
          iSQLite=$iPackage
          package[$iPackage]="sqlite"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash sqlite3"
+    testPresence[$iPackage]="echo \"#include <sqlite3.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs && hash sqlite3"
       getVersion[$iPackage]="versionString=(\`sqlite3 -version\`); echo \${versionString[0]}"
-      minVersion[$iPackage]="3.4.0"
+      minVersion[$iPackage]="3.7.12"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="sqlite"
       aptInstall[$iPackage]="sqlite"
-       sourceURL[$iPackage]="http://www.sqlite.org/sqlite-autoconf-3071100.tar.gz"
+       sourceURL[$iPackage]="http://www.sqlite.org/2013/sqlite-autoconf-3080100.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-threadsafe"
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # Apache Portable Runtime library (will only be installed if we need to compile any of the GNU Compiler Collection)
@@ -422,13 +431,14 @@ iPackage=$(expr $iPackage + 1)
       getVersion[$iPackage]="echo \"#include <apr-1/apr_version.h>\" > dummy.c; echo \"#include <stdio.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",APR_MAJOR_VERSION,APR_MINOR_VERSION,APR_PATCH_VERSION);}\" >> dummy.c; gcc dummy.c $libDirs -lapr-1; ./a.out"
       minVersion[$iPackage]="0.0.0"
       maxVersion[$iPackage]="99.99.99"
-      yumInstall[$iPackage]="apr"
+      yumInstall[$iPackage]="apr-devel"
       aptInstall[$iPackage]="apr"
        sourceURL[$iPackage]="http://download.nextag.com/apache//apr/apr-1.4.6.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="test"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # Apache Portable Runtime utility (will only be installed if we need to compile any of the GNU Compiler Collection)
@@ -447,6 +457,26 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
         makeTest[$iPackage]="test"
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=1
+
+# Zlib
+iPackage=$(expr $iPackage + 1)
+           iZLIB=$iPackage
+         package[$iPackage]="zlib"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="echo \"#include <zlib.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lz"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <zlib.h>\" >> dummy.c; echo \"main() {printf(ZLIB_VERSION);printf(\\\"\\\\n\\\");}\" >> dummy.c; gcc dummy.c $libDirs -lz ;./a.out"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="zlib-devel"
+      aptInstall[$iPackage]="zlib1g-dev"
+       sourceURL[$iPackage]="http://zlib.net/zlib-1.2.8.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # svn (will only be installed if we need to compile any of the GNU Compiler Collection)
@@ -460,11 +490,12 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="subversion"
       aptInstall[$iPackage]="subversion"
-       sourceURL[$iPackage]="http://subversion.tigris.org/downloads/subversion-1.6.17.tar.gz"
+       sourceURL[$iPackage]="http://apache.mirrors.timporter.net/subversion/subversion-1.8.4.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # GMP (will only be installed if we need to compile any of the GNU Compiler Collection)
@@ -478,11 +509,12 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="gmp-devel"
       aptInstall[$iPackage]="libgmp3-dev"
-       sourceURL[$iPackage]="ftp://ftp.gnu.org/gnu/gmp/gmp-5.0.2.tar.gz"
+       sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # MPFR (will only be installed if we need to compile any of the GNU Compiler Collection)
@@ -496,11 +528,12 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="mpfr-devel"
       aptInstall[$iPackage]="libmpfr-dev"
-       sourceURL[$iPackage]="http://www.mpfr.org/mpfr-3.1.0/mpfr-3.1.0.tar.gz"
+       sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # MPC (will only be installed if we need to compile any of the GNU Compiler Collection)
@@ -514,11 +547,56 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="libmpc-devel"
       aptInstall[$iPackage]="libmpc-dev"
-       sourceURL[$iPackage]="http://www.multiprecision.org/mpc/download/mpc-1.0.1.tar.gz"
+       sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=1
+
+# bison
+iPackage=$(expr $iPackage + 1)
+          iBison=$iPackage
+         package[$iPackage]="bison"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash bison"
+      getVersion[$iPackage]="echo 1.0.0"
+      minVersion[$iPackage]="0.9.9"
+      maxVersion[$iPackage]="99.99.99"
+      yumInstall[$iPackage]="bison"
+      aptInstall[$iPackage]="bison"
+       sourceURL[$iPackage]="http://ftp.gnu.org/gnu/bison/bison-3.0.1.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=1
+
+# flex
+iPackage=$(expr $iPackage + 1)
+           iFlex=$iPackage
+         package[$iPackage]="flex"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash flex"
+      getVersion[$iPackage]="echo 1.0.0"
+      minVersion[$iPackage]="0.9.9"
+      maxVersion[$iPackage]="99.99.99"
+      yumInstall[$iPackage]="flex"
+      aptInstall[$iPackage]="flex"
+       sourceURL[$iPackage]="http://downloads.sourceforge.net/project/flex/flex-2.5.37.tar.bz2"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+   #! <workaround>
+   #!  <replaced>makeTest[$iPackage]="make check"</replaced>
+   #!  <description>test suite currently fails due to unsupported directive</description>
+   
+   #!  <url>http://lists.gnu.org/archive/html/bug-bison/2013-10/msg00008.html</url>
+   #! </workaround>
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # gcc (second attempt - install from source)
@@ -533,10 +611,11 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
-buildEnvironment[$iPackage]=""
+buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # g++ (second attempt - install from source)
@@ -551,10 +630,11 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
-buildEnvironment[$iPackage]=""
+buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # GFortran (second attempt - install from source)
@@ -569,10 +649,11 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
-buildEnvironment[$iPackage]=""
+buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # GSL
@@ -591,6 +672,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # FGSL
@@ -609,6 +691,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix $toolInstallPath --f90 gfortran --gsl `gsl-config --prefix`"
         makeTest[$iPackage]="test"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # FoX
@@ -626,24 +709,7 @@ buildEnvironment[$iPackage]="export FC=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
-   parallelBuild[$iPackage]=1
-
-# Zlib
-iPackage=$(expr $iPackage + 1)
-           iZLIB=$iPackage
-         package[$iPackage]="zlib"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <zlib.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lz"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <zlib.h>\" >> dummy.c; echo \"main() {printf(ZLIB_VERSION);printf(\\\"\\\\n\\\");}\" >> dummy.c; gcc dummy.c $libDirs -lz ;./a.out"
-      minVersion[$iPackage]="0.0.0"
-      maxVersion[$iPackage]="9.9.9"
-      yumInstall[$iPackage]="zlib-devel"
-      aptInstall[$iPackage]="zlib1g-dev"
-       sourceURL[$iPackage]="http://zlib.net/zlib-1.2.5.tar.gz"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath"
-        makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # HDF5
@@ -662,6 +728,7 @@ buildEnvironment[$iPackage]="export F9X=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-fortran --enable-production"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # GnuPlot
@@ -680,6 +747,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # GraphViz
@@ -698,6 +766,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # ImageMagick
@@ -715,6 +784,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # blas
@@ -733,6 +803,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # lapack
@@ -751,6 +822,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # OpenSSL (required for Mercurial)
@@ -763,11 +835,17 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="1.0.1"
       yumInstall[$iPackage]="openssl openssl-devel"
       aptInstall[$iPackage]="openssl libssl-dev"
-       sourceURL[$iPackage]="http://www.openssl.org/source/openssl-1.0.0d.tar.gz"
+       sourceURL[$iPackage]="http://www.openssl.org/source/openssl-1.0.0e.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath shared"
         makeTest[$iPackage]=""
+#! <workaround>
+#! <description>Docs do not install because of POD syntax problems</description>
+#! <replaced>makeInstall[$iPackage]="install"</replaced>
+#! <url>https://bugs.archlinux.org/task/35868</url>
+#! </workaround>
+     makeInstall[$iPackage]="install_sw"
    parallelBuild[$iPackage]=1
 
 # bzip2
@@ -786,7 +864,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
-     makeInstall[$iPackage]="PREFIX=$toolInstallPath"
+     makeInstall[$iPackage]="install PREFIX=$toolInstallPath"
    parallelBuild[$iPackage]=0
 
 # Python
@@ -800,11 +878,12 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="python"
       aptInstall[$iPackage]="python python-dev"
-       sourceURL[$iPackage]="http://www.python.org/ftp/python/2.7.2/Python-2.7.2.tgz"
+       sourceURL[$iPackage]="http://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="test"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # docutils
@@ -822,6 +901,7 @@ buildEnvironment[$iPackage]="python"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # hg
@@ -840,6 +920,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # poppler
@@ -857,6 +938,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
 # pdflatex
@@ -874,6 +956,7 @@ buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # pdfmerge
@@ -891,6 +974,25 @@ buildEnvironment[$iPackage]="copy"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
+# expat
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="expat"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash xmlwf"
+      getVersion[$iPackage]="echo 1.0.0"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="expat-devel"
+      aptInstall[$iPackage]=""
+       sourceURL[$iPackage]="http://downloads.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
 # Install packages.
@@ -1079,7 +1181,7 @@ do
 				    echo "Failed to download ez_setup.py" >>$glcLogFile
 				    exit 1
 				fi
-				$toolInstallPath/bin/python ez_setup.py >>$glcLogFile 2>&1
+				$toolInstallPath/bin/python ez_setup.py --prefix $toolInstallPath  >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    echo "Failed to install ez_setup.py"
 				    echo "Failed to install ez_setup.py" >>$glcLogFile
@@ -1304,19 +1406,19 @@ EOF
 			    if [[ $m4InstallDone -eq 0 ]]; then
 				currentDir=`pwd`
 				cd ..
-				wget http://ftp.gnu.org/gnu/m4/m4-1.4.16.tar.gz >>$glcLogFile 2>&1
+				wget http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.gz >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    echo "Failed to download m4 source"
 				    echo "Failed to download m4 source" >>$glcLogFile
 				    exit 1
 				fi
-				tar xvfz m4-1.4.16.tar.gz >>$glcLogFile 2>&1
+				tar xvfz m4-1.4.17.tar.gz >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    echo "Failed to unpack m4 source"
 				    echo "Failed to unpack m4 source" >>$glcLogFile
 				    exit 1
 				fi
-				cd m4-1.4.16
+				cd m4-1.4.17
 				./configure --prefix=$toolInstallPath >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    echo "Failed to configure m4 source"
@@ -1411,9 +1513,9 @@ EOF
 			fi
 		        # Install the package.
 			if [ $installAsRoot -eq 1 ]; then
-			    echo "$rootPassword" | eval $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
+			    echo "$rootPassword" | eval $suCommand make ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
 			else
-			    make install ${makeInstall[$i]} >>$glcLogFile 2>&1
+			    make ${makeInstall[$i]} >>$glcLogFile 2>&1
 			fi
 			if [ $? -ne 0 ]; then
 			    echo "Could not install ${package[$i]}"
@@ -1491,11 +1593,19 @@ EOF
 		    echo "      postponing"
 		    echo "      postponing" >>$glcLogFile
 		else
-		    exit 1
+		    if [[ $i -eq $iMPFR || $i -eq $iMPC || $i -eq $iGMP ]]; then
+			echo "      ignoring [will be installed with GCC]"
+			echo "      ignoring [will be installed with GCC]" >>$glcLogFile
+		    else
+			exit 1
+		    fi
 		fi
             fi
  	    # Hardwired magic.
 	    # If we installed SQLite, force SVN to use it.
+	    if [ $i -eq $iZLIB ]; then
+		configOptions[$iSVN]="${configOptions[$iSVN]} --with-zlib=$toolInstallPath"
+	    fi
 	    if [ $i -eq $iSQLite ]; then
 		configOptions[$iSVN]="${configOptions[$iSVN]} --with-sqlite=$toolInstallPath"
 	    fi
@@ -1554,7 +1664,7 @@ EOF
 		fi
 	    fi
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
-		# We have all GNU Compiler Collection components, so we don't need svn, GMP, MPFR or MPC.
+		# We have all GNU Compiler Collection components, so we don't need svn, GMP, MPFR, MPC, flex, or bison.
 		packageAtLevel[$iSQLite]=100
 		packageAtLevel[$iAPR]=100
 		packageAtLevel[$iAPRutil]=100
@@ -1562,6 +1672,8 @@ EOF
 		packageAtLevel[$iGMP]=100
 		packageAtLevel[$iMPFR]=100
 		packageAtLevel[$iMPC]=100
+		packageAtLevel[$iFlex]=100
+		packageAtLevel[$iBison]=100
 	    else
 		# We will need to install some GNU Compiler Collection components.
 		# Select those components now.
@@ -1594,11 +1706,11 @@ EOF
 				exit 1
 			    fi
 			else
-			    echo "I need to compiler some of the GNU Compiler Collection."
+			    echo "I need to compile some of the GNU Compiler Collection."
 			    echo "That requires that gcc-multilib be installed which requires root access."
 			    echo "Please do: sudo apt-get install gcc-multilib"
 			    echo "or ask your sysadmin to install it for you if necessary, then run this script again."
-			    echo "I need to compiler some of the GNU Compiler Collection." >>$glcLogFile
+			    echo "I need to compile some of the GNU Compiler Collection." >>$glcLogFile
 			    echo "That requires that gcc-multilib be installed which requires root access." >>$glcLogFile
 			    echo "Please do: sudo apt-get install gcc-multilib" >>$glcLogFile
 			    echo "or ask your sysadmin to install it for you if necessary, then run this script again." >>$glcLogFile
@@ -1607,43 +1719,6 @@ EOF
 		    fi
 		fi
 		
-	    fi
-	fi
-        # Hardwired magic.
-        # If we installed GMP from source then let MPFR and the GNU Compiler Collection know about it.
-	if [ $i -eq $iGMP ]; then
-	    if [ -e $toolInstallPath/lib/libgmp.so ]; then
-		configOptions[$iMPFR]="${configOptions[$iMPFR]} --with-gmp=$toolInstallPath"
-		configOptions[$iMPC]="${configOptions[$iMPC]} --with-gmp=$toolInstallPath"
-		configOptions[$iGCCsource]="${configOptions[$iGCCsource]} --with-gmp=$toolInstallPath"
-		configOptions[$iGPPsource]="${configOptions[$iGPPsource]} --with-gmp=$toolInstallPath"
-		configOptions[$iFortranSource]="${configOptions[$iFortranSource]} --with-gmp=$toolInstallPath"
-	    fi
-	fi
-        # Hardwired magic.
-        # If we installed MPFR from source then let the GNU Compiler Collection know about it.
-	if [ $i -eq $iMPFR ]; then
-	    if [ -e $toolInstallPath/lib/libmpfr.so ]; then
-		configOptions[$iMPC]="${configOptions[$iMPC]} --with-mpfr=$toolInstallPath"
-		configOptions[$iGCCsource]="${configOptions[$iGCCsource]} --with-mpfr=$toolInstallPath"
-		configOptions[$iGPPsource]="${configOptions[$iGPPsource]} --with-mpfr=$toolInstallPath"
-		configOptions[$iFortranSource]="${configOptions[$iFortranSource]} --with-mpfr=$toolInstallPath"
-	    fi
-	fi
-        # Hardwired magic.
-        # If we installed MPC from source then let the GNU Compiler Collection know about it.
-	if [ $i -eq $iMPC ]; then
-	    if [ -e $toolInstallPath/lib/libmpc.so ]; then
-		configOptions[$iGCCsource]="${configOptions[$iGCCsource]} --with-mpc=$toolInstallPath"
-		configOptions[$iGPPsource]="${configOptions[$iGPPsource]} --with-mpc=$toolInstallPath"
-		configOptions[$iFortranSource]="${configOptions[$iFortranSource]} --with-mpc=$toolInstallPath"
-	    fi
-	fi
-        # Hardwired magic.
-        # If we installed GSL from source then set a suitable configure option for FGSL.
-	if [ $i -eq $iGSL ]; then
-	    if [ -e $toolInstallPath/lib/libgsl.so ]; then
-		configOptions[$iFGSL]="${configOptions[$iFGSL]} --gsl $toolInstallPath" 
 	    fi
 	fi
         # Hardwired magic.
@@ -1716,10 +1791,16 @@ modulesAtLevel[$iPackage]=0
    interactive[$iPackage]=0
 
 # LaTeX::Encode
+#! <workaround>
+#!  <description>Global symbols are not correctly imported with a modern Perl</description>
+#!  <url>https://rt.cpan.org/Public/Bug/Display.html?id=87908</url>
+#! </workaround>
 iPackage=$(expr $iPackage + 1)
+  iLaTeXEncode=$iPackage
        modules[$iPackage]="LaTeX::Encode"
-modulesAtLevel[$iPackage]=1
+modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
+ modulesSource[$iPackage]="http://search.cpan.org/CPAN/authors/id/A/AN/ANDREWF/LaTeX-Encode-0.08.tar.gz"
     modulesYum[$iPackage]="null"
     modulesApt[$iPackage]="liblatex-encode-perl"
    interactive[$iPackage]=0
@@ -1812,6 +1893,42 @@ modulesAtLevel[$iPackage]=1
   modulesForce[$iPackage]=1
     modulesYum[$iPackage]="null"
     modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
+# Fatal
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Fatal"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-autodie"
+    modulesApt[$iPackage]=""
+   interactive[$iPackage]=0
+
+# XML::SAX
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="XML::SAX"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-XML-SAX"
+    modulesApt[$iPackage]=""
+   interactive[$iPackage]=0
+
+# XML::Parser
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="XML::Parser"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-XML-Parser"
+    modulesApt[$iPackage]=""
+   interactive[$iPackage]=0
+
+# XML::SAX::Expat
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="XML::SAX::Expat"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-XML-SAX"
+    modulesApt[$iPackage]=""
    interactive[$iPackage]=0
 
 # XML::Simple
@@ -2170,6 +2287,81 @@ do
 		fi
                 installDone=1
             fi
+	    # Try installing from source.
+	    if [[ $installDone -eq 0 && ${modulesSource[$i]} != "" ]]; then
+		echo "   Installing from source"
+		echo "   Installing from source" >>$glcLogFile
+		wget "${modulesSource[$i]}" >>$glcLogFile 2>&1
+		if [ $? -ne 0 ]; then
+		    echo "Could not download ${modules[$i]}"
+		    echo "Could not download ${modules[$i]}" >>$glcLogFile
+		    exit 1
+		fi
+		baseName=`basename ${modulesSource[$i]}`
+		unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
+		tar xvf$unpack $baseName >>$glcLogFile 2>&1
+		if [ $? -ne 0 ]; then
+		    echo "Could not unpack ${modules[$i]}"
+		    echo "Could not unpack ${modules[$i]}" >>$glcLogFile
+		    exit 1
+		fi
+		dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
+		cd $dirName
+# Hardwired magic.
+#! <workaround>
+#!  <description>Global symbols are not correctly imported with a modern Perl</description>
+#!  <url>https://rt.cpan.org/Public/Bug/Display.html?id=87908</url>
+#! </workaround>
+# Apply a patch to LaTeX::Encode to fix symbol import issues.
+if [ $i -eq $iLaTeXEncode ]; then
+cd lib/LaTeX
+sed -i~ s/"use LaTeX::Encode::EncodingTable;"/"#use LaTeX::Encode::EncodingTable;"/ Encode.pm
+sed -i~ s/"use base qw(Exporter);"/"use base qw(Exporter);\nuse LaTeX::Encode::EncodingTable;"/ Encode.pm
+cd -
+fi
+		# Configure the source.
+		if [ -e ../$dirName/Makefile.PL ]; then
+		    if [ $installAsRoot -eq 1 ]; then
+			perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
+		    else
+			perl -Mlocal::lib ../$dirName/Makefile.PL >>$glcLogFile 2>&1
+		    fi
+		else
+		    echo "Can not locate Makefile.PL for ${modules[$i]}"
+		    echo "Can not locate Makefile.PL for ${modules[$i]}" >>$glcLogFile
+		    exit 1
+		fi
+		if [ $? -ne 0 ]; then
+		    echo "Could not build Makefile for ${modules[$i]}"
+		    echo "Could not build Makefile for ${modules[$i]}" >>$glcLogFile
+		    exit 1
+		fi
+		# Make the package.
+		make -j >>$glcLogFile 2>&1
+		if [ $? -ne 0 ]; then
+		    echo "Could not make ${modules[$i]}"
+		    echo "Could not make ${modules[$i]}" >>$glcLogFile
+		    exit 1
+		fi
+		# Run any tests of the package.
+		make -j ${makeTest[$i]} >>$glcLogFile 2>&1
+		if [ $? -ne 0 ]; then
+		    echo "Testing ${modules[$i]} failed"
+		    echo "Testing ${modules[$i]} failed" >>$glcLogFile
+		    exit 1
+		fi
+		# Install the package.
+		if [ $installAsRoot -eq 1 ]; then
+		    echo "$rootPassword" | eval $suCommand make install $suClose >>$glcLogFile 2>&1
+		else
+		    make install >>$glcLogFile 2>&1
+		fi
+		if [ $? -ne 0 ]; then
+		    echo "Could not install ${modules[$i]}"
+		    echo "Could not install ${modules[$i]}" >>$glcLogFile
+		    exit 1
+		fi
+	    fi
 	    # Try installing via CPAN.
 	    if [[ $installDone -eq 0 &&  $installViaCPAN -eq 1 ]]; then
 		echo "   Installing via CPAN"
@@ -2403,7 +2595,7 @@ if [ "$RESPONSE" = yes ] ; then
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
     fi
     echo "# Alias to configure the environment to compile and run Galacticus v0.9.3" >> $HOME/.bashrc
-    echo "alias galacticus092='" >> $HOME/.bashrc
+    echo "alias galacticus093='" >> $HOME/.bashrc
     echo "if [ -n \"\${LD_LIBRARY_PATH}\" ]; then" >> $HOME/.bashrc
     echo " export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
     echo "else" >> $HOME/.bashrc
@@ -2419,7 +2611,9 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else" >> $HOME/.bashrc
     echo " export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib" >> $HOME/.bashrc
     echo "fi" >> $HOME/.bashrc
-    echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
+    if [ -e $HOME/perl5/lib/perl5/local/lib.pm ]; then
+	echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
+    fi
     echo "export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
@@ -2431,7 +2625,7 @@ if [ "$RESPONSE" = yes ] ; then
 	mv -f $HOME/.cshrc.tmp $HOME/.cshrc
     fi
     echo "# Alias to configure the environment to compile and run Galacticus v0.9.3" >> $HOME/.cshrc
-    echo "alias galacticus092 'if ( \$?LD_LIBRARY_PATH ) then \\" >> $HOME/.cshrc
+    echo "alias galacticus093 'if ( \$?LD_LIBRARY_PATH ) then \\" >> $HOME/.cshrc
     echo " setenv LD_LIBRARY_PATH $toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH \\" >> $HOME/.cshrc
     echo "else \\" >> $HOME/.cshrc
     echo " setenv LD_LIBRARY_PATH $toolInstallPath/lib:$toolInstallPath/lib64 \\" >> $HOME/.cshrc
@@ -2446,10 +2640,9 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else \\" >> $HOME/.cshrc
     echo " setenv PYTHONPATH $toolInstallPath/python:$toolInstallPath/py-lib \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
-    echo "eval \`perl -I$HOME/perl5/lib/perl5 -Mlocal::lib\` \\" >> $HOME/.cshrc
-    if [ -n "${gfortranAlias:-x}" ]; then
-	echo "alias gfortran $gfortranAlias" >> $HOME/.bashrc
-    fi 
+    if [ -e $HOME/perl5/lib/perl5/local/lib.pm ]; then
+	echo "eval \`perl -I$HOME/perl5/lib/perl5 -Mlocal::lib\` \\" >> $HOME/.cshrc
+    fi
     echo "setenv GALACTICUS_FCFLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"'" >> $HOME/.cshrc
 fi
 
@@ -2482,8 +2675,8 @@ echo "You can delete the \"galacticusInstallWork\" folder if you want"
 echo "You can delete the \"galacticusInstallWork\" folder if you want" >> $glcLogFile
 echo
 if [ $envSet -eq 1 ]; then
-    echo "You should execute the command \"galacticus092\" before attempting to use Galacticus to configure all environment variables, library paths etc."
-    echo "You should execute the command \"galacticus092\" before attempting to use Galacticus to configure all environment variables, library paths etc." >> $glcLogFile
+    echo "You should execute the command \"galacticus093\" before attempting to use Galacticus to configure all environment variables, library paths etc."
+    echo "You should execute the command \"galacticus093\" before attempting to use Galacticus to configure all environment variables, library paths etc." >> $glcLogFile
 else
     if [ $installAsRoot -eq 1 ]; then
 	echo "If you install Galacticus libraries and tools in a non-standard location you may need to set environment variables appropriately to find them."
