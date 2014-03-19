@@ -2,7 +2,7 @@
 
 # Galacticus install script.
 # v0.9.3
-# © Andrew Benson 2012
+# © Andrew Benson 2012, 2013, 2014
 
 # Functions
 function contains() {
@@ -433,7 +433,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-devel"
       aptInstall[$iPackage]="apr"
-       sourceURL[$iPackage]="http://download.nextag.com/apache//apr/apr-1.4.6.tar.bz2"
+       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-1.5.0.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -452,7 +452,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-util"
       aptInstall[$iPackage]="apr-util"
-       sourceURL[$iPackage]="http://download.nextag.com/apache//apr/apr-util-1.4.1.tar.bz2"
+       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-util-1.5.3.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
@@ -1841,6 +1841,24 @@ modulesAtLevel[$iPackage]=1
     modulesApt[$iPackage]="libcompress-bzip2-perl"
    interactive[$iPackage]=0
 
+# IO::Prompt
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="IO::Prompt"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-IO-prompt"
+    modulesApt[$iPackage]=""
+   interactive[$iPackage]=0
+
+# IO::Interactive
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="IO::Interactive"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]=""
+    modulesApt[$iPackage]=""
+   interactive[$iPackage]=0
+
 # Term::ReadKey
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Term::ReadKey"
@@ -2183,6 +2201,15 @@ modulesAtLevel[$iPackage]=1
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
+# PDL::IO::HDF5
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="PDL::IO::HDF5"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
 # POSIX
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="POSIX"
@@ -2457,99 +2484,7 @@ fi
     
 done
 
-# Install PDL::IO::HDF5
-# Installed here because we use a custom version and so install from source
-# rather than installing from CPAN.
-# Test if this module should be installed at this level.
-if [ 1 -le $installLevel ]; then
-    # Check if package is installed.
-    echo Testing presence of PDL::IO::HDF5 >> $glcLogFile
-    installPackage=1
-    perl -e "use PDL::IO::HDF5" >& /dev/null
-    if [ $? -eq 0 ]; then
-        # Check installed version.
-	echo "  PDL::IO::HDF5 is present - testing version" >> $glcLogFile
-        version=`perl -e "eval 'require PDL::IO::HDF5'; print PDL::IO::HDF5->VERSION"`
-	echo "  Found version $version of PDL::IO::HDF5" >> $glcLogFile
-	if [[ "$version" != "0.63_glc" ]]; then
-	    installPackage=0
-	fi
-    fi
-    # Install package if necessary.
-    if [ $installPackage -eq 0 ]; then
-	echo PDL::IO::HDF5 - found
-	echo PDL::IO::HDF5 - found >> $glcLogFile
-    else
-	echo PDL::IO::HDF5 - not found - will be installed
-	echo PDL::IO::HDF5 - not found - will be installed >> $glcLogFile
-	echo "   Installing from source"
-	echo "   Installing from source" >>$glcLogFile
-	wget "http://users.obs.carnegiescience.edu/abenson/galacticus/tools/PDL-IO-HDF5-0.6.tar.gz" >>$glcLogFile 2>&1
-	if [ $? -ne 0 ]; then
-	    echo "Could not download PDL::IO::HDF5"
-	    echo "Could not download PDL::IO::HDF5" >>$glcLogFile
-	    exit 1
-	fi
-	baseName="PDL-IO-HDF5-0.6.tar.gz"
-	unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tar//`
-	tar xvf$unpack $baseName >>$glcLogFile 2>&1
-	if [ $? -ne 0 ]; then
-	    echo "Could not unpack PDL::IO::HDF5"
-	    echo "Could not unpack PDL::IO::HDF5" >>$glcLogFile
-	    exit 1
-	fi
-	dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
-	cd $dirName
-	# Detect local HDF5 install.
-	if [ -e $toolInstallPath."/include/hdf5.mod" ]; then
-	    export HDF5_PATH=$toolInstallPath
-	fi
-        # Configure the source.
-	if [ -e ../$dirName/Makefile.PL ]; then
-	    if [ $installAsRoot -eq 1 ]; then
-		perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
-	    else
-		perl -Mlocal::lib ../$dirName/Makefile.PL >>$glcLogFile 2>&1
-	    fi
-	else
-	    echo "Can not locate Makefile.PL for PDL::IO::HDF5"
-	    echo "Can not locate Makefile.PL for PDL::IO::HDF5" >>$glcLogFile
-	    exit 1
-	fi
-	if [ $? -ne 0 ]; then
-	    echo "Could not build Makefile for PDL::IO::HDF5"
-	    echo "Could not build Makefile for PDL::IO::HDF5" >>$glcLogFile
-	    exit 1
-	fi
-        # Make the package.
-	make -j >>$glcLogFile 2>&1
-	if [ $? -ne 0 ]; then
-	    echo "Could not make PDL::IO::HDF5"
-	    echo "Could not make PDL::IO::HDF5" >>$glcLogFile
-	    exit 1
-	fi
-        # Run any tests of the package.
-	make -j ${makeTest[$i]} >>$glcLogFile 2>&1
-	if [ $? -ne 0 ]; then
-	    echo "Testing PDL::IO::HDF5 failed"
-	    echo "Testing PDL::IO::HDF5 failed" >>$glcLogFile
-	    exit 1
-	fi
-        # Install the package.
-	if [ $installAsRoot -eq 1 ]; then
-	    echo "$rootPassword" | eval $suCommand make install ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
-	else
-	    make install ${makeInstall[$i]} >>$glcLogFile 2>&1
-	fi
-	if [ $? -ne 0 ]; then
-	    echo "Could not install PDL::IO::HDF5"
-	    echo "Could not install PDL::IO::HDF5" >>$glcLogFile
-	    exit 1
-	fi
-    fi
-fi
-
-# Retrieve Galacticus via Bazaar.
+# Retrieve Galacticus via Mercurial.
 if [[ $runningAsRoot -eq 1 ]]; then
     echo "Script is running as root - if you want to install Galacticus itself as a regular user, just quit (Ctrl-C) now."
 fi
@@ -2679,11 +2614,11 @@ if [ $envSet -eq 1 ]; then
     echo "You should execute the command \"galacticus093\" before attempting to use Galacticus to configure all environment variables, library paths etc." >> $glcLogFile
 else
     if [ $installAsRoot -eq 1 ]; then
-	echo "If you install Galacticus libraries and tools in a non-standard location you may need to set environment variables appropriately to find them."
-	echo "If you install Galacticus libraries and tools in a non-standard location you may need to set environment variables appropriately to find them." >> $glcLogFile
+	echo "If you installed Galacticus libraries and tools in a non-standard location you may need to set environment variables appropriately to find them. You will also need to set appropriate -fintrinsic-modules-path and -L options in the FCFLAGS variable of Galacticus' Makefile so that it know where to find installed modules and libraries."
+	echo "If you installed Galacticus libraries and tools in a non-standard location you may need to set environment variables appropriately to find them. You will also need to set appropriate -fintrinsic-modules-path and -L options in the FCFLAGS variable of Galacticus' Makefile so that it know where to find installed modules and libraries." >> $glcLogFile
     else
-	echo "You may need to set environment variables to permit libraries and tools installed to be found."
-	echo "You may need to set environment variables to permit libraries and tools installed to be found." >> $glcLogFile
+	echo "You may need to set environment variables to permit libraries and tools installed to be found. You will also need to set appropriate -fintrinsic-modules-path and -L options in the FCFLAGS variable of Galacticus' Makefile so that it know where to find installed modules and libraries."
+	echo "You may need to set environment variables to permit libraries and tools installed to be found. You will also need to set appropriate -fintrinsic-modules-path and -L options in the FCFLAGS variable of Galacticus' Makefile so that it know where to find installed modules and libraries." >> $glcLogFile
     fi
 fi
 exit 0
