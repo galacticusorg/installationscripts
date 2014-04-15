@@ -731,6 +731,25 @@ buildEnvironment[$iPackage]="export F9X=gfortran"
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
+# FFTW3
+iPackage=$(expr $iPackage + 1)
+           iHDF5=$iPackage
+         package[$iPackage]="fftw3"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash fftw-wisdom"
+      getVersion[$iPackage]="versionString=(\`fftw-wisom -V\`); echo \${versionString[5]}"
+      minVersion[$iPackage]="3.3.0"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="fftw3-devel"
+      aptInstall[$iPackage]="libfftw3-dev"
+       sourceURL[$iPackage]="http://www.fftw.org/fftw-3.3.4.tar.gz"
+buildEnvironment[$iPackage]="export F9X=gfortran"
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=1
+
 # GnuPlot
 iPackage=$(expr $iPackage + 1)
         iGNUPLOT=$iPackage
