@@ -433,7 +433,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-devel"
       aptInstall[$iPackage]="apr"
-       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-1.5.0.tar.bz2"
+       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-1.5.1.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -733,11 +733,11 @@ buildEnvironment[$iPackage]="export F9X=gfortran"
 
 # FFTW3
 iPackage=$(expr $iPackage + 1)
-           iHDF5=$iPackage
+          iFFTW3=$iPackage
          package[$iPackage]="fftw3"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash fftw-wisdom"
-      getVersion[$iPackage]="versionString=(\`fftw-wisom -V\`); echo \${versionString[5]}"
+      getVersion[$iPackage]="versionString=(\`fftw-wisdom -V\`); echo \${versionString[5]}"
       minVersion[$iPackage]="3.3.0"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="fftw3-devel"
@@ -1769,6 +1769,11 @@ EOF
 	fi
     fi
 done
+
+# Set environment path for HDF5 if we installed our own copy.
+if [ -e $toolInstallPath/lib/libhdf5.so ]; then
+    export HDF5_PATH=$toolInstallPath
+fi
 
 # Specify the list of Perl modules and their requirements.
 gotPerlLocalLibEnv=0
