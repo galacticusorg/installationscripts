@@ -395,7 +395,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr"
       aptInstall[$iPackage]="apr"
-       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-1.5.0.tar.bz2"
+       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-1.5.1.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -1615,6 +1615,11 @@ EOF
 	fi
     fi
 done
+
+# Set environment path for HDF5 if we installed our own copy.
+if [ -e $toolInstallPath/lib/libhdf5.so ]; then
+    export HDF5_PATH=$toolInstallPath
+fi
 
 # Specify the list of Perl modules and their requirements.
 gotPerlLocalLibEnv=0
