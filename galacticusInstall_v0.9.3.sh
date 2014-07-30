@@ -1847,6 +1847,15 @@ modulesAtLevel[$iPackage]=2
     modulesApt[$iPackage]="libfile-which-perl"
    interactive[$iPackage]=0
 
+# File::Temp
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="File::Temp"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-File-Temp"
+    modulesApt[$iPackage]="libfile-temp-perl"
+   interactive[$iPackage]=0
+
 # File::Copy
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="File::Copy"
