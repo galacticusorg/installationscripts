@@ -452,7 +452,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-util"
       aptInstall[$iPackage]="apr-util"
-       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-util-1.5.3.tar.bz2"
+       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-util-1.5.4.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
