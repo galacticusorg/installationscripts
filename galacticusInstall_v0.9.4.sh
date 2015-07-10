@@ -2252,6 +2252,15 @@ modulesAtLevel[$iPackage]=2
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
+# POSIX::strftime::GNU
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="POSIX::strftime::GNU"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
 # List::Uniq
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="List::Uniq"
