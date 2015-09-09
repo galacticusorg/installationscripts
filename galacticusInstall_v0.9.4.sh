@@ -2120,7 +2120,7 @@ modulesAtLevel[$iPackage]=2
 # File::Slurp
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="File::Slurp"
-modulesAtLevel[$iPackage]=1
+modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="null"
     modulesApt[$iPackage]="libfile-slurp-perl"
