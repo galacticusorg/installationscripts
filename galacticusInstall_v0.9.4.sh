@@ -2,7 +2,7 @@
 
 # Galacticus install script.
 # v0.9.4
-# © Andrew Benson 2012, 2013, 2014
+# © Andrew Benson 2012, 2013, 2014, 2015
 
 # Functions
 function contains() {
@@ -433,7 +433,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-devel"
       aptInstall[$iPackage]="apr"
-       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-1.5.1.tar.bz2"
+       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-1.5.2.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
