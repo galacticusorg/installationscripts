@@ -161,13 +161,17 @@ export CC=gcc
 export CXX=g++
 export FC=gfortran
 
-# Minimal, typical or full install?
-installLevel=-1
-while [ $installLevel -eq -1 ]
+# Binary, minimal, typical or full install?
+installLevel=-2
+while [ $installLevel -eq -2 ]
 do
-    read -p "Minimal, typical or full install?: " RESPONSE
+    read -p "Binary, minimal, typical or full install?: " RESPONSE
     
-    if [ "$RESPONSE" = minimal ] ; then
+    if [ "$RESPONSE" = binary ] ; then
+        installLevel=-1
+	echo "Binary install only (plus anything required to run the binary)"
+	echo "Binary install only (plus anything required to run the binary)" >> $glcLogFile
+    elif [ "$RESPONSE" = minimal ] ; then
         installLevel=0
 	echo "Minimal install only (just enough to compile and run Galacticus)"
 	echo "Minimal install only (just enough to compile and run Galacticus)" >> $glcLogFile
@@ -1985,7 +1989,7 @@ modulesAtLevel[$iPackage]=0
 # XML::Simple
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="XML::Simple"
-modulesAtLevel[$iPackage]=0
+modulesAtLevel[$iPackage]=-1
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="perl-XML-Simple"
     modulesApt[$iPackage]="libxml-simple-perl"
@@ -2039,7 +2043,7 @@ modulesAtLevel[$iPackage]=1
 # Data::Dumper
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Data::Dumper"
-modulesAtLevel[$iPackage]=0
+modulesAtLevel[$iPackage]=-1
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="perl-Data-Dump"
     modulesApt[$iPackage]="null"
@@ -2084,7 +2088,7 @@ modulesAtLevel[$iPackage]=2
 # Fcntl
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Fcntl"
-modulesAtLevel[$iPackage]=0
+modulesAtLevel[$iPackage]=-1
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="null"
     modulesApt[$iPackage]="null"
@@ -2545,23 +2549,6 @@ if [ ! -e $galacticusInstallPath ]; then
     fi
 fi
 
-# Hardwired magic.
-# Figure out which libstdc++ we should use. This is necessary because some
-# distributions (Ubuntu.....) don't find -lstdc++ when linking using gfortran.
-echo "main() {}" > dummy.c
-gcc dummy.c -lstdc++ >>$glcLogFile 2>&1
-if [ $? -eq 0 ]; then
-    stdcppLibInfo=(`ldd a.out | grep libstdc++`)
-    stdcppLib=${stdcppLibInfo[2]}
-    if [ ! -e $toolInstallPath/lib/lidstdc++.so ]; then
-	if [ $installAsRoot -eq 1 ]; then
-	    echo "$rootPassword" | eval $suCommand ln -sf $stdcppLib $toolInstallPath/lib/lidstdc++.so >>$glcLogFile 2>&1
-	else
-	    ln -sf $stdcppLib $toolInstallPath/lib/libstdc++.so
-	fi
-    fi
-fi
-
 # Add commands to .bashrc and/or .cshrc.
 envSet=0
 read -p "Add a Galacticus environment alias to .bashrc? [no/yes]: " RESPONSE
@@ -2623,15 +2610,40 @@ if [ "$RESPONSE" = yes ] ; then
     echo "setenv GALACTICUS_FCFLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"'" >> $HOME/.cshrc
 fi
 
-# Build Galacticus.
+# Determine if we want to install from source, or use the static binary.
 cd $galacticusInstallPath
-if [ ! -e Galacticus.exe ]; then
-    export GALACTICUS_FCFLAGS=$moduleDirs
-    make Galacticus.exe >>$glcLogFile 2>&1
-    if [ $? -ne 0 ]; then
-	echo "failed to build Galacticus"
-	echo "failed to build Galacticus" >> $glcLogFile
-	exit 1
+if [[ $installLevel -eq -1 ]]; then
+    # Install the binary executable.
+    wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/Galacticus_v0.9.4_latest_x86_64.exe -O $galacticusInstallPath/Galacticus.exe
+    chmod u+rx $galacticusInstallPath/Galacticus.exe
+else
+    
+    # Hardwired magic.
+    # Figure out which libstdc++ we should use. This is necessary because some
+    # distributions (Ubuntu.....) don't find -lstdc++ when linking using gfortran.
+    echo "main() {}" > dummy.c
+    gcc dummy.c -lstdc++ >>$glcLogFile 2>&1
+    if [ $? -eq 0 ]; then
+	stdcppLibInfo=(`ldd a.out | grep libstdc++`)
+	stdcppLib=${stdcppLibInfo[2]}
+	if [ ! -e $toolInstallPath/lib/lidstdc++.so ]; then
+	    if [ $installAsRoot -eq 1 ]; then
+		echo "$rootPassword" | eval $suCommand ln -sf $stdcppLib $toolInstallPath/lib/lidstdc++.so >>$glcLogFile 2>&1
+	    else
+		ln -sf $stdcppLib $toolInstallPath/lib/libstdc++.so
+	    fi
+	fi
+    fi
+    
+    # Build Galacticus.
+    if [ ! -e Galacticus.exe ]; then
+	export GALACTICUS_FCFLAGS=$moduleDirs
+	make Galacticus.exe >>$glcLogFile 2>&1
+	if [ $? -ne 0 ]; then
+	    echo "failed to build Galacticus"
+	    echo "failed to build Galacticus" >> $glcLogFile
+	    exit 1
+	fi
     fi
 fi
 
