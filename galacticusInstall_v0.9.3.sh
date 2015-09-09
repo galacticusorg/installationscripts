@@ -2563,7 +2563,7 @@ if [ "$RESPONSE" = yes ] ; then
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
     fi
     echo "# Alias to configure the environment to compile and run Galacticus v0.9.3" >> $HOME/.bashrc
-    echo "alias galacticus093='" >> $HOME/.bashrc
+    echo "alias galacticus093='\\" >> $HOME/.bashrc
     echo "if [ -n \"\${LD_LIBRARY_PATH}\" ]; then" >> $HOME/.bashrc
     echo " export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
     echo "else" >> $HOME/.bashrc
@@ -2582,7 +2582,7 @@ if [ "$RESPONSE" = yes ] ; then
     if [ -e $HOME/perl5/lib/perl5/local/lib.pm ]; then
 	echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
     fi
-    echo "export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
+    echo "export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"\\" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
 read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
