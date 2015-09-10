@@ -2540,12 +2540,20 @@ if [ -n "$RESPONSE" ]; then
     galacticusInstallPath=$RESPONSE
 fi
 if [ ! -e $galacticusInstallPath ]; then
-    mkdir -p `dirname $galacticusInstallPath`
-    hg clone https://abensonca@bitbucket.org/abensonca/galacticus $galacticusInstallPath
-    if [ $? -ne 0 ]; then
-	echo "failed to download Galacticus"
-	echo "failed to download Galacticus" >> $glcLogFile
-	exit 1
+    if [[ $installLevel -eq -1 ]]; then
+	cd `dirname $galacticusInstallPath`
+	wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/galacticus_v0.9.4.tar.bz2
+	tar xvfj galacticus_v0.9.4.tar.bz2
+	mv galacticus_v0.9.4 $galacticusInstallPath
+	cd -
+    else
+	mkdir -p `dirname $galacticusInstallPath`
+	hg clone https://abensonca@bitbucket.org/abensonca/galacticus $galacticusInstallPath
+	if [ $? -ne 0 ]; then
+	    echo "failed to download Galacticus"
+	    echo "failed to download Galacticus" >> $glcLogFile
+	    exit 1
+	fi
     fi
 fi
 
