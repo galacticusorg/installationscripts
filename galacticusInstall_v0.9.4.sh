@@ -2656,7 +2656,9 @@ else
 fi
 
 # Run a test case.
-./Galacticus.exe parameters.xml >>$glcLogFile 2>&1
+echo "Running a quick test of Galacticus - should take around 1 minute on a single core (less time if you have multiple cores)"
+echo "Running a quick test of Galacticus - should take around 1 minute on a single core (less time if you have multiple cores)" >> $glcLogFile
+./Galacticus.exe parameters/quickTest.xml >>$glcLogFile 2>&1
 if [ $? -ne 0 ]; then
     echo "failed to run Galacticus"
     echo "failed to run Galacticus" >> $glcLogFile
