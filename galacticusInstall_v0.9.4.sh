@@ -166,25 +166,25 @@ installLevel=-2
 while [ $installLevel -eq -2 ]
 do
     read -p "Binary, minimal, typical or full install?: " RESPONSE
-    
-    if [ "$RESPONSE" = binary ] ; then
+    lcRESPONSE=${RESPONSE,,}
+    if [ "$lcRESPONSE" = binary ] ; then
         installLevel=-1
 	echo "Binary install only (plus anything required to run the binary)"
 	echo "Binary install only (plus anything required to run the binary)" >> $glcLogFile
-    elif [ "$RESPONSE" = minimal ] ; then
+    elif [ "$lcRESPONSE" = minimal ] ; then
         installLevel=0
 	echo "Minimal install only (just enough to compile and run Galacticus)"
 	echo "Minimal install only (just enough to compile and run Galacticus)" >> $glcLogFile
-    elif [ "$RESPONSE" = typical ] ; then
+    elif [ "$lcRESPONSE" = typical ] ; then
         installLevel=1
 	echo "Typical install (compile, run, make plots etc.)"
 	echo "Typical install (compile, run, make plots etc.)" >> $glcLogFile
-    elif [ "$RESPONSE" = full ]; then
+    elif [ "$lcRESPONSE" = full ]; then
         installLevel=2
         echo "Full install"
         echo "Full install" >> $glcLogFile
     else
-	echo "Please enter 'minimal', 'typical' or 'full'"
+	echo "Please enter 'binary', 'minimal', 'typical' or 'full'"
     fi
 done
 
