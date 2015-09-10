@@ -395,7 +395,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.8.999"
+      minVersion[$iPackage]="6.0.0"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="gcc-gfortran"
       aptInstall[$iPackage]="gfortran"
@@ -648,7 +648,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.7.999"
+      minVersion[$iPackage]="6.0.0"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
