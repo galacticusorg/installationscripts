@@ -18,6 +18,18 @@ function contains() {
     return 1
 }
 
+function logexec()
+{
+    echo \-\-\> "$@" >> $glcLogFile
+    eval "$@" >> $glcLogFile 2>&1 
+}
+
+function logmessage()
+{
+    echo "$@"
+    echo "$@" >>$glcLogFile 2>&1
+}
+
 # Define a log file.
 glcLogFile=`pwd`"/galacticusInstall.log"
 
@@ -665,7 +677,7 @@ iPackage=$(expr $iPackage + 1)
             iGSL=$iPackage
          package[$iPackage]="gsl"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash gsl-config"
+    testPresence[$iPackage]="hash gsl-config && hash gsl-histogram"
       getVersion[$iPackage]="gsl-config --version"
       minVersion[$iPackage]="1.15"
       maxVersion[$iPackage]="99.99"
@@ -1071,7 +1083,7 @@ do
 				echo "   Installing via yum" >> $glcLogFile
 				echo "$rootPassword" | eval $suCommand yum -y install $yumPackage $suClose >>$glcLogFile 2>&1
 				if ! eval ${testPresence[$i]} >& /dev/null; then
-				    echo "   ...failed"
+				    logmessage "   ...failed"
 				    exit 1
 				fi
 				installDone=1
@@ -1098,7 +1110,7 @@ do
 				echo "   Installing via apt-get" >> $glcLogFile
 				echo "$rootPassword" | eval $suCommand apt-get -y install $aptPackage $suClose >>$glcLogFile 2>&1
 				if ! eval ${testPresence[$i]} >& /dev/null; then
-				    echo "   ...failed"
+				    logmessage "   ...failed"
 				    exit 1
 				fi
 				installDone=1
@@ -1111,6 +1123,7 @@ do
 	    if [[ $installDone -eq 0 && ${sourceURL[$i]} != "null" ]]; then
 		if [[ ${sourceURL[$i]} =~ "fail:" ]]; then
 		    echo "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer."
+		    echo "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer." >>$glcLogFile 2>&1
 		    exit 1
 		else
 		    echo "   Installing from source"
@@ -1181,8 +1194,7 @@ do
 			    if [ ! -e $toolInstallPath/bin/python ]; then
 				wget http://peak.telecommunity.com/dist/virtual-python.py >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to download virtual-python.py"
-				    echo "Failed to download virtual-python.py" >>$glcLogFile
+				    logmessage "Failed to download virtual-python.py"
 				    exit 1
 				fi
                                 # Check if there is a site-packages folder.
@@ -1194,20 +1206,17 @@ do
 				fi
 				python virtual-python.py --prefix $toolInstallPath $virtualPythonOptions >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to install virtual-python.py"
-				    echo "Failed to install virtual-python.py" >>$glcLogFile
+				    logmessage "Failed to install virtual-python.py"
 				    exit 1
 				fi
 				wget http://peak.telecommunity.com/dist/ez_setup.py >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to download ez_setup.py"
-				    echo "Failed to download ez_setup.py" >>$glcLogFile
+				    logmessage "Failed to download ez_setup.py"
 				    exit 1
 				fi
 				$toolInstallPath/bin/python ez_setup.py --prefix $toolInstallPath  >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to install ez_setup.py"
-				    echo "Failed to install ez_setup.py" >>$glcLogFile
+				    logmessage "Failed to install ez_setup.py"
 				    exit 1
 				fi
 			    fi
@@ -1256,8 +1265,7 @@ do
   #
 EOF
                         if [ $? -ne 0 ]; then
-			    echo "Failed to patch make.inc in blas"
-			    echo "Failed to patch make.inc in blas" >>$glcLogFile
+			    logmesage "Failed to patch make.inc in blas"
 			    exit 1
 			fi
 			patch -p1 <<EOF
@@ -1294,15 +1302,13 @@ EOF
         \$(SBLAS2) \$(SBLAS3)
 EOF
 	                if [ $? -ne 0 ]; then
-			    echo "Failed to patch Makefile in blas"
-			    echo "Failed to patch Makefile in blas" >>$glcLogFile
+			    logmessage "Failed to patch Makefile in blas"
 			    exit 1
 			fi
 			sed -i~ -r s/"@X@"/"\t"/g Makefile >>$glcLogFile 2>&1
 			make libblas.so >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    echo "Failed to make libblas.so"
-			    echo "Failed to make libblas.so" >>$glcLogFile
+			    logmessage "Failed to make libblas.so"
 			    exit 1
 			fi
 			mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
@@ -1355,22 +1361,19 @@ EOF
 ! TMGLIB       = libtmglib.so
 EOF
                        if [ $? -ne 0 ]; then
-			   echo "Failed to patch make.inc in lapack"
-			   echo "Failed to patch make.inc in lapack" >>$glcLogFile
+			   logmessage "Failed to patch make.inc in lapack"
 			   exit 1
 		       fi
 		       echo s\#BLASLIB\\s*=\\s*..\\/..\\/librefblas.so\#BLASLIB = $toolInstallPath\\/lib\\/libblas.so\# > rule.sed
 		       sed -i~ -r -f rule.sed make.inc >>$glcLogFile 2>&1
 		       if [ $? -ne 0 ]; then
-			   echo "Failed to modify blas path in make.inc in lapack"
-			   echo "Failed to modify blas path in make.inc in lapack" >>$glcLogFile
+			   logmessage "Failed to modify blas path in make.inc in lapack"
 			   exit 1
 		       fi
 		       rm -f rule.sed
 		       make all >>$glcLogFile 2>&1
 		       if [ $? -ne 0 ]; then
-			   echo "Failed to make lapack"
-			   echo "Failed to make lapack" >>$glcLogFile
+			   logmessage "Failed to make lapack"
 			   exit 1
 		       fi
 		       mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
@@ -1431,39 +1434,33 @@ EOF
 				cd ..
 				wget http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.gz >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to download m4 source"
-				    echo "Failed to download m4 source" >>$glcLogFile
+				    logmessage "Failed to download m4 source"
 				    exit 1
 				fi
 				tar xvfz m4-1.4.17.tar.gz >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to unpack m4 source"
-				    echo "Failed to unpack m4 source" >>$glcLogFile
+				    logmessage "Failed to unpack m4 source"
 				    exit 1
 				fi
 				cd m4-1.4.17
 				./configure --prefix=$toolInstallPath >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to configure m4 source"
-				    echo "Failed to configure m4 source" >>$glcLogFile
+				    logmessage "Failed to configure m4 source"
 				    exit 1
 				fi
 				make >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to make m4"
-				    echo "Failed to make m4" >>$glcLogFile
+				    logmessage "Failed to make m4"
 				    exit 1
 				fi
 				make check >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to check m4"
-				    echo "Failed to check m4" >>$glcLogFile
+				    logmessage "Failed to check m4"
 				    exit 1
 				fi
 				make install >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed to install m4"
-				    echo "Failed to install m4" >>$glcLogFile
+				    logmessage "Failed to install m4"
 				    exit 1
 				fi
 				cd $currentDir
@@ -1502,9 +1499,9 @@ EOF
 			    fi
 			    eval ${buildEnvironment[$i]}
 			    if [ -e ../$dirName/configure ]; then
-				$preConfig ../$dirName/configure ${configOptions[$i]} >>$glcLogFile 2>&1
+				logexec $preConfig ../$dirName/configure ${configOptions[$i]}
 			    elif [ -e ../$dirName/config ]; then
-				$preConfig ../$dirName/config ${configOptions[$i]} >>$glcLogFile 2>&1
+				logexec $preConfig ../$dirName/config ${configOptions[$i]}
 			    elif [[ ${configOptions[$i]} -ne "skip" ]]; then
 				echo "Can not locate configure script for ${package[$i]}"
 				echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
@@ -1521,24 +1518,23 @@ EOF
 			if [ ${parallelBuild[$i]} -eq 1 ]; then
 			    makeOptions=" -j$coreCount"
 			fi
-			make $makeOptions >>$glcLogFile 2>&1
+			logexec make $makeOptions
 			if [ $? -ne 0 ]; then
 			    echo "Could not make ${package[$i]}"
 			    echo "Could not make ${package[$i]}" >>$glcLogFile
 			    exit 1
 			fi
 		        # Run any tests of the package.
-			make ${makeTest[$i]} >>$glcLogFile 2>&1
+			logexec make ${makeTest[$i]}
 			if [ $? -ne 0 ]; then
-			    echo "Testing ${package[$i]} failed"
-			    echo "Testing ${package[$i]} failed" >>$glcLogFile
+			    logmessage "Testing ${package[$i]} failed"
 			    exit 1
 			fi
 		        # Install the package.
 			if [ $installAsRoot -eq 1 ]; then
 			    echo "$rootPassword" | eval $suCommand make ${makeInstall[$i]} $suClose >>$glcLogFile 2>&1
 			else
-			    make ${makeInstall[$i]} >>$glcLogFile 2>&1
+			    logexec make ${makeInstall[$i]}
 			fi
 			if [ $? -ne 0 ]; then
 			    echo "Could not install ${package[$i]}"
@@ -1551,51 +1547,43 @@ EOF
  			    if [ $installAsRoot -eq 1 ]; then
 				echo "$rootPassword" | eval $suCommand make clean $suClose >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed building shared libraries for ${package[$i]} at stage 1"
-				    echo "Failed building shared libraries for ${package[$i]} at stage 1" >>$glcLogFile
+				    logmessage "Failed building shared libraries for ${package[$i]} at stage 1"
 				    exit 1
 				fi
 				echo "$rootPassword" | eval $suCommand make -f Makefile-libbz2_so $suClose >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed building shared libraries for ${package[$i]} at stage 2"
-				    echo "Failed building shared libraries for ${package[$i]} at stage 2" >>$glcLogFile
+				    logmessage "Failed building shared libraries for ${package[$i]} at stage 2"
 				    exit 1
 				fi
 				echo "$rootPassword" | eval $suCommand cp libbz2.so* $toolInstallPath/lib/ $suClose >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed building shared libraries for ${package[$i]} at stage 3"
-				    echo "Failed building shared libraries for ${package[$i]} at stage 3" >>$glcLogFile
+				    logmessage "Failed building shared libraries for ${package[$i]} at stage 3"
 				    exit 1
 				fi
 				echo "$rootPassword" | eval $suCommand chmod a+r $toolInstallPath/lib/libbz2.so* $suClose >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed building shared libraries for ${package[$i]} at stage 4"
-				    echo "Failed building shared libraries for ${package[$i]} at stage 4" >>$glcLogFile
+				    logmessage "Failed building shared libraries for ${package[$i]} at stage 4"
 				    exit 1
 				fi
 			    else
 				make clean >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed building shared libraries for ${package[$i]} at stage 1"
-				    echo "Failed building shared libraries for ${package[$i]} at stage 1" >>$glcLogFile
+				    logmessage "Failed building shared libraries for ${package[$i]} at stage 1"
 				    exit 1
 				fi
 				make -f Makefile-libbz2_so >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed building shared libraries for ${package[$i]} at stage 2"
-				    echo "Failed building shared libraries for ${package[$i]} at stage 2" >>$glcLogFile
+				    logmessage "Failed building shared libraries for ${package[$i]} at stage 2"
 				    exit 1
 				fi
 				cp libbz2.so* $toolInstallPath/lib/ >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed building shared libraries for ${package[$i]} at stage 3"
-				    echo "Failed building shared libraries for ${package[$i]} at stage 3" >>$glcLogFile
+				    logmessage "Failed building shared libraries for ${package[$i]} at stage 3"
 				    exit 1
 				fi
 				chmod a+r $toolInstallPath/lib/libbz2.so*  >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    echo "Failed building shared libraries for ${package[$i]} at stage 4"
-				    echo "Failed building shared libraries for ${package[$i]} at stage 4" >>$glcLogFile
+				    logmessage "Failed building shared libraries for ${package[$i]} at stage 4"
 				    exit 1
 				fi
 			    fi
@@ -1724,8 +1712,7 @@ EOF
 			if [ $installAsRoot -eq 1 ]; then
 			    echo "$rootPassword" | eval $suCommand apt-get -y install gcc-multilib $suClose >>$glcLogFile 2>&1
 			    if [ ! -e /usr/include/asm/errno.h ]; then
-				echo "Failed to install gcc-multilib needed for compiling GNU Compiler Collection."
-				echo "Failed to install gcc-multilib needed for compiling GNU Compiler Collection." >>$glcLogFile
+				logmessage "Failed to install gcc-multilib needed for compiling GNU Compiler Collection."
 				exit 1
 			    fi
 			else
@@ -2342,7 +2329,7 @@ do
 		    echo "$rootPassword" | eval $suCommand yum -y install ${modulesYum[$i]} $suClose >>$glcLogFile 2>&1
 		    perl -e "use $module" >& /dev/null
 		    if [ $? -ne 0 ]; then
-			echo "   ...failed"
+			logmessage "   ...failed"
 			exit 1
 		    fi
                     installDone=1
@@ -2355,7 +2342,7 @@ do
 		echo "$rootPassword" | eval $suCommand apt-get -y install ${modulesApt[$i]} $suClose >>$glcLogFile 2>&1
 		perl -e "use $module" >& /dev/null
 		if [ $? -ne 0 ]; then
-		    echo "   ...failed"
+		    logmessage "   ...failed"
 		    exit 1
 		fi
                 installDone=1
@@ -2419,8 +2406,7 @@ fi
 		# Run any tests of the package.
 		make -j ${makeTest[$i]} >>$glcLogFile 2>&1
 		if [ $? -ne 0 ]; then
-		    echo "Testing ${modules[$i]} failed"
-		    echo "Testing ${modules[$i]} failed" >>$glcLogFile
+		    logmessage "Testing ${modules[$i]} failed"
 		    exit 1
 		fi
 		# Install the package.
@@ -2458,39 +2444,33 @@ fi
 		    if [ $? -ne 0 ]; then
 			wget http://search.cpan.org/CPAN/authors/id/A/AP/APEIRON/local-lib-1.008004.tar.gz >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    echo "Failed to download local-lib-1.008004.tar.gz"
-			    echo "Failed to download local-lib-1.008004.tar.gz" >>$glcLogFile
+			    logmessage "Failed to download local-lib-1.008004.tar.gz"
 			    exit
 			fi
 			tar xvfz local-lib-1.008004.tar.gz >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    echo "Failed to unpack local-lib-1.008004.tar.gz"
-			    echo "Failed to unpack local-lib-1.008004.tar.gz" >>$glcLogFile
+			    logmessage "Failed to unpack local-lib-1.008004.tar.gz"
 			    exit
 			fi
 			cd local-lib-1.008004
 			perl Makefile.PL --bootstrap >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    echo "Failed to bootstrap local-lib-1.008004"
-			    echo "Failed to bootstrap local-lib-1.008004" >>$glcLogFile
+			    logmessage "Failed to bootstrap local-lib-1.008004"
 			    exit
 			fi
 			make >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    echo "Failed to make local-lib-1.008004"
-			    echo "Failed to make local-lib-1.008004" >>$glcLogFile
+			    logmessage "Failed to make local-lib-1.008004"
 			    exit
 			fi
 			make test >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    echo ""
-			    echo "Tests of local-lib-1.008004 failed" >>$glcLogFile
+			    logmessage "Tests of local-lib-1.008004 failed" >>$glcLogFile
 			    exit
 			fi
 			make install >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    echo "Failed to install local-lib-1.008004"
-			    echo "Failed to install local-lib-1.008004" >>$glcLogFile
+			    logmessage "Failed to install local-lib-1.008004"			    
 			    exit
 			fi
 		    fi
@@ -2510,7 +2490,7 @@ fi
 		# Check that the module was installed successfully.
 		perl -e "use $module" >>/dev/null 2>&1
 		if [ $? -ne 0 ]; then
-		    echo "   ...failed"
+		    logmessage "   ...failed"
 		    exit 1
 		fi
                 installDone=1
@@ -2542,16 +2522,15 @@ fi
 if [ ! -e $galacticusInstallPath ]; then
     if [[ $installLevel -eq -1 ]]; then
 	cd `dirname $galacticusInstallPath`
-	wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/galacticus_v0.9.4.tar.bz2
-	tar xvfj galacticus_v0.9.4.tar.bz2
+	wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/galacticus_v0.9.4.tar.bz2 2>&1
+	tar xvfj galacticus_v0.9.4.tar.bz2 2>&1
 	mv galacticus_v0.9.4 $galacticusInstallPath
 	cd -
     else
 	mkdir -p `dirname $galacticusInstallPath`
-	hg clone https://abensonca@bitbucket.org/abensonca/galacticus $galacticusInstallPath
+	hg clone https://abensonca@bitbucket.org/abensonca/galacticus $galacticusInstallPath 2>&1
 	if [ $? -ne 0 ]; then
-	    echo "failed to download Galacticus"
-	    echo "failed to download Galacticus" >> $glcLogFile
+	    logmessage "failed to download Galacticus"
 	    exit 1
 	fi
     fi
@@ -2622,7 +2601,7 @@ fi
 cd $galacticusInstallPath
 if [[ $installLevel -eq -1 ]]; then
     # Install the binary executable.
-    wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/Galacticus_v0.9.4_latest_x86_64.exe -O $galacticusInstallPath/Galacticus.exe
+    wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/Galacticus_v0.9.4_latest_x86_64.exe -O $galacticusInstallPath/Galacticus.exe 2>&1
     chmod u+rx $galacticusInstallPath/Galacticus.exe
 else
     
@@ -2648,8 +2627,7 @@ else
 	export GALACTICUS_FCFLAGS=$moduleDirs
 	make Galacticus.exe >>$glcLogFile 2>&1
 	if [ $? -ne 0 ]; then
-	    echo "failed to build Galacticus"
-	    echo "failed to build Galacticus" >> $glcLogFile
+	    logmessage "failed to build Galacticus"
 	    exit 1
 	fi
     fi
@@ -2660,8 +2638,7 @@ echo "Running a quick test of Galacticus - should take around 1 minute on a sing
 echo "Running a quick test of Galacticus - should take around 1 minute on a single core (less time if you have multiple cores)" >> $glcLogFile
 ./Galacticus.exe parameters/quickTest.xml >>$glcLogFile 2>&1
 if [ $? -ne 0 ]; then
-    echo "failed to run Galacticus"
-    echo "failed to run Galacticus" >> $glcLogFile
+    logmessage "failed to run Galacticus"
     exit 1
 fi
 cd -
