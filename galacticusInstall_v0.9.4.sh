@@ -1122,20 +1122,23 @@ do
 	    # Try installing via source.
 	    if [[ $installDone -eq 0 && ${sourceURL[$i]} != "null" ]]; then
 		if [[ ${sourceURL[$i]} =~ "fail:" ]]; then
-		    echo "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer."
-		    echo "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer." >>$glcLogFile 2>&1
+		    logmessage "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer."
 		    exit 1
 		else
-		    echo "   Installing from source"
-		    echo "   Installing from source" >>$glcLogFile
+		    logmessage "   Installing from source"
 		    if [[ ${sourceURL[$i]} =~ "svn:" ]]; then
-			svn checkout "${sourceURL[$i]}" >>$glcLogFile 2>&1
+			logexec svn checkout "${sourceURL[$i]}"
+			if [ $? -ne 0 ]; then
+			    logmessage "Trying svn checkout again using http protocol instead"
+			    baseName=`basename ${sourceURL[$i]}`
+			    logexec rm -rf $baseName
+			    logexec svn checkout "${sourceURL[$i]/svn:/http:}"
+			fi
 		    else
-			wget "${sourceURL[$i]}" >>$glcLogFile 2>&1
+			logexec wget "${sourceURL[$i]}"
 		    fi
 		    if [ $? -ne 0 ]; then
-			echo "Could not download ${package[$i]}"
-			echo "Could not download ${package[$i]}" >>$glcLogFile
+			logmessage "Could not download ${package[$i]}"
 			exit 1
 		    fi
 		    baseName=`basename ${sourceURL[$i]}`
@@ -1143,10 +1146,9 @@ do
 			dirName=$baseName
 		    else
 			unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
-			tar xvf$unpack $baseName >>$glcLogFile 2>&1
+			logexec tar xvf$unpack $baseName
 			if [ $? -ne 0 ]; then
-			    echo "Could not unpack ${package[$i]}"
-			    echo "Could not unpack ${package[$i]}" >>$glcLogFile
+			    logmessage "Could not unpack ${package[$i]}"
 			    exit 1
 			fi
 			dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
