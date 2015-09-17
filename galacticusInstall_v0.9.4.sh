@@ -33,6 +33,80 @@ function logmessage()
 # Define a log file.
 glcLogFile=`pwd`"/galacticusInstall.log"
 
+# Get arugments.
+TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash:: -- "$@"`
+eval set -- "$TEMP"
+cmdToolPrefix=
+cmdAsRoot=
+cmdRootPwd=
+cmdInstallLevel=
+cmdPackageManager=
+cmdCores=
+cmdSuMethod=
+cmdGalacticusPrefix=
+cmdSetCShell=
+cmdSetBash=
+while true; do
+    case "$1" in
+	--asRoot ) cmdAsRoot="$2"; shift 2 ;;
+	--cores ) cmdCores="$2"; shift 2 ;;
+	--galacticusPrefix ) cmdGalacticusPrefix="$2"; shift 2 ;;
+	--installLevel ) cmdInstallLevel="$2"; shift 2 ;;
+	--packageManager ) cmdPackageManager="$2"; shift 2 ;;
+	--rootPwd ) cmdRootPwd="$2"; shift 2 ;;
+	--setCShell ) cmdSetCShell="$2"; shift 2 ;;
+	--setBash ) cmdSetBash="$2"; shift 2 ;;
+	--suMethod ) cmdSuMethod="$2"; shift 2 ;;
+	--toolPrefix ) cmdToolPrefix="$2"; shift 2 ;;
+	-- ) shift; break ;;
+	* ) break ;;
+    esac
+done
+
+# Validate arguments.
+if [ ! -z ${cmdAsRoot} ]; then
+    if [[ ${cmdAsRoot} != "no" && ${cmdAsRoot} != "yes" ]]; then
+	logmessage "asRoot option should be 'yes' or 'no'"
+	exit 1
+    fi
+fi
+if [ ! -z ${cmdSetCShell} ]; then
+    if [[ ${cmdSetCShell} != "no" && ${cmdSetCShell} != "yes" ]]; then
+	logmessage "asRoot option should be 'yes' or 'no'"
+	exit 1
+    fi
+fi
+if [ ! -z ${cmdSetBash} ]; then
+    if [[ ${cmdSetBash} != "no" && ${cmdSetBash} != "yes" ]]; then
+	logmessage "asRoot option should be 'yes' or 'no'"
+	exit 1
+    fi
+fi
+if [ ! -z ${cmdSuMethod} ]; then
+    if [[ ${cmdSuMethod} != "su" && ${cmdSuMethod} != "sudo" ]]; then
+	logmessage "suMethod option should be 'su' or 'sudo'"
+	exit 1
+    fi
+fi
+if [ ! -z ${cmdPackageManager} ]; then
+    if [[ ${cmdPackageManager} != "no" && ${cmdPackageManager} != "yes" ]]; then
+	logmessage "packageManager option should be 'yes' or 'no'"
+	exit 1
+    fi
+fi
+if [ ! -z ${cmdInstallLevel} ]; then
+    if [[ ${cmdInstallLevel} != "binary" && ${cmdInstallLevel} != "minimal" && ${cmdInstallLevel} != "typical" && ${cmdInstallLevel} != "full" ]]; then
+	logmessage "installLevel option should be 'binary', 'minimal', 'typical', or 'full'"
+	exit 1
+    fi
+fi
+if [ ! -z ${cmdCores} ]; then
+    if [[ ! ${cmdCores} =~ ^[0-9]+$ ]]; then
+	logmessage "cores option should be an integer"
+	exit 1
+    fi
+fi
+
 # Open the log file.
 echo "Galacticus v0.9.4 install log" > $glcLogFile
 
@@ -53,28 +127,39 @@ if [[ $UID -eq 0 ]]; then
     installAsRoot=1
     runningAsRoot=1
     # Set up a suitable install path.
-    toolInstallPath=/usr/local/galacticus
-    read -p "Path to install tools to as root [$toolInstallPath]: " RESPONSE
-    if [ -n "$RESPONSE" ]; then
-        toolInstallPath=$RESPONSE
-    fi
+    if [ -z ${cmdToolPrefix} ]; then
+	toolInstallPath=/usr/local/galacticus
+	read -p "Path to install tools to as root [$toolInstallPath]: " RESPONSE
+	if [ -n "$RESPONSE" ]; then
+            toolInstallPath=$RESPONSE
+	fi
+    else
+ 	toolInstallPath=${cmdToolPrefix}
+    fi 	
 else
     installAsRoot=-1
     runningAsRoot=0
 fi
 while [ $installAsRoot -eq -1 ]
 do
-    read -p "Install required libraries and Perl modules as root (requires root password)? [no/yes]: " RESPONSE
-    
+    if [ -z ${cmdAsRoot} ]; then
+	read -p "Install required libraries and Perl modules as root (requires root password)? [no/yes]: " RESPONSE
+    else
+	RESPONSE=${cmdAsRoot}
+    fi
     if [ "$RESPONSE" = yes ] ; then
 	# Installation will be done as root where possible.
         installAsRoot=1
-
+	
 	# Ask whether we should use "su" or "sudo" for root installs.
         suCommand="null"
         while [[ $suCommand == "null" ]]
         do
-	    read -p "Use sudo or su for root installs:" suMethod
+	    if [ -z ${cmdSuMethod} ]; then
+		read -p "Use sudo or su for root installs:" suMethod
+	    else
+		suMethod=$cmdSuMethod
+	    fi
             if [[ $suMethod == "su" ]]; then
 		suCommand="su -c \""
 		suClose="\""
@@ -87,7 +172,11 @@ do
         done
 
         # Get the root password.
-        read -s -p "Please enter the $pName password:" rootPassword
+	if [ -z ${cmdRootPwd} ]; then
+            read -s -p "Please enter the $pName password:" rootPassword
+	else
+	    rootPassword=$cmdRootPwd
+	fi
 	echo "$rootPassword" | eval $suCommand echo worked $suClose >& /dev/null
 	echo
 	if [ $? -ne 0 ] ; then
@@ -98,11 +187,15 @@ do
 	echo "Libraries and Perl modules will be installed as root" >> $glcLogFile
 
 	# Set up a suitable install path.
-        toolInstallPath=/usr/local/galacticus
-        read -p "Path to install tools to as root [$toolInstallPath]: " RESPONSE
-        if [ -n "$RESPONSE" ]; then
-            toolInstallPath=$RESPONSE
-        fi
+	if [ -z ${cmdToolPrefix} ]; then
+	    toolInstallPath=/usr/local/galacticus
+            read -p "Path to install tools to as root [$toolInstallPath]: " RESPONSE
+            if [ -n "$RESPONSE" ]; then
+		toolInstallPath=$RESPONSE
+            fi
+	else
+ 	    toolInstallPath=${cmdToolPrefix}
+	fi
     elif [ "$RESPONSE" = no ] ; then
 	# Install as regular user.
         installAsRoot=0
@@ -110,11 +203,15 @@ do
 	echo "Libraries and Perl modules will be installed as regular user" >> $glcLogFile
 
 	# Set yp a suitable install path.
-        toolInstallPath=$HOME/Galacticus/Tools
-        read -p "Path to install tools to [$toolInstallPath]: " RESPONSE
-        if [ -n "$RESPONSE" ]; then
-            toolInstallPath=$RESPONSE
-        fi
+	if [ -z ${cmdToolPrefix} ]; then
+            toolInstallPath=$HOME/Galacticus/Tools
+            read -p "Path to install tools to [$toolInstallPath]: " RESPONSE
+            if [ -n "$RESPONSE" ]; then
+		toolInstallPath=$RESPONSE
+            fi
+	else
+ 	    toolInstallPath=${cmdToolPrefix}
+ 	fi
     else
 	# Response invalid, try again.
 	echo "Please enter 'yes' or 'no'"
@@ -177,7 +274,11 @@ export FC=gfortran
 installLevel=-2
 while [ $installLevel -eq -2 ]
 do
-    read -p "Binary, minimal, typical or full install?: " RESPONSE
+    if [ -z ${cmdInstallLevel} ]; then
+	read -p "Binary, minimal, typical or full install?: " RESPONSE
+    else
+	RESPONSE=$cmdInstallLevel
+    fi
     lcRESPONSE=${RESPONSE,,}
     if [ "$lcRESPONSE" = binary ] ; then
         installLevel=-1
@@ -205,7 +306,11 @@ if [ $installAsRoot -eq 1 ]; then
     usePackageManager=-1
     while [ $usePackageManager -eq -1 ]
     do
-	read -p "Use package manager for install (if available)?: " RESPONSE
+	if [ -z $cmdPackageManager ]; then
+	    read -p "Use package manager for install (if available)?: " RESPONSE
+	else
+	    RESPONSE=$cmdPackageManager
+	fi
         if [ "$RESPONSE" = yes ] ; then
             usePackageManager=1
 	    echo "Package manager will be used for installs if possible"
@@ -227,7 +332,11 @@ coresAvailable=`grep -c ^processor /proc/cpuinfo`
 coreCount=-1
 while [ $coreCount -eq -1 ]
 do
-    read -p "How many cores should I use when compiling? ($coresAvailable available): " RESPONSE
+    if [ -z ${cmdCores} ]; then
+	read -p "How many cores should I use when compiling? ($coresAvailable available): " RESPONSE
+    else
+	RESPONSE=$cmdCores
+    fi
     if ! [[ "$RESPONSE" =~ ^[0-9]+$ ]] ; then
 	    echo "Please enter an integer"
     else
@@ -240,7 +349,6 @@ do
 	fi
     fi
 done
-
 
 # Figure out which install options are available to us.
 installViaYum=0
@@ -867,10 +975,10 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lssl"
       getVersion[$iPackage]="echo 1.0.0"
       minVersion[$iPackage]="0.9.9"
-      maxVersion[$iPackage]="1.0.1"
+      maxVersion[$iPackage]="1.0.3"
       yumInstall[$iPackage]="openssl openssl-devel"
       aptInstall[$iPackage]="openssl libssl-dev"
-       sourceURL[$iPackage]="http://www.openssl.org/source/openssl-1.0.0e.tar.gz"
+       sourceURL[$iPackage]="http://www.openssl.org/source/openssl-1.0.2d.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath shared"
@@ -2516,12 +2624,17 @@ done
 if [[ $runningAsRoot -eq 1 ]]; then
     echo "Script is running as root - if you want to install Galacticus itself as a regular user, just quit (Ctrl-C) now."
 fi
-galacticusInstallPath=$HOME/Galacticus/v0.9.4
-read -p "Path to install Galacticus to [$galacticusInstallPath]: " RESPONSE
-if [ -n "$RESPONSE" ]; then
-    galacticusInstallPath=$RESPONSE
+if [ -z ${cmdGalacticusPrefix} ]; then
+    galacticusInstallPath=$HOME/Galacticus/v0.9.4
+    read -p "Path to install Galacticus to [$galacticusInstallPath]: " RESPONSE
+    if [ -n "$RESPONSE" ]; then
+	galacticusInstallPath=$RESPONSE
+    fi
+else
+    galacticusInstallPath=$cmdGalacticusPrefix
 fi
 if [ ! -e $galacticusInstallPath ]; then
+    mkdir -p `dirname $galacticusInstallPath`
     if [[ $installLevel -eq -1 ]]; then
 	cd `dirname $galacticusInstallPath`
 	wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/galacticus_v0.9.4.tar.bz2 2>&1
@@ -2529,7 +2642,6 @@ if [ ! -e $galacticusInstallPath ]; then
 	mv galacticus_v0.9.4 $galacticusInstallPath
 	cd -
     else
-	mkdir -p `dirname $galacticusInstallPath`
 	hg clone https://abensonca@bitbucket.org/abensonca/galacticus $galacticusInstallPath 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to download Galacticus"
@@ -2540,7 +2652,11 @@ fi
 
 # Add commands to .bashrc and/or .cshrc.
 envSet=0
-read -p "Add a Galacticus environment alias to .bashrc? [no/yes]: " RESPONSE
+if [ -z ${cmdSetBash} ]; then
+    read -p "Add a Galacticus environment alias to .bashrc? [no/yes]: " RESPONSE
+else
+    RESPONSE=$cmdSetBash
+fi
 if [ "$RESPONSE" = yes ] ; then
     envSet=1
     if [ -e $HOME/.bashrc ]; then
@@ -2570,7 +2686,11 @@ if [ "$RESPONSE" = yes ] ; then
     echo "export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"\\" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
-read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
+if [ -z ${cmdSetCShell} ]; then
+    read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
+else
+    RESPONSE=$cmdSetCShell
+fi
 if [ "$RESPONSE" = yes ] ; then
     envSet=1
     if [ -e $HOME/.cshrc ]; then
@@ -2603,8 +2723,8 @@ fi
 cd $galacticusInstallPath
 if [[ $installLevel -eq -1 ]]; then
     # Install the binary executable.
-    wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/Galacticus_v0.9.4_latest_x86_64.exe -O $galacticusInstallPath/Galacticus.exe 2>&1
-    chmod u+rx $galacticusInstallPath/Galacticus.exe
+    logexec wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/Galacticus_v0.9.4_latest_x86_64.exe -O $galacticusInstallPath/Galacticus.exe 2>&1
+    logexec chmod u+rx $galacticusInstallPath/Galacticus.exe
 else
     
     # Hardwired magic.
