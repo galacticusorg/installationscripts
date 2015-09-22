@@ -2532,7 +2532,7 @@ fi
 		fi
 		# Install the package.
 		if [ $installAsRoot -eq 1 ]; then
-		    echo "$rootPassword" | eval $suCommand make install $suClose >>$glcLogFile 2>&1
+		    echo "$rootPassword" | eval $suCommand make PATH=${PATH} install $suClose >>$glcLogFile 2>&1
 		else
 		    make install >>$glcLogFile 2>&1
 		fi
