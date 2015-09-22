@@ -970,6 +970,7 @@ buildEnvironment[$iPackage]=""
 
 # OpenSSL (required for Mercurial)
 iPackage=$(expr $iPackage + 1)
+    iSSL=$iPackage
          package[$iPackage]="OpenSSL"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lssl"
@@ -1737,6 +1738,16 @@ EOF
 	    # If we installed APR utils, force SVN to use it.
 	    if [ $i -eq $iAPRutil ]; then
 		configOptions[$iSVN]="${configOptions[$iSVN]} --with-apr-util=$toolInstallPath"
+	    fi
+	    # If we installed SSL check that we have certificates.
+	    if [ $i -eq $iSSL ]; then
+		for dir in "/etc/ssl/certs"
+		do
+		    if [[ -e $dir/ca-bundle.crt && ! -e $toolInstallPath/ssl/certs/ca-bundle.crt ]]; then
+			rm -rf $toolInstallPath/ssl/certs
+			ln -sf $dir $toolInstallPath/ssl/certs
+		    fi
+		done
 	    fi
 	fi
         # Hardwired magic.        
