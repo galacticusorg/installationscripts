@@ -34,7 +34,7 @@ function logmessage()
 glcLogFile=`pwd`"/galacticusInstall.log"
 
 # Get arugments.
-TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash:: -- "$@"`
+TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures:: -- "$@"`
 eval set -- "$TEMP"
 cmdToolPrefix=
 cmdAsRoot=
@@ -46,6 +46,7 @@ cmdSuMethod=
 cmdGalacticusPrefix=
 cmdSetCShell=
 cmdSetBash=
+cmdIgnoreFailures=
 while true; do
     case "$1" in
 	--asRoot ) cmdAsRoot="$2"; shift 2 ;;
@@ -56,6 +57,7 @@ while true; do
 	--rootPwd ) cmdRootPwd="$2"; shift 2 ;;
 	--setCShell ) cmdSetCShell="$2"; shift 2 ;;
 	--setBash ) cmdSetBash="$2"; shift 2 ;;
+	--ignoreFailures ) cmdIgnoreFailures="$2"; shift 2 ;;
 	--suMethod ) cmdSuMethod="$2"; shift 2 ;;
 	--toolPrefix ) cmdToolPrefix="$2"; shift 2 ;;
 	-- ) shift; break ;;
@@ -72,13 +74,19 @@ if [ ! -z ${cmdAsRoot} ]; then
 fi
 if [ ! -z ${cmdSetCShell} ]; then
     if [[ ${cmdSetCShell} != "no" && ${cmdSetCShell} != "yes" ]]; then
-	logmessage "asRoot option should be 'yes' or 'no'"
+	logmessage "setCShell option should be 'yes' or 'no'"
 	exit 1
     fi
 fi
 if [ ! -z ${cmdSetBash} ]; then
     if [[ ${cmdSetBash} != "no" && ${cmdSetBash} != "yes" ]]; then
-	logmessage "asRoot option should be 'yes' or 'no'"
+	logmessage "setBash option should be 'yes' or 'no'"
+	exit 1
+    fi
+fi
+if [ ! -z ${cmdIgnoreFailures} ]; then
+    if [[ ${cmdIgnoreFailures} != "no" && ${cmdIgnoreFailures} != "yes" ]]; then
+	logmessage "ignoreFailures option should be 'yes' or 'no'"
 	exit 1
     fi
 fi
@@ -791,7 +799,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="gsl-devel"
       aptInstall[$iPackage]="libgsl0-dev gsl-bin"
-       sourceURL[$iPackage]="http://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-1.15.tar.gz"
+       sourceURL[$iPackage]="http://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-1.16.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -922,7 +930,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="ImageMagick"
       aptInstall[$iPackage]="imagemagick"
-       sourceURL[$iPackage]="ftp://ftp.imagemagick.org/pub/ImageMagick/ImageMagick-6.7.6-1.tar.bz2"
+       sourceURL[$iPackage]="http://www.imagemagick.org/download/ImageMagick.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -1231,8 +1239,16 @@ do
 	    # Try installing via source.
 	    if [[ $installDone -eq 0 && ${sourceURL[$i]} != "null" ]]; then
 		if [[ ${sourceURL[$i]} =~ "fail:" ]]; then
-		    logmessage "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer."
-		    exit 1
+		    abort="yes"
+		    if [ -z ${cmdIgnoreFailures} ]; then
+			abort=$cmdIgnoreFailures
+		    fi
+		    if [ "$abort" = yes ]; then
+			logmessage "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer."
+			exit 1
+		    else
+			logmessage "This installer can not currently install ${package[$i]} from source. Ignoring and continuing, but errors may occur."
+		    fi
 		else
 		    logmessage "   Installing from source"
 		    if [[ ${sourceURL[$i]} =~ "svn:" ]]; then
@@ -2544,8 +2560,7 @@ fi
 	    fi
 	    # Try installing via CPAN.
 	    if [[ $installDone -eq 0 &&  $installViaCPAN -eq 1 ]]; then
-		echo "   Installing via CPAN"
-		echo "   Installing via CPAN" >> $glcLogFile
+		logmessage "   Installing via CPAN"
 		if [ ${modulesForce[$i]} -eq 1 ]; then
 		    cpanInstall="force('install','${modules[$i]}')"
 		else
@@ -2555,43 +2570,45 @@ fi
 		    # Install as root.
                     export PERL_MM_USE_DEFAULT=1
 		    if [ ${interactive[$i]} -eq 0 ]; then
+			echo $suCommand perl -MCPAN -e "$cpanInstall" $suClose >>$glcLogFile 2>&1
 			echo "$rootPassword" | eval $suCommand perl -MCPAN -e "$cpanInstall" $suClose >>$glcLogFile 2>&1
 		    else
+			echo $suCommand perl -MCPAN -e "$cpanInstall" $suClose >>$glcLogFile 2>&1
 			echo "$rootPassword" | eval $suCommand perl -MCPAN -e "$cpanInstall" $suClose
 		    fi
 		else		    
                     # Check for local::lib.
-		    perl -e "use local::lib" >& /dev/null
+		    logexec perl -e "use local::lib"
 		    if [ $? -ne 0 ]; then
-			wget http://search.cpan.org/CPAN/authors/id/A/AP/APEIRON/local-lib-1.008004.tar.gz >>$glcLogFile 2>&1
+			wget http://search.cpan.org/CPAN/authors/id/H/HA/HAARG/local-lib-2.000015.tar.gz >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to download local-lib-1.008004.tar.gz"
+			    logmessage "Failed to download local-lib-2.000015.tar.gz"
 			    exit
 			fi
-			tar xvfz local-lib-1.008004.tar.gz >>$glcLogFile 2>&1
+			tar xvfz local-lib-2.000015.tar.gz >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to unpack local-lib-1.008004.tar.gz"
+			    logmessage "Failed to unpack local-lib-2.000015.tar.gz"
 			    exit
 			fi
-			cd local-lib-1.008004
+			cd local-lib-2.000015
 			perl Makefile.PL --bootstrap >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to bootstrap local-lib-1.008004"
+			    logmessage "Failed to bootstrap local-lib-2.000015"
 			    exit
 			fi
 			make >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to make local-lib-1.008004"
+			    logmessage "Failed to make local-lib-2.000015"
 			    exit
 			fi
 			make test >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Tests of local-lib-1.008004 failed" >>$glcLogFile
+			    logmessage "Tests of local-lib-2.000015 failed" >>$glcLogFile
 			    exit
 			fi
 			make install >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to install local-lib-1.008004"			    
+			    logmessage "Failed to install local-lib-2.000015"			    
 			    exit
 			fi
 		    fi
@@ -2603,13 +2620,14 @@ fi
 		    # Install as regular user.
 		    export PERL_MM_USE_DEFAULT=1
 		    if [ ${interactive[$i]} -eq 0 ]; then
-			perl -Mlocal::lib -MCPAN -e "$cpanInstall" >>$glcLogFile 2>&1
+			logexec perl -Mlocal::lib -MCPAN -e "$cpanInstall"
 		    else
+			echo perl -Mlocal::lib -MCPAN -e "$cpanInstall" >>$glcLogFile
 			perl -Mlocal::lib -MCPAN -e "$cpanInstall"
 		    fi
 		fi
 		# Check that the module was installed successfully.
-		perl -e "use $module" >>/dev/null 2>&1
+		logexec perl -e "use $module" >>/dev/null 2>&1
 		if [ $? -ne 0 ]; then
 		    logmessage "   ...failed"
 		    exit 1
