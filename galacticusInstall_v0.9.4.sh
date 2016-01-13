@@ -2713,6 +2713,7 @@ if [ "$RESPONSE" = yes ] ; then
 	echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
     fi
     echo "export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"\\" >> $HOME/.bashrc
+    echo "export GALACTICUS_CFLAGS=\"$libDirs -I$toolInstallPath/include\"\\" >> $HOME/.bashrc
     echo "'" >> $HOME/.bashrc
 fi
 if [ -z ${cmdSetCShell} ]; then
@@ -2746,6 +2747,7 @@ if [ "$RESPONSE" = yes ] ; then
 	echo "eval \`perl -I$HOME/perl5/lib/perl5 -Mlocal::lib\` \\" >> $HOME/.cshrc
     fi
     echo "setenv GALACTICUS_FCFLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"'" >> $HOME/.cshrc
+    echo "setenv GALACTICUS_CFLAGS \"$libDirs -I$toolInstallPath/include\"'" >> $HOME/.cshrc
 fi
 
 # Determine if we want to install from source, or use the static binary.
