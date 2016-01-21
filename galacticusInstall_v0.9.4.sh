@@ -565,7 +565,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-devel"
       aptInstall[$iPackage]="apr"
-       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-1.5.2.tar.bz2"
+       sourceURL[$iPackage]="http://mirrors.sonic.net/apache//apr/apr-1.5.2.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -584,7 +584,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-util"
       aptInstall[$iPackage]="apr-util"
-       sourceURL[$iPackage]="http://www.motorlogy.com/apache//apr/apr-util-1.5.4.tar.bz2"
+       sourceURL[$iPackage]="http://mirrors.sonic.net/apache//apr/apr-util-1.5.4.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
@@ -622,7 +622,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="subversion"
       aptInstall[$iPackage]="subversion"
-       sourceURL[$iPackage]="http://apache.mirrors.timporter.net/subversion/subversion-1.8.4.tar.bz2"
+       sourceURL[$iPackage]="http://mirror.reverse.net/pub/apache/subversion/subversion-1.9.3.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -818,7 +818,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="http://www.lrz.de/services/software/mathematik/gsl/fortran/fgsl-0.9.4.tar.gz"
+       sourceURL[$iPackage]="http://www.lrz.de/services/software/mathematik/gsl/fortran/download/fgsl-0.9.4.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix $toolInstallPath --f90 gfortran --gsl `gsl-config --prefix`"
@@ -987,7 +987,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="1.0.3"
       yumInstall[$iPackage]="openssl openssl-devel"
       aptInstall[$iPackage]="openssl libssl-dev"
-       sourceURL[$iPackage]="http://www.openssl.org/source/openssl-1.0.2d.tar.gz"
+       sourceURL[$iPackage]="ftp://ftp.openssl.org/source/openssl-1.0.2e.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath shared"
@@ -2693,28 +2693,28 @@ if [ "$RESPONSE" = yes ] ; then
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
     fi
     echo "# Alias to configure the environment to compile and run Galacticus v0.9.4" >> $HOME/.bashrc
-    echo "alias galacticus094='\\" >> $HOME/.bashrc
-    echo "if [ -n \"\${LD_LIBRARY_PATH}\" ]; then" >> $HOME/.bashrc
-    echo " export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
-    echo "else" >> $HOME/.bashrc
-    echo " export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64" >> $HOME/.bashrc
-    echo "fi" >> $HOME/.bashrc
-    echo "if [ -n \"\${PATH}\" ]; then" >> $HOME/.bashrc
-    echo " export PATH=$toolInstallPath/bin:\$PATH" >> $HOME/.bashrc
-    echo "else" >> $HOME/.bashrc
-    echo " export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
-    echo "fi" >> $HOME/.bashrc
-    echo "if [ -n \"\${PYTHONPATH}\" ]; then" >> $HOME/.bashrc
-    echo " export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib:\$PYTHONPATH" >> $HOME/.bashrc
-    echo "else" >> $HOME/.bashrc
-    echo " export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib" >> $HOME/.bashrc
-    echo "fi" >> $HOME/.bashrc
+    echo "function galacticus094() {" >> $HOME/.bashrc
+    echo " if [ -n \"\${LD_LIBRARY_PATH}\" ]; then" >> $HOME/.bashrc
+    echo "  export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64:\$LD_LIBRARY_PATH" >> $HOME/.bashrc
+    echo " else" >> $HOME/.bashrc
+    echo "  export LD_LIBRARY_PATH=$toolInstallPath/lib:$toolInstallPath/lib64" >> $HOME/.bashrc
+    echo " fi" >> $HOME/.bashrc
+    echo " if [ -n \"\${PATH}\" ]; then" >> $HOME/.bashrc
+    echo "  export PATH=$toolInstallPath/bin:\$PATH" >> $HOME/.bashrc
+    echo " else" >> $HOME/.bashrc
+    echo "  export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
+    echo " fi" >> $HOME/.bashrc
+    echo " if [ -n \"\${PYTHONPATH}\" ]; then" >> $HOME/.bashrc
+    echo "  export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib:\$PYTHONPATH" >> $HOME/.bashrc
+    echo " else" >> $HOME/.bashrc
+    echo "  export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib" >> $HOME/.bashrc
+    echo " fi" >> $HOME/.bashrc
     if [ -e $HOME/perl5/lib/perl5/local/lib.pm ]; then
-	echo "eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
+	echo " eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
     fi
-    echo "export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"\\" >> $HOME/.bashrc
-    echo "export GALACTICUS_CFLAGS=\"$libDirs -I$toolInstallPath/include\"\\" >> $HOME/.bashrc
-    echo "'" >> $HOME/.bashrc
+    echo " export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
+    echo " export GALACTICUS_CFLAGS=\"$libDirs -I$toolInstallPath/include\"" >> $HOME/.bashrc
+    echo "}" >> $HOME/.bashrc
 fi
 if [ -z ${cmdSetCShell} ]; then
     read -p "Add a Galacticus environment alias to .cshrc? [no/yes]: " RESPONSE
