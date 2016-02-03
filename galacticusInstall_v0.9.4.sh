@@ -2029,6 +2029,15 @@ modulesAtLevel[$iPackage]=2
     modulesApt[$iPackage]="libterm-readkey-perl"
    interactive[$iPackage]=0
 
+# Test::Inter
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Test::Inter"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
 # Math::SigFigs
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Math::SigFigs"
