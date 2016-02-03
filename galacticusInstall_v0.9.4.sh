@@ -2065,6 +2065,33 @@ modulesAtLevel[$iPackage]=1
     modulesApt[$iPackage]="libmime-lite-perl"
    interactive[$iPackage]=1
 
+# Devel::CheckLib
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Devel::CheckLib"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
+# File::ShareDir
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="File::ShareDir"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
+# Inline::C
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Inline::C"
+modulesAtLevel[$iPackage]=1
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
 # PDL
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="PDL"
