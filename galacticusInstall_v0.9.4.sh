@@ -1252,7 +1252,7 @@ do
 		else
 		    logmessage "   Installing from source"
 		    if [[ ${sourceURL[$i]} =~ "svn:" ]]; then
-			logexec svn checkout "${sourceURL[$i]}"
+			logexec svn checkout \"${sourceURL[$i]}\"
 			if [ $? -ne 0 ]; then
 			    logmessage "Trying svn checkout again using http protocol instead"
 			    baseName=`basename ${sourceURL[$i]}`
@@ -1260,7 +1260,7 @@ do
 			    logexec svn checkout "${sourceURL[$i]/svn:/http:}"
 			fi
 		    else
-			logexec wget "${sourceURL[$i]}"
+			logexec wget \"${sourceURL[$i]}\"
 		    fi
 		    if [ $? -ne 0 ]; then
 			logmessage "Could not download ${package[$i]}"
@@ -2578,7 +2578,7 @@ fi
 		    fi
 		else		    
                     # Check for local::lib.
-		    logexec perl -e "use local::lib"
+		    logexec perl -e \"use local::lib\"
 		    if [ $? -ne 0 ]; then
 			wget http://search.cpan.org/CPAN/authors/id/H/HA/HAARG/local-lib-2.000015.tar.gz >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
@@ -2620,14 +2620,14 @@ fi
 		    # Install as regular user.
 		    export PERL_MM_USE_DEFAULT=1
 		    if [ ${interactive[$i]} -eq 0 ]; then
-			logexec perl -Mlocal::lib -MCPAN -e "$cpanInstall"
+			logexec perl -Mlocal::lib -MCPAN -e \"$cpanInstall\"
 		    else
 			echo perl -Mlocal::lib -MCPAN -e "$cpanInstall" >>$glcLogFile
 			perl -Mlocal::lib -MCPAN -e "$cpanInstall"
 		    fi
 		fi
 		# Check that the module was installed successfully.
-		logexec perl -e "use $module" >>/dev/null 2>&1
+		logexec perl -e \"use $module\" >>/dev/null 2>&1
 		if [ $? -ne 0 ]; then
 		    logmessage "   ...failed"
 		    exit 1
