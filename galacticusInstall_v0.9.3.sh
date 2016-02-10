@@ -349,11 +349,12 @@ buildEnvironment[$iPackage]=""
 # gcc (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
             iGCC=$iPackage
+	iGCCVMin="4.0.0"
          package[$iPackage]="gcc"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gcc"
       getVersion[$iPackage]="versionString=(\`gcc --version\`); echo \${versionString[2]}"
-      minVersion[$iPackage]="4.0.0"
+      minVersion[$iPackage]=$iGCCVMin
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="gcc"
       aptInstall[$iPackage]="gcc"
@@ -368,11 +369,12 @@ buildEnvironment[$iPackage]=""
 # g++ (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
             iGPP=$iPackage
+	iGPPVMin="4.0.0"
          package[$iPackage]="g++"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash g++"
       getVersion[$iPackage]="versionString=(\`g++ --version\`); echo \${versionString[2]}"
-      minVersion[$iPackage]="4.0.0"
+      minVersion[$iPackage]=$iGPPVMin
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="gcc-g++"
       aptInstall[$iPackage]="g++"
@@ -387,11 +389,12 @@ buildEnvironment[$iPackage]=""
 # GFortran (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
         iFortran=$iPackage
+    iFortranVMin="4.8.999"
          package[$iPackage]="gfortran"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.8.999"
+      minVersion[$iPackage]=$iFortranVMin
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="gcc-gfortran"
       aptInstall[$iPackage]="gfortran"
@@ -606,7 +609,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gcc"
       getVersion[$iPackage]="versionString=(\`gcc --version\`); echo \${versionString[2]}"
-      minVersion[$iPackage]="4.0.0"
+      minVersion[$iPackage]=$iGCCVMin
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
@@ -625,7 +628,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash g++"
       getVersion[$iPackage]="versionString=(\`g++ --version\`); echo \${versionString[2]}"
-      minVersion[$iPackage]="4.0.0"
+      minVersion[$iPackage]=$iGPPVMin
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
@@ -644,7 +647,7 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="4.8.999"
+      minVersion[$iPackage]=$iFortranVMin
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
