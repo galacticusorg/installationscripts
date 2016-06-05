@@ -1927,6 +1927,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="libtext-table-perl"
    interactive[$iPackage]=0
 
+# Regexp::Common
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Regexp::Common"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-Regexp-Common"
+    modulesApt[$iPackage]="libregexp-common-perl"
+   interactive[$iPackage]=0
+
 # Text::Wrap
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Text::Wrap"
