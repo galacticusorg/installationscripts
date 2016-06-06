@@ -2494,7 +2494,12 @@ do
 	module=${modules[$i]}
         # Test if the module is already present.
 	echo "Testing for Perl module $module" >>$glcLogFile
-	perl -e "use $module" >>$glcLogFile 2>&1
+	if [[ $module == "Inline::C" ]]; then
+	    # Hardwired magic to test for Inline::C.
+	    perl -e 'use Inline C=>q{void testpres(){printf("inline c present\n");}};testpres' >>$glcLogFile 2>&1
+	else
+	    perl -e "use $module" >>$glcLogFile 2>&1
+	fi
 	if [ $? -eq 0 ]; then
 	    # Module already exists.
 	    echo $module - found
