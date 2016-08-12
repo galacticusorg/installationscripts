@@ -1918,6 +1918,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="perl-modules"
    interactive[$iPackage]=0
 
+# Sub::Identify
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Sub::Identify"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-Sub-Identify"
+    modulesApt[$iPackage]="libsub-identify-perl"
+   interactive[$iPackage]=0
+
 # Text::Table
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Text::Table"
