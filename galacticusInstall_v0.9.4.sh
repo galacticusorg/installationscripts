@@ -1936,6 +1936,24 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="libtext-table-perl"
    interactive[$iPackage]=0
 
+# Text::Template
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Text::Template"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-Text-Template"
+    modulesApt[$iPackage]="libtext-template-perl"
+   interactive[$iPackage]=0
+
+# Sub::Identify
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Sub::Identify"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-Sub-Identify"
+    modulesApt[$iPackage]=""
+   interactive[$iPackage]=0
+
 # Regexp::Common
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Regexp::Common"
