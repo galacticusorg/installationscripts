@@ -1945,6 +1945,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="libtext-template-perl"
    interactive[$iPackage]=0
 
+# NestedMap
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="NestedMap"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]=""
+    modulesApt[$iPackage]=""
+   interactive[$iPackage]=0
+
 # Sub::Identify
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Sub::Identify"
