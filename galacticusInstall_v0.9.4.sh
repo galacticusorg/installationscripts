@@ -521,7 +521,7 @@ buildEnvironment[$iPackage]=""
 # GFortran (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
         iFortran=$iPackage
-    iFortranVMin="6.0.0"
+    iFortranVMin="7.0.0"
          package[$iPackage]="gfortran"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
@@ -799,7 +799,7 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gsl-config && hash gsl-histogram"
       getVersion[$iPackage]="gsl-config --version"
       minVersion[$iPackage]="1.15"
-      maxVersion[$iPackage]="99.99"
+      maxVersion[$iPackage]="1.16"
       yumInstall[$iPackage]="gsl-devel"
       aptInstall[$iPackage]="libgsl0-dev gsl-bin"
        sourceURL[$iPackage]="http://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-1.16.tar.gz"
@@ -1951,15 +1951,6 @@ iPackage=$(expr $iPackage + 1)
 modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]=""
-    modulesApt[$iPackage]=""
-   interactive[$iPackage]=0
-
-# Sub::Identify
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Sub::Identify"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Sub-Identify"
     modulesApt[$iPackage]=""
    interactive[$iPackage]=0
 
