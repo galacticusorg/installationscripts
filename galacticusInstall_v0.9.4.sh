@@ -568,7 +568,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-devel"
       aptInstall[$iPackage]="apr"
-       sourceURL[$iPackage]="http://mirrors.sonic.net/apache//apr/apr-1.5.2.tar.bz2"
+       sourceURL[$iPackage]="http://mirrors.sonic.net/apache//apr/apr-1.6.3.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -587,7 +587,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-util"
       aptInstall[$iPackage]="apr-util"
-       sourceURL[$iPackage]="http://mirrors.sonic.net/apache//apr/apr-util-1.5.4.tar.bz2"
+       sourceURL[$iPackage]="http://mirrors.sonic.net/apache//apr/apr-util-1.6.1.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
