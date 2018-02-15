@@ -568,7 +568,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-devel"
       aptInstall[$iPackage]="apr"
-       sourceURL[$iPackage]="http://mirrors.sonic.net/apache//apr/apr-1.6.3.tar.gz"
+       sourceURL[$iPackage]="http://www-us.apache.org/dist//apr/apr-1.6.3.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -587,7 +587,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="apr-util"
       aptInstall[$iPackage]="apr-util"
-       sourceURL[$iPackage]="http://mirrors.sonic.net/apache//apr/apr-util-1.6.1.tar.gz"
+       sourceURL[$iPackage]="http://www-us.apache.org/dist//apr/apr-util-1.6.1.tar.bz2"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
@@ -858,7 +858,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="hdf5-devel"
       aptInstall[$iPackage]="hdf5-tools"
-       sourceURL[$iPackage]="http://www.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8.9/src/hdf5-1.8.9.tar.gz"
+       sourceURL[$iPackage]="https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.20/src/hdf5-1.8.20.tar.gz"
 buildEnvironment[$iPackage]="export F9X=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-fortran --enable-production"
