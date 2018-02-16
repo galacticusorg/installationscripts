@@ -557,6 +557,24 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
+# expat
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="expat"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash xmlwf"
+      getVersion[$iPackage]="echo 1.0.0"
+      minVersion[$iPackage]="0.0.0"
+      maxVersion[$iPackage]="99.99"
+      yumInstall[$iPackage]="expat-devel"
+      aptInstall[$iPackage]="libexpat-dev"
+       sourceURL[$iPackage]="http://downloads.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
 # Apache Portable Runtime library (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
             iAPR=$iPackage
@@ -1129,24 +1147,6 @@ buildEnvironment[$iPackage]="copy"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]=""
         makeTest[$iPackage]=""
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=0
-
-# expat
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="expat"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash xmlwf"
-      getVersion[$iPackage]="echo 1.0.0"
-      minVersion[$iPackage]="0.0.0"
-      maxVersion[$iPackage]="99.99"
-      yumInstall[$iPackage]="expat-devel"
-      aptInstall[$iPackage]=""
-       sourceURL[$iPackage]="http://downloads.sourceforge.net/project/expat/expat/2.1.0/expat-2.1.0.tar.gz"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
-        makeTest[$iPackage]="check"
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
