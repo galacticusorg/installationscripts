@@ -2,7 +2,7 @@
 
 # Galacticus install script.
 # v0.9.4
-# Â© Andrew Benson 2012, 2013, 2014, 2015
+# © Andrew Benson 2012, 2013, 2014, 2015
 
 # Functions
 function contains() {
@@ -1950,8 +1950,8 @@ iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="NestedMap"
 modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
-    modulesYum[$iPackage]=""
-    modulesApt[$iPackage]=""
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
 # Regexp::Common
