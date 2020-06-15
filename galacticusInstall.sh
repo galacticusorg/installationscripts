@@ -1,8 +1,7 @@
 #!/usr/bin/env bash
 
 # Galacticus install script.
-# v0.9.4
-# © Andrew Benson 2012, 2013, 2014, 2015
+# © Andrew Benson 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020
 
 # Functions
 function contains() {
@@ -116,7 +115,7 @@ if [ ! -z ${cmdCores} ]; then
 fi
 
 # Open the log file.
-echo "Galacticus v0.9.4 install log" > $glcLogFile
+echo "Galacticus install log" > $glcLogFile
 
 # Write some useful machine info to the log file if possible.
 hash uname >& /dev/null
@@ -256,11 +255,6 @@ if [ -n "${C_INCLUDE_PATH}" ]; then
     export C_INCLUDE_PATH=$toolInstallPath/include:$C_INCLUDE_PATH
 else
     export C_INCLUDE_PATH=$toolInstallPath/include
-fi
-if [ -n "${PYTHONPATH}" ]; then
-    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.7/site-packages:$toolInstallPath/lib64/python2.7/site-packages:$PYTHONPATH
-else
-    export PYTHONPATH=$toolInstallPath/py-lib:$toolInstallPath/lib/python2.7/site-packages:$toolInstallPath/lib64/python2.7/site-packages
 fi
 if [ -n "${PERLLIB}" ]; then
     export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl:$PERLLIB
@@ -477,13 +471,13 @@ buildEnvironment[$iPackage]=""
 # gcc (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
             iGCC=$iPackage
-	iGCCVMin="4.0.0"
+	iGCCVMin="10.0.1"
          package[$iPackage]="gcc"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gcc"
       getVersion[$iPackage]="versionString=(\`gcc --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGCCVMin
-      maxVersion[$iPackage]="9.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="gcc"
       aptInstall[$iPackage]="gcc"
        sourceURL[$iPackage]="null"
@@ -503,7 +497,7 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash g++"
       getVersion[$iPackage]="versionString=(\`g++ --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGPPVMin
-      maxVersion[$iPackage]="9.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="gcc-g++"
       aptInstall[$iPackage]="g++"
        sourceURL[$iPackage]="null"
@@ -517,13 +511,13 @@ buildEnvironment[$iPackage]=""
 # GFortran (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
         iFortran=$iPackage
-    iFortranVMin="7.0.0"
+    iFortranVMin="10.0.1"
          package[$iPackage]="gfortran"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]=$iFortranVMin
-      maxVersion[$iPackage]="9.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="gcc-gfortran"
       aptInstall[$iPackage]="gfortran"
        sourceURL[$iPackage]="null"
@@ -533,25 +527,6 @@ buildEnvironment[$iPackage]=""
         makeTest[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
-
-# SQLite (will only be installed if we need to compile any of the GNU Compiler Collection)
-iPackage=$(expr $iPackage + 1)
-         iSQLite=$iPackage
-         package[$iPackage]="sqlite"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <sqlite3.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs && hash sqlite3"
-      getVersion[$iPackage]="versionString=(\`sqlite3 -version\`); echo \${versionString[0]}"
-      minVersion[$iPackage]="3.7.12"
-      maxVersion[$iPackage]="99.99.99"
-      yumInstall[$iPackage]="sqlite"
-      aptInstall[$iPackage]="sqlite"
-       sourceURL[$iPackage]="http://www.sqlite.org/2013/sqlite-autoconf-3080100.tar.gz"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath --enable-threadsafe"
-        makeTest[$iPackage]=""
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=1
 
 # expat
 iPackage=$(expr $iPackage + 1)
@@ -570,44 +545,6 @@ buildEnvironment[$iPackage]=""
         makeTest[$iPackage]="check"
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
-
-# Apache Portable Runtime library (will only be installed if we need to compile any of the GNU Compiler Collection)
-iPackage=$(expr $iPackage + 1)
-            iAPR=$iPackage
-         package[$iPackage]="apr"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lapr-1"
-      getVersion[$iPackage]="echo \"#include <apr-1/apr_version.h>\" > dummy.c; echo \"#include <stdio.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",APR_MAJOR_VERSION,APR_MINOR_VERSION,APR_PATCH_VERSION);}\" >> dummy.c; gcc dummy.c $libDirs -lapr-1; ./a.out"
-      minVersion[$iPackage]="0.0.0"
-      maxVersion[$iPackage]="99.99.99"
-      yumInstall[$iPackage]="apr-devel"
-      aptInstall[$iPackage]="apr"
-       sourceURL[$iPackage]="http://www-us.apache.org/dist//apr/apr-1.6.3.tar.bz2"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath"
-        makeTest[$iPackage]="test"
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=1
-
-# Apache Portable Runtime utility (will only be installed if we need to compile any of the GNU Compiler Collection)
-iPackage=$(expr $iPackage + 1)
-        iAPRutil=$iPackage
-         package[$iPackage]="apr-util"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -laprutil-1"
-      getVersion[$iPackage]="echo \"#include <apr-1/apr_version.h>\" > dummy.c; echo \"#include <stdio.h>\" >> dummy.c; echo \"#include <apr-1/apu_version.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",APU_MAJOR_VERSION,APU_MINOR_VERSION,APU_PATCH_VERSION);}\" >> dummy.c; gcc dummy.c $libDirs -laprutil-1; ./a.out"
-      minVersion[$iPackage]="0.0.0"
-      maxVersion[$iPackage]="99.99.99"
-      yumInstall[$iPackage]="apr-util"
-      aptInstall[$iPackage]="apr-util"
-       sourceURL[$iPackage]="http://www-us.apache.org/dist//apr/apr-util-1.6.1.tar.bz2"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath --with-apr=$toolInstallPath"
-        makeTest[$iPackage]="test"
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=1
 
 # Zlib
 iPackage=$(expr $iPackage + 1)
@@ -628,26 +565,7 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
-# svn (will only be installed if we need to compile any of the GNU Compiler Collection)
-iPackage=$(expr $iPackage + 1)
-            iSVN=$iPackage
-         package[$iPackage]="svn"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash svn"
-      getVersion[$iPackage]="svn --version --quiet"
-      minVersion[$iPackage]="0.0.0"
-      maxVersion[$iPackage]="99.99.99"
-      yumInstall[$iPackage]="subversion"
-      aptInstall[$iPackage]="subversion"
-       sourceURL[$iPackage]="http://mirror.reverse.net/pub/apache/subversion/subversion-1.9.3.tar.bz2"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath"
-        makeTest[$iPackage]="check"
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=1
-
-# GMP (will only be installed if we need to compile any of the GNU Compiler Collection)
+   # GMP (will only be installed if we need to compile any of the GNU Compiler Collection)
 iPackage=$(expr $iPackage + 1)
             iGMP=$iPackage
          package[$iPackage]="gmp"
@@ -755,10 +673,10 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gcc"
       getVersion[$iPackage]="versionString=(\`gcc --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGCCVMin
-      maxVersion[$iPackage]="9.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
+       sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -774,10 +692,10 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash g++"
       getVersion[$iPackage]="versionString=(\`g++ --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGPPVMin
-      maxVersion[$iPackage]="9.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
+       sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -793,10 +711,10 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]=$iFortranVMin
-      maxVersion[$iPackage]="9.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="svn://gcc.gnu.org/svn/gcc/trunk"
+       sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -917,30 +835,6 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
-# OpenSSL (required for Mercurial)
-iPackage=$(expr $iPackage + 1)
-    iSSL=$iPackage
-         package[$iPackage]="OpenSSL"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lssl"
-      getVersion[$iPackage]="echo 1.0.0"
-      minVersion[$iPackage]="0.9.9"
-      maxVersion[$iPackage]="1.0.3"
-      yumInstall[$iPackage]="openssl openssl-devel"
-      aptInstall[$iPackage]="openssl libssl-dev"
-       sourceURL[$iPackage]="ftp://ftp.openssl.org/source/openssl-1.0.2e.tar.gz"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath shared"
-        makeTest[$iPackage]=""
-#! <workaround>
-#! <description>Docs do not install because of POD syntax problems</description>
-#! <replaced>makeInstall[$iPackage]="install"</replaced>
-#! <url>https://bugs.archlinux.org/task/35868</url>
-#! </workaround>
-     makeInstall[$iPackage]="install_sw"
-   parallelBuild[$iPackage]=1
-
 # bzip2
 iPackage=$(expr $iPackage + 1)
               iBZIP2=$iPackage
@@ -960,58 +854,21 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install PREFIX=$toolInstallPath"
    parallelBuild[$iPackage]=0
 
-# Python
+# git
 iPackage=$(expr $iPackage + 1)
-         iPYTHON=$iPackage
-         package[$iPackage]="python"
+            iGIT=$iPackage
+         package[$iPackage]="git"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash python && hash python-config"
-      getVersion[$iPackage]="versionString=(\`python -V 2>&1\`); echo \${versionString[1]}"
-      minVersion[$iPackage]="2.3.999"
-      maxVersion[$iPackage]="99.99"
-      yumInstall[$iPackage]="python"
-      aptInstall[$iPackage]="python python-dev"
-       sourceURL[$iPackage]="http://www.python.org/ftp/python/2.7.6/Python-2.7.6.tgz"
+    testPresence[$iPackage]="hash git"
+      getVersion[$iPackage]="versionString=(\`git version\`); echo \${versionString[2]}"
+      minVersion[$iPackage]="2.0.0"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="git"
+      aptInstall[$iPackage]="git-all"
+       sourceURL[$iPackage]="https://github.com/git/git/archive/v2.27.0.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
-        makeTest[$iPackage]="test"
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=1
-
-# docutils
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="docutils"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="python -c 'import docutils'"
-      getVersion[$iPackage]="python -c 'import docutils; print docutils.__version__'"
-      minVersion[$iPackage]="0.10"
-      maxVersion[$iPackage]="9.9.9"
-      yumInstall[$iPackage]="python-docutils"
-      aptInstall[$iPackage]="python-docutils"
-       sourceURL[$iPackage]="http://downloads.sourceforge.net/project/docutils/docutils/0.10/docutils-0.10.tar.gz"
-buildEnvironment[$iPackage]="python"
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="skip"
-        makeTest[$iPackage]=""
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=0
-
-# hg
-iPackage=$(expr $iPackage + 1)
-             iHG=$iPackage
-         package[$iPackage]="hg"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash hg"
-      getVersion[$iPackage]="versionString=(\`hg version\`); echo \${versionString[4]}"
-      minVersion[$iPackage]="2.0.0"
-      maxVersion[$iPackage]="9.9.9"
-      yumInstall[$iPackage]="hg"
-      aptInstall[$iPackage]="hg"
-       sourceURL[$iPackage]="http://mercurial.selenic.com/release/mercurial-2.4.1.tar.gz"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="skip"
         makeTest[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
@@ -1120,13 +977,13 @@ do
 		    fi
 		else
 		    logmessage "   Installing from source"
-		    if [[ ${sourceURL[$i]} =~ "svn:" ]]; then
-			logexec svn checkout \"${sourceURL[$i]}\"
+		    if [[ ${sourceURL[$i]} =~ "git:" ]]; then
+			logexec git clone checkout \"${sourceURL[$i]}\"
 			if [ $? -ne 0 ]; then
-			    logmessage "Trying svn checkout again using http protocol instead"
+			    logmessage "Trying git checkout again using http protocol instead"
 			    baseName=`basename ${sourceURL[$i]}`
 			    logexec rm -rf $baseName
-			    logexec svn checkout "${sourceURL[$i]/svn:/http:}"
+			    logexec git clone "${sourceURL[$i]/git:/http:}"
 			fi
 		    else
 			logexec wget \"${sourceURL[$i]}\"
@@ -1136,7 +993,7 @@ do
 			exit 1
 		    fi
 		    baseName=`basename ${sourceURL[$i]}`
-		    if [[ ${sourceURL[$i]} =~ "svn:" ]]; then  
+		    if [[ ${sourceURL[$i]} =~ "git:" ]]; then  
 			dirName=$baseName
 		    else
 			unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
@@ -1158,17 +1015,11 @@ do
 		    if [ $i -eq $iHDF5 ]; then
 			find . -name "*.c" | xargs sed -r -i~ /"^\s*\/\/"/d
 		    fi
-     		    # Check for Python package.
+     		    # Check for special package.
 		    if [ -z "${buildEnvironment[$i]}" ]; then
-			isPython=0
 			isPerl=0
 			isCopy=0
 		    else
-			if [ "${buildEnvironment[$i]}" = "python" ]; then
-			    isPython=1
-			else
-			    isPython=0
-			fi
 			if [ "${buildEnvironment[$i]}" = "perl" ]; then
 			    isPerl=1
 			else
@@ -1180,52 +1031,7 @@ do
 			    isCopy=0
 			fi
 		    fi
-		    if [ $isPython -eq 1 ]; then
-		        # This is a Python package.
-			if [ $installAsRoot -eq 1 ]; then
-			    # Install Python package as root.
-			    echo "$rootPassword" | $suCommand python setup.py install $suClose >>$glcLogFile 2>&1
-			else
-                            # Check that we have a virtual Python install
-			    if [ ! -e $toolInstallPath/bin/python ]; then
-				wget http://peak.telecommunity.com/dist/virtual-python.py >>$glcLogFile 2>&1
-				if [ $? -ne 0 ]; then
-				    logmessage "Failed to download virtual-python.py"
-				    exit 1
-				fi
-                                # Check if there is a site-packages folder.
-				virtualPythonOptions=" "
-				pythonSitePackages=`python -c "import sys, os; py_version = 'python%s.%s' % (sys.version_info[0], sys.version_info[1]); print os.path.join(sys.prefix, 'lib', py_version,'site-packages')"`
-				if [ ! -e $pythonSitePackages ]; then
-				    virtualPythonOptions="$virtualPythonOptions --no-site-packages"
-				    echo "No Python site-packages found - will run virtual-python.py with --no-site-packages options" >>$glcLogFile 2>&1
-				fi
-				python virtual-python.py --prefix $toolInstallPath $virtualPythonOptions >>$glcLogFile 2>&1
-				if [ $? -ne 0 ]; then
-				    logmessage "Failed to install virtual-python.py"
-				    exit 1
-				fi
-				wget http://peak.telecommunity.com/dist/ez_setup.py >>$glcLogFile 2>&1
-				if [ $? -ne 0 ]; then
-				    logmessage "Failed to download ez_setup.py"
-				    exit 1
-				fi
-				$toolInstallPath/bin/python ez_setup.py --prefix $toolInstallPath  >>$glcLogFile 2>&1
-				if [ $? -ne 0 ]; then
-				    logmessage "Failed to install ez_setup.py"
-				    exit 1
-				fi
-			    fi
-			    # Install Python package as regular user.
-			    $toolInstallPath/bin/python setup.py install --prefix=$toolInstallPath >>$glcLogFile 2>&1
-			fi
-		        # Check that install succeeded.
-			if [ $? -ne 0 ]; then
-			    echo "Could not install ${package[$i]}"
-			    echo "Could not install ${package[$i]}" >>$glcLogFile
-			    exit 1
-			fi
-		    elif [ $isCopy -eq 1 ]; then
+		    if [ $isCopy -eq 1 ]; then
 		        # This is a package that we simply copy.
 			if [ $installAsRoot -eq 1 ]; then
 			    # Copy executable as root.
@@ -1309,31 +1115,6 @@ EOF
 			fi
 			mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
 			cp -f libblas.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
-		    elif [[ $i -eq $iHG ]]; then
-			# Save a copy of the version file.
-			cp mercurial/__version__.py mercurial/__version__.py.SAFE 
-			# Make local version.
-			make local >>$glcLogFile 2>&1
-			if [ $? -ne 0 ]; then
-			    echo "Could not make ${package[$i]}"
-			    echo "Could not make ${package[$i]}" >>$glcLogFile
-			    exit 1
-			fi
-		        # Install the package.
-			if [ $installAsRoot -eq 1 ]; then
-			    echo "$rootPassword" | eval $suCommand make install PREFIX=$toolInstallPath $suClose >>$glcLogFile 2>&1
-			else
-			    make install PREFIX=$toolInstallPath >>$glcLogFile 2>&1
-			fi
-			if [ $? -ne 0 ]; then
-			    echo "Could not install ${package[$i]}"
-			    echo "Could not install ${package[$i]}" >>$glcLogFile
-			    exit 1
-			fi
-			# Version file gets clobbered (due to bug in package).
-			if [ ! -e $toolInstallPath/lib/python2.7/site-packages/mercurial/__version__.py ]; then
-			    cp mercurial/__version__.py.SAFE $toolInstallPath/lib/python2.7/site-packages/mercurial/
-			fi
 		    else
                         # This is a regular (configure|make|make install) package.
                         # Test whether we have an m4 installed.
@@ -1542,32 +1323,6 @@ EOF
 		    fi
 		fi
             fi
- 	    # Hardwired magic.
-	    # If we installed SQLite, force SVN to use it.
-	    if [ $i -eq $iZLIB ]; then
-		configOptions[$iSVN]="${configOptions[$iSVN]} --with-zlib=$toolInstallPath"
-	    fi
-	    if [ $i -eq $iSQLite ]; then
-		configOptions[$iSVN]="${configOptions[$iSVN]} --with-sqlite=$toolInstallPath"
-	    fi
-	    # If we installed APR, force SVN to use it.
-	    if [ $i -eq $iAPR ]; then
-		configOptions[$iSVN]="${configOptions[$iSVN]} --with-apr=$toolInstallPath"
-	    fi
-	    # If we installed APR utils, force SVN to use it.
-	    if [ $i -eq $iAPRutil ]; then
-		configOptions[$iSVN]="${configOptions[$iSVN]} --with-apr-util=$toolInstallPath"
-	    fi
-	    # If we installed SSL check that we have certificates.
-	    if [ $i -eq $iSSL ]; then
-		for dir in "/etc/ssl/certs"
-		do
-		    if [[ -e $dir/ca-bundle.crt && ! -e $toolInstallPath/ssl/certs/ca-bundle.crt ]]; then
-			rm -rf $toolInstallPath/ssl/certs
-			ln -sf $dir $toolInstallPath/ssl/certs
-		    fi
-		done
-	    fi
 	fi
         # Hardwired magic.        
 	# If we installed (or already had) v1.13 or v1.14 of GSL then downgrade the version of FGSL that we want.
@@ -1615,11 +1370,7 @@ EOF
 		fi
 	    fi
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
-		# We have all GNU Compiler Collection components, so we don't need svn, GMP, MPFR, MPC, flex, or bison.
-		packageAtLevel[$iSQLite]=100
-		packageAtLevel[$iAPR]=100
-		packageAtLevel[$iAPRutil]=100
-		packageAtLevel[$iSVN]=100
+		# We have all GNU Compiler Collection components, so we don't need GMP, MPFR, MPC, flex, or bison.
 		packageAtLevel[$iGMP]=100
 		packageAtLevel[$iMPFR]=100
 		packageAtLevel[$iMPC]=100
@@ -1690,8 +1441,6 @@ EOF
 		aptInstall[iZLIB]="null"
 		yumInstall[iHDF5]="null"
 		aptInstall[iHDF5]="null"
-		yumInstall[iPYTHON]="null"
-		aptInstall[iPYTHON]="null"
 	    fi
 	fi
     fi
@@ -1712,15 +1461,6 @@ modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="perl-CPAN"
     modulesApt[$iPackage]="perl-modules"
-   interactive[$iPackage]=0
-
-# Sub::Identify
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Sub::Identify"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Sub-Identify"
-    modulesApt[$iPackage]="libsub-identify-perl"
    interactive[$iPackage]=0
 
 # Text::Table
@@ -1759,15 +1499,6 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="libregexp-common-perl"
    interactive[$iPackage]=0
 
-# Text::Wrap
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Text::Wrap"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]=""
-    modulesApt[$iPackage]=""
-   interactive[$iPackage]=0
-
 # Sort::Topological
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Sort::Topological"
@@ -1792,33 +1523,6 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="liblatex-encode-perl"
    interactive[$iPackage]=0
 
-# File::Find
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Find"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# File::Which
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Which"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-File-Which"
-    modulesApt[$iPackage]="libfile-which-perl"
-   interactive[$iPackage]=0
-
-# File::Temp
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Temp"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-File-Temp"
-    modulesApt[$iPackage]="libfile-temp-perl"
-   interactive[$iPackage]=0
-
 # File::Copy
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="File::Copy"
@@ -1828,24 +1532,6 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
-# Switch
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Switch"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=1
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# MIME::Lite
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="MIME::Lite"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-MIME-Lite"
-    modulesApt[$iPackage]="libmime-lite-perl"
-   interactive[$iPackage]=1
-
 # XML::SAX
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="XML::SAX"
@@ -1853,15 +1539,6 @@ modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="perl-XML-SAX"
     modulesApt[$iPackage]="libxml-sax-perl"
-   interactive[$iPackage]=0
-
-# XML::Parser
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="XML::Parser"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-XML-Parser"
-    modulesApt[$iPackage]=""
    interactive[$iPackage]=0
 
 # XML::Simple
@@ -1927,33 +1604,6 @@ modulesAtLevel[$iPackage]=-1
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
-# File::Compare
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Compare"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# File::Copy
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Copy"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# File::Find
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Find"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
 # File::Slurp
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="File::Slurp"
@@ -1963,64 +1613,10 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="libfile-slurp-perl"
    interactive[$iPackage]=0
 
-# threads
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="threads"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-threads"
-    modulesApt[$iPackage]="libthreads-perl"
-   interactive[$iPackage]=0
-
-# Text::Balanced
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Text::Balanced"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# Net::SMTP::SSL
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Net::SMTP::SSL"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Net-SMTP-SSL"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
 # Scalar::Util
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Scalar::Util"
 modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# Sys::CPU
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Sys::CPU"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Sys-CPU"
-    modulesApt[$iPackage]="libsys-cpu-perl"
-   interactive[$iPackage]=0
-
-# POSIX
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="POSIX"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# POSIX::strftime::GNU
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="POSIX::strftime::GNU"
-modulesAtLevel[$iPackage]=1
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="null"
     modulesApt[$iPackage]="null"
@@ -2273,12 +1869,12 @@ fi
     
 done
 
-# Retrieve Galacticus via Mercurial.
+# Retrieve Galacticus via Git.
 if [[ $runningAsRoot -eq 1 ]]; then
     echo "Script is running as root - if you want to install Galacticus itself as a regular user, just quit (Ctrl-C) now."
 fi
 if [ -z ${cmdGalacticusPrefix} ]; then
-    galacticusInstallPath=$HOME/Galacticus/v0.9.4
+    galacticusInstallPath=$HOME/Galacticus/galacticus
     read -p "Path to install Galacticus to [$galacticusInstallPath]: " RESPONSE
     if [ -n "$RESPONSE" ]; then
 	galacticusInstallPath=$RESPONSE
@@ -2290,17 +1886,17 @@ if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
     if [[ $installLevel -eq -1 ]]; then
 	cd `dirname $galacticusInstallPath`
-	wget https://users.obs.carnegiescience.edu/abenson/galacticus/versions/galacticus_datasets.tar.bz2 2>&1
-	tar xvfj galacticus_datasets.tar.bz2 2>&1
-	mv galacticus_datasets datasets
+	wget https://github.com/galacticusorg/datasets/archive/masterRelease.tar.gz 2>&1
+	tar xvfz masterRelease.tar.bz2 2>&1
+	mv datasets-masterRelease datasets
 	cd -
     else
-	hg clone https://bitbucket.org/galacticusdev/galacticus $galacticusInstallPath 2>&1
+	git clone git@github.com:galacticusorg/galacticus.git $galacticusInstallPath 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to download Galacticus"
 	    exit 1
 	fi
-	hg clone https://bitbucket.org/galacticusdev/datasets $galacticusInstallPath 2>&1
+	git clone git@github.com:galacticusorg/datasets.git $galacticusInstallPath 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to download Galacticus datasets"
 	    exit 1
@@ -2333,11 +1929,6 @@ if [ "$RESPONSE" = yes ] ; then
     echo " else" >> $HOME/.bashrc
     echo "  export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
     echo " fi" >> $HOME/.bashrc
-    echo " if [ -n \"\${PYTHONPATH}\" ]; then" >> $HOME/.bashrc
-    echo "  export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib:\$PYTHONPATH" >> $HOME/.bashrc
-    echo " else" >> $HOME/.bashrc
-    echo "  export PYTHONPATH=$toolInstallPath/python:$toolInstallPath/py-lib" >> $HOME/.bashrc
-    echo " fi" >> $HOME/.bashrc
     if [ -e $HOME/perl5/lib/perl5/local/lib.pm ]; then
 	echo " eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
     fi
@@ -2369,11 +1960,6 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else \\" >> $HOME/.cshrc
     echo " setenv PATH $toolInstallPath/bin \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
-    echo "if ( \$?PYTHONPATH ) then \\" >> $HOME/.cshrc
-    echo " setenv PYTHONPATH $toolInstallPath/python:$toolInstallPath/py-lib:\$PYTHONPATH \\" >> $HOME/.cshrc
-    echo "else \\" >> $HOME/.cshrc
-    echo " setenv PYTHONPATH $toolInstallPath/python:$toolInstallPath/py-lib \\" >> $HOME/.cshrc
-    echo "endif \\" >> $HOME/.cshrc
     if [ -e $HOME/perl5/lib/perl5/local/lib.pm ]; then
 	echo "eval \`perl -I$HOME/perl5/lib/perl5 -Mlocal::lib\` \\" >> $HOME/.cshrc
     fi
@@ -2387,7 +1973,7 @@ fi
 cd $galacticusInstallPath
 if [[ $installLevel -eq -1 ]]; then
     # Install the binary executable.
-    logexec wget http://users.obs.carnegiescience.edu/abenson/galacticus/versions/galacticus_latest_x86_64.exe -O $galacticusInstallPath/Galacticus.exe 2>&1
+    logexec wget https://github.com/galacticusorg/galacticus/releases/download/masterRelease/galacticus.exe -O $galacticusInstallPath/Galacticus.exe 2>&1
     logexec chmod u+rx $galacticusInstallPath/Galacticus.exe
 else
     
