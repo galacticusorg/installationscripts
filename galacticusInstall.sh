@@ -741,25 +741,6 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
-# FGSL
-iPackage=$(expr $iPackage + 1)
-           iFGSL=$iPackage
-         package[$iPackage]="FGSL"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lfgsl_gfortran"
-      getVersion[$iPackage]="echo \"program test; use fgsl; write (*,'(a)') fgsl_version; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lfgsl_gfortran; ./a.out"
-      minVersion[$iPackage]="0.9.3.999"
-      maxVersion[$iPackage]="9.9.9"
-      yumInstall[$iPackage]="null"
-      aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="http://www.lrz.de/services/software/mathematik/gsl/fortran/download/fgsl-0.9.4.tar.gz"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix $toolInstallPath --f90 gfortran --gsl `gsl-config --prefix`"
-        makeTest[$iPackage]="test"
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=1
-
 # FoX
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="FoX"
@@ -1323,21 +1304,6 @@ EOF
 		    fi
 		fi
             fi
-	fi
-        # Hardwired magic.        
-	# If we installed (or already had) v1.13 or v1.14 of GSL then downgrade the version of FGSL that we want.
-	if [ $i -eq $iGSL ]; then
-	    gslVersion=`gsl-config --version`
-	    if [ $gslVersion = "1.13" ]; then
-		minVersion[$iFGSL]="0.9.2.9"
-		maxVersion[$iFGSL]="0.9.2.1"
-		sourceURL[$iFGSL]="http://www.lrz.de/services/software/mathematik/gsl/fortran/fgsl-0.9.2.tar.gz"
-	    fi
-	    if [ $gslVersion = "1.14" ]; then
-		minVersion[$iFGSL]="0.9.2.9"
-		maxVersion[$iFGSL]="0.9.3.1"
-		sourceURL[$iFGSL]="http://www.lrz.de/services/software/mathematik/gsl/fortran/fgsl-0.9.3.tar.gz"
-	    fi
 	fi
         # Hardwired magic.        
         # Check if GCC/G++/Fortran are installed - delist MPFR, GMP and MPC if so.
