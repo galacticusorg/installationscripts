@@ -471,7 +471,7 @@ buildEnvironment[$iPackage]=""
 # gcc (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
             iGCC=$iPackage
-	iGCCVMin="10.0.1"
+	iGCCVMin="4.0.0"
          package[$iPackage]="gcc"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gcc"
@@ -511,7 +511,7 @@ buildEnvironment[$iPackage]=""
 # GFortran (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
         iFortran=$iPackage
-    iFortranVMin="10.0.1"
+    iFortranVMin="10.1.0"
          package[$iPackage]="gfortran"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
@@ -846,7 +846,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="1.0.1"
       yumInstall[$iPackage]="bzip2 bzip2-devel bzip2-libs"
       aptInstall[$iPackage]="bzip2 libbz2-dev"
-       sourceURL[$iPackage]="http://www.bzip.org/1.0.6/bzip2-1.0.6.tar.gz"
+       sourceURL[$iPackage]="https://sourceware.org/pub/bzip2/bzip2-1.0.8.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="skip"
@@ -994,7 +994,7 @@ do
 		    fi
 		    baseName=`basename ${sourceURL[$i]}`
 		    if [[ ${sourceURL[$i]} =~ "git:" ]]; then  
-			dirName=$baseName
+			dirName=`echo $baseName | sed s/"\.git"//`
 		    else
 			unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
 			logexec tar xvf$unpack $baseName
@@ -1891,16 +1891,18 @@ if [ ! -e $galacticusInstallPath ]; then
 	mv datasets-masterRelease datasets
 	cd -
     else
-	git clone git@github.com:galacticusorg/galacticus.git $galacticusInstallPath 2>&1
+	cd `dirname $galacticusInstallPath`
+	git clone https://github.com/galacticusorg/galacticus.git galacticus 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to download Galacticus"
 	    exit 1
 	fi
-	git clone git@github.com:galacticusorg/datasets.git $galacticusInstallPath 2>&1
+	git clone https://github.com/galacticusorg/datasets.git datasets 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to download Galacticus datasets"
 	    exit 1
 	fi
+	cd -
     fi
 fi
 
@@ -1934,8 +1936,8 @@ if [ "$RESPONSE" = yes ] ; then
     fi
     echo " export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
     echo " export GALACTICUS_CFLAGS=\"$libDirs -I$toolInstallPath/include\"" >> $HOME/.bashrc
-    echo " export GALACTICUS_EXEC_PATH=$galacticusInstallPath/galacticus" >> $HOME/.bashrc
-    echo " export GALACTICUS_DATA_PATH=$galacticusInstallPath/datasets" >> $HOME/.bashrc
+    echo " export GALACTICUS_EXEC_PATH=`dirname $galacticusInstallPath`/galacticus" >> $HOME/.bashrc
+    echo " export GALACTICUS_DATA_PATH=`dirname $galacticusInstallPath`/datasets" >> $HOME/.bashrc
     echo "}" >> $HOME/.bashrc
 fi
 if [ -z ${cmdSetCShell} ]; then
@@ -1965,8 +1967,8 @@ if [ "$RESPONSE" = yes ] ; then
     fi
     echo "setenv GALACTICUS_FCFLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.cshrc
     echo "setenv GALACTICUS_CFLAGS \"$libDirs -I$toolInstallPath/include\"" >> $HOME/.cshrc
-    echo "setenv GALACTICUS_EXEC_PATH $galacticusInstallPath/galacticus" >> $HOME/.cshrc
-    echo "setenv GALACTICUS_DATA_PATH $galacticusInstallPath/datasets'" >> $HOME/.cshrc
+    echo "setenv GALACTICUS_EXEC_PATH `dirname $galacticusInstallPath`/galacticus" >> $HOME/.cshrc
+    echo "setenv GALACTICUS_DATA_PATH `dirname $galacticusInstallPath`/datasets'" >> $HOME/.cshrc
 fi
 
 # Determine if we want to install from source, or use the static binary.
@@ -2009,8 +2011,8 @@ fi
 # Run a test case.
 echo "Running a quick test of Galacticus - should take around 1 minute on a single core (less time if you have multiple cores)"
 echo "Running a quick test of Galacticus - should take around 1 minute on a single core (less time if you have multiple cores)" >> $glcLogFile
-export GALACTICUS_EXEC_PATH=$galacticusInstallPath/galacticus
-export GALACTICUS_DATA_PATH=$galacticusInstallPath/datasets
+export GALACTICUS_EXEC_PATH=`dirname $galacticusInstallPath`/galacticus
+export GALACTICUS_DATA_PATH=`dirname $galacticusInstallPath`/datasets
 ./Galacticus.exe parameters/quickTest.xml >>$glcLogFile 2>&1
 if [ $? -ne 0 ]; then
     logmessage "failed to run Galacticus"
