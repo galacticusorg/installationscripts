@@ -730,10 +730,10 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gsl-config && hash gsl-histogram"
       getVersion[$iPackage]="gsl-config --version"
       minVersion[$iPackage]="1.15"
-      maxVersion[$iPackage]="1.16"
+      maxVersion[$iPackage]="2.6"
       yumInstall[$iPackage]="gsl-devel"
       aptInstall[$iPackage]="libgsl0-dev gsl-bin"
-       sourceURL[$iPackage]="http://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-1.16.tar.gz"
+       sourceURL[$iPackage]="http://www.mirrorservice.org/sites/ftp.gnu.org/gnu/gsl/gsl-2.6.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
