@@ -1465,15 +1465,6 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="libregexp-common-perl"
    interactive[$iPackage]=0
 
-# Sort::Topological
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Sort::Topological"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
 # LaTeX::Encode
 #! <workaround>
 #!  <description>Global symbols are not correctly imported with a modern Perl</description>
