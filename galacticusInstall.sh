@@ -1429,6 +1429,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="perl-modules"
    interactive[$iPackage]=0
 
+# Clone
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Clone"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-Clone"
+    modulesApt[$iPackage]="libcline-perl"
+   interactive[$iPackage]=0
+
 # Text::Table
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="Text::Table"
