@@ -555,7 +555,7 @@ iPackage=$(expr $iPackage + 1)
        sourceURL[$iPackage]="https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2.5.0.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]=""
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]="check"
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
