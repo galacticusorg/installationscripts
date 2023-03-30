@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 # Galacticus install script.
-# © Andrew Benson 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022
+# Copyright Andrew Benson 2012, 2013, 2014, 2015, 2016, 2017, 2018, 2019, 2020, 2021, 2022
 
 # Functions
 function contains() {
