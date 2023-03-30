@@ -17,6 +17,10 @@ jobs:
       - name: "Set environmental variables"
         run: |
           echo "GALACTICUS_EXEC_PATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+      - name: Install tools
+        run: |
+          sudo apt -y update
+          sudo apt install -y gcc-multilib
       - name: Run the installation script
         run: |
           cd $GALACTICUS_EXEC_PATH
