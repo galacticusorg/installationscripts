@@ -124,7 +124,7 @@ fi
 
 # Set defaults.
 catLogOnError="no"
-if [ -z ${cmdCatLogOnError} ]; then
+if [ ! -z ${cmdCatLogOnError} ]; then
     catLogOnError=$cmdCatLogOnError
 fi
 
