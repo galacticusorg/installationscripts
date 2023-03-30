@@ -2113,7 +2113,7 @@ fi
 cd $galacticusInstallPath
 if [[ $installLevel -eq -1 ]]; then
     # Install the binary executable.
-    logexec wget https://github.com/galacticusorg/galacticus/releases/download/masterRelease/galacticus.exe -O $galacticusInstallPath/Galacticus.exe
+    logexec wget https://github.com/galacticusorg/galacticus/releases/download/bleeding-edge/Galacticus.exe -O $galacticusInstallPath/Galacticus.exe
     logexec chmod u+rx $galacticusInstallPath/Galacticus.exe
 else
     
