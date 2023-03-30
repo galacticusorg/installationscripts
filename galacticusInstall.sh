@@ -2074,6 +2074,7 @@ if [ "$RESPONSE" = yes ] ; then
     fi
     echo " export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
     echo " export GALACTICUS_CFLAGS=\"$libDirs -I$toolInstallPath/include\"" >> $HOME/.bashrc
+    echo " export GALACTICUS_CPPFLAGS=\"$libDirs -I$toolInstallPath/include\"" >> $HOME/.bashrc
     echo " export GALACTICUS_EXEC_PATH=`dirname $galacticusInstallPath`/galacticus" >> $HOME/.bashrc
     echo " export GALACTICUS_DATA_PATH=`dirname $galacticusInstallPath`/datasets" >> $HOME/.bashrc
     echo "}" >> $HOME/.bashrc
@@ -2105,6 +2106,7 @@ if [ "$RESPONSE" = yes ] ; then
     fi
     echo "setenv GALACTICUS_FCFLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.cshrc
     echo "setenv GALACTICUS_CFLAGS \"$libDirs -I$toolInstallPath/include\"" >> $HOME/.cshrc
+    echo "setenv GALACTICUS_CPPFLAGS \"$libDirs -I$toolInstallPath/include\"" >> $HOME/.cshrc
     echo "setenv GALACTICUS_EXEC_PATH `dirname $galacticusInstallPath`/galacticus" >> $HOME/.cshrc
     echo "setenv GALACTICUS_DATA_PATH `dirname $galacticusInstallPath`/datasets'" >> $HOME/.cshrc
 fi
@@ -2140,6 +2142,7 @@ else
 	export GALACTICUS_FCFLAGS="$moduleDirs"
 	export GALACTICUS_CFLAGS="$libDirs -I$toolInstallPath/include"
 	export GALACTICUS_CPPFLAGS="$libDirs -I$toolInstallPath/include"
+	export GALACTICUS_EXEC_PATH=`dirname $galacticusInstallPath`/galacticus
 	logexec make -j$coreCount Galacticus.exe
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to build Galacticus"

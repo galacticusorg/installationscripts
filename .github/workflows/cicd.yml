@@ -3,7 +3,7 @@ on:
   workflow_dispatch:
   push:
   schedule:
-    - cron: '04 23 * * *'
+    - cron: '04 23 * * 1'
 jobs:
   Check-Workarounds:
     runs-on: ubuntu-latest
