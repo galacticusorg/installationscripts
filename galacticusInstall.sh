@@ -2014,32 +2014,32 @@ else
 fi
 if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
-    if [[ $installLevel -eq -1 ]]; then
-	cd `dirname $galacticusInstallPath`
-	wget https://github.com/galacticusorg/datasets/archive/masterRelease.tar.gz 2>&1
-	tar xvfz masterRelease.tar.bz2 2>&1
-	mv datasets-masterRelease datasets
-	cd -
-    else
-	cd `dirname $galacticusInstallPath`
-	git clone https://github.com/galacticusorg/galacticus.git galacticus 2>&1
-	if [ $? -ne 0 ]; then
-	    logmessage "failed to download Galacticus"
-	    if [ "$catLogOnError" = yes ]; then
-		cat $glcLogFile
-	    fi
-	    exit 1
+fi
+if [[ $installLevel -eq -1 ]]; then
+    cd `dirname $galacticusInstallPath`
+    wget https://github.com/galacticusorg/datasets/archive/masterRelease.tar.gz 2>&1
+    tar xvfz masterRelease.tar.bz2 2>&1
+    mv datasets-masterRelease datasets
+    cd -
+else
+    cd `dirname $galacticusInstallPath`
+    git clone https://github.com/galacticusorg/galacticus.git galacticus 2>&1
+    if [ $? -ne 0 ]; then
+	logmessage "failed to download Galacticus"
+	if [ "$catLogOnError" = yes ]; then
+	    cat $glcLogFile
 	fi
-	git clone https://github.com/galacticusorg/datasets.git datasets 2>&1
-	if [ $? -ne 0 ]; then
-	    logmessage "failed to download Galacticus datasets"
-	    if [ "$catLogOnError" = yes ]; then
-		cat $glcLogFile
-	    fi
-	    exit 1
-	fi
-	cd -
+	exit 1
     fi
+    git clone https://github.com/galacticusorg/datasets.git datasets 2>&1
+    if [ $? -ne 0 ]; then
+	logmessage "failed to download Galacticus datasets"
+	if [ "$catLogOnError" = yes ]; then
+	    cat $glcLogFile
+	fi
+	exit 1
+    fi
+    cd -
 fi
 
 # Add commands to .bashrc and/or .cshrc.
@@ -2136,7 +2136,7 @@ else
     if [ ! -e Galacticus.exe ]; then
 	export GALACTICUS_FCFLAGS=$moduleDirs
 	export GALACTICUS_CFLAGS=$libDirs -I$toolInstallPath/include
-	make Galacticus.exe >>$glcLogFile 2>&1
+	make -j$coreCount Galacticus.exe >>$glcLogFile 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to build Galacticus"
 	    if [ "$catLogOnError" = yes ]; then
