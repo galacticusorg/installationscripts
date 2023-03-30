@@ -846,7 +846,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="git"
       aptInstall[$iPackage]="git-all"
-       sourceURL[$iPackage]="https://github.com/git/git/archive/v2.27.0.tar.gz"
+       sourceURL[$iPackage]="https://github.com/git/git/archive/refs/tags/v2.40.0.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
