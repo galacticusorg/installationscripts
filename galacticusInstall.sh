@@ -2016,14 +2016,16 @@ if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
 fi
 if [[ $installLevel -eq -1 ]]; then
+    logmessage "downloading Galacticus datasets tarball"
     cd `dirname $galacticusInstallPath`
-    wget https://github.com/galacticusorg/datasets/archive/masterRelease.tar.gz 2>&1
-    tar xvfz masterRelease.tar.bz2 2>&1
+    logexec wget https://github.com/galacticusorg/datasets/archive/masterRelease.tar.gz
+    logexec tar xvfz masterRelease.tar.bz2
     mv datasets-masterRelease datasets
     cd -
 else
+    logmessage "cloning Galacticus"
     cd `dirname $galacticusInstallPath`
-    git clone https://github.com/galacticusorg/galacticus.git galacticus 2>&1
+    logexec git clone https://github.com/galacticusorg/galacticus.git galacticus
     if [ $? -ne 0 ]; then
 	logmessage "failed to download Galacticus"
 	if [ "$catLogOnError" = yes ]; then
@@ -2031,7 +2033,7 @@ else
 	fi
 	exit 1
     fi
-    git clone https://github.com/galacticusorg/datasets.git datasets 2>&1
+    logexec git clone https://github.com/galacticusorg/datasets.git datasets
     if [ $? -ne 0 ]; then
 	logmessage "failed to download Galacticus datasets"
 	if [ "$catLogOnError" = yes ]; then
@@ -2111,7 +2113,7 @@ fi
 cd $galacticusInstallPath
 if [[ $installLevel -eq -1 ]]; then
     # Install the binary executable.
-    logexec wget https://github.com/galacticusorg/galacticus/releases/download/masterRelease/galacticus.exe -O $galacticusInstallPath/Galacticus.exe 2>&1
+    logexec wget https://github.com/galacticusorg/galacticus/releases/download/masterRelease/galacticus.exe -O $galacticusInstallPath/Galacticus.exe
     logexec chmod u+rx $galacticusInstallPath/Galacticus.exe
 else
     
@@ -2119,7 +2121,7 @@ else
     # Figure out which libstdc++ we should use. This is necessary because some
     # distributions (Ubuntu.....) don't find -lstdc++ when linking using gfortran.
     echo "main() {}" > dummy.c
-    gcc dummy.c -lstdc++ >>$glcLogFile 2>&1
+    logexec gcc dummy.c -lstdc++
     if [ $? -eq 0 ]; then
 	stdcppLibInfo=(`ldd a.out | grep libstdc++`)
 	stdcppLib=${stdcppLibInfo[2]}
@@ -2136,7 +2138,7 @@ else
     if [ ! -e Galacticus.exe ]; then
 	export GALACTICUS_FCFLAGS=$moduleDirs
 	export GALACTICUS_CFLAGS=$libDirs -I$toolInstallPath/include
-	make -j$coreCount Galacticus.exe >>$glcLogFile 2>&1
+	logexec make -j$coreCount Galacticus.exe
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to build Galacticus"
 	    if [ "$catLogOnError" = yes ]; then
@@ -2152,7 +2154,7 @@ echo "Running a quick test of Galacticus - should take around 1 minute on a sing
 echo "Running a quick test of Galacticus - should take around 1 minute on a single core (less time if you have multiple cores)" >> $glcLogFile
 export GALACTICUS_EXEC_PATH=`dirname $galacticusInstallPath`/galacticus
 export GALACTICUS_DATA_PATH=`dirname $galacticusInstallPath`/datasets
-./Galacticus.exe parameters/quickTest.xml >>$glcLogFile 2>&1
+logexec ./Galacticus.exe parameters/quickTest.xml
 if [ $? -ne 0 ]; then
     logmessage "failed to run Galacticus"
     if [ "$catLogOnError" = yes ]; then
