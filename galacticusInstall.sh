@@ -1728,6 +1728,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="liblist-moreutils-perl"
    interactive[$iPackage]=0
 
+# IO::Scalar
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="IO::Scalar"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-IO-stringy"
+    modulesApt[$iPackage]="libio-stringy-perl"
+   interactive[$iPackage]=0
+
 # Install required Perl modules.
 echo "Checking for Perl modules..." 
 echo "Checking for Perl modules..." >> $glcLogFile
