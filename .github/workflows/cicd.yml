@@ -16,12 +16,12 @@ jobs:
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
       - name: "Set environmental variables"
         run: |
-          echo "GALACTICUS_EXEC_PATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "INSTALLER_PATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
       - name: Install tools
         run: |
           sudo apt -y update
           sudo apt install -y gcc-multilib
       - name: Run the installation script
         run: |
-          cd $GALACTICUS_EXEC_PATH
-          ./galacticusInstall.sh --galacticusPrefix /opt --toolPrefix=/opt --asRoot=no --cores=2 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=no --catLogOnError=yes
+          cd $INSTALLER_PATH
+          ./galacticusInstall.sh --galacticusPrefix=$INSTALLER_PATH/install --toolPrefix=$INSTALLER_PATH/install --asRoot=no --cores=2 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=no --catLogOnError=yes
