@@ -677,6 +677,7 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
+       gitBranch[$iPackage]="releases/gcc-12"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -696,6 +697,7 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
+       gitBranch[$iPackage]="releases/gcc-12"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -715,6 +717,7 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
+       gitBranch[$iPackage]="releases/gcc-12"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
@@ -965,6 +968,9 @@ do
 			    baseName=`basename ${sourceURL[$i]}`
 			    logexec rm -rf $baseName
 			    logexec git clone "${sourceURL[$i]/git:/http:}"
+			fi
+		        if [ -z "${gitBranch[$i]}" ]; then
+			    logexec git checkout ${gitBranch[$i]}
 			fi
 		    else
 			logexec wget \"${sourceURL[$i]}\"
