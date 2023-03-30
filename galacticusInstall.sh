@@ -2014,34 +2014,34 @@ else
 fi
 if [ ! -e $galacticusInstallPath ]; then
     mkdir -p `dirname $galacticusInstallPath`
-fi
-if [[ $installLevel -eq -1 ]]; then
-    logmessage "downloading Galacticus datasets tarball"
-    cd `dirname $galacticusInstallPath`
-    logexec wget https://github.com/galacticusorg/datasets/archive/masterRelease.tar.gz
-    logexec tar xvfz masterRelease.tar.bz2
-    mv datasets-masterRelease datasets
-    cd -
-else
-    logmessage "cloning Galacticus"
-    cd `dirname $galacticusInstallPath`
-    logexec git clone https://github.com/galacticusorg/galacticus.git galacticus
-    if [ $? -ne 0 ]; then
-	logmessage "failed to download Galacticus"
-	if [ "$catLogOnError" = yes ]; then
-	    cat $glcLogFile
+    if [[ $installLevel -eq -1 ]]; then
+	logmessage "downloading Galacticus datasets tarball"
+	cd `dirname $galacticusInstallPath`
+	logexec wget https://github.com/galacticusorg/datasets/archive/masterRelease.tar.gz
+	logexec tar xvfz masterRelease.tar.bz2
+	mv datasets-masterRelease datasets
+	cd -
+    else
+	logmessage "cloning Galacticus"
+	cd `dirname $galacticusInstallPath`
+	logexec git clone https://github.com/galacticusorg/galacticus.git galacticus
+	if [ $? -ne 0 ]; then
+	    logmessage "failed to download Galacticus"
+	    if [ "$catLogOnError" = yes ]; then
+		cat $glcLogFile
+	    fi
+	    exit 1
 	fi
-	exit 1
-    fi
-    logexec git clone https://github.com/galacticusorg/datasets.git datasets
-    if [ $? -ne 0 ]; then
-	logmessage "failed to download Galacticus datasets"
-	if [ "$catLogOnError" = yes ]; then
-	    cat $glcLogFile
+	logexec git clone https://github.com/galacticusorg/datasets.git datasets
+	if [ $? -ne 0 ]; then
+	    logmessage "failed to download Galacticus datasets"
+	    if [ "$catLogOnError" = yes ]; then
+		cat $glcLogFile
+	    fi
+	    exit 1
 	fi
-	exit 1
+	cd -
     fi
-    cd -
 fi
 
 # Add commands to .bashrc and/or .cshrc.
@@ -2054,7 +2054,7 @@ fi
 if [ "$RESPONSE" = yes ] ; then
     envSet=1
     if [ -e $HOME/.bashrc ]; then
-	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus) > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
+	awk 'BEGIN {inGLC=0} {if (index($0,"Alias to configure the environment to compile and run Galacticus") > 0) inGLC=1;if (inGLC == 0) print $0; if (inGLC == 1 && index($0,"'"'"'")) inGLC=0}' $HOME/.bashrc > $HOME/.bashrc.tmp
 	mv -f $HOME/.bashrc.tmp $HOME/.bashrc
     fi
     echo "# Alias to configure the environment to compile and run Galacticus" >> $HOME/.bashrc
@@ -2137,8 +2137,6 @@ else
     # Build Galacticus.
     if [ ! -e Galacticus.exe ]; then
 	logmessage "building Galacticus"
-	pwd
-	ls -l
 	export GALACTICUS_FCFLAGS=$moduleDirs
 	export GALACTICUS_CFLAGS=$libDirs -I$toolInstallPath/include
 	logexec make -j$coreCount Galacticus.exe

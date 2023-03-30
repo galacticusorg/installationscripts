@@ -24,4 +24,4 @@ jobs:
       - name: Run the installation script
         run: |
           cd $INSTALLER_PATH
-          ./galacticusInstall.sh --galacticusPrefix=$INSTALLER_PATH/install --toolPrefix=$INSTALLER_PATH/install --asRoot=no --cores=2 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=no --catLogOnError=yes
+          ./galacticusInstall.sh --galacticusPrefix=$INSTALLER_PATH --toolPrefix=$INSTALLER_PATH/install --asRoot=no --cores=2 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=no --catLogOnError=yes
