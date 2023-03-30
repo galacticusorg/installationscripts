@@ -2136,6 +2136,9 @@ else
     
     # Build Galacticus.
     if [ ! -e Galacticus.exe ]; then
+	logmessage "building Galacticus"
+	pwd
+	ls -l
 	export GALACTICUS_FCFLAGS=$moduleDirs
 	export GALACTICUS_CFLAGS=$libDirs -I$toolInstallPath/include
 	logexec make -j$coreCount Galacticus.exe
