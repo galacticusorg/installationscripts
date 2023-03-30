@@ -33,7 +33,7 @@ function logmessage()
 glcLogFile=`pwd`"/galacticusInstall.log"
 
 # Get arugments.
-TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures:: -- "$@"`
+TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError:: -- "$@"`
 eval set -- "$TEMP"
 cmdToolPrefix=
 cmdAsRoot=
@@ -46,6 +46,7 @@ cmdGalacticusPrefix=
 cmdSetCShell=
 cmdSetBash=
 cmdIgnoreFailures=
+cmdCatLogOnError=
 while true; do
     case "$1" in
 	--asRoot ) cmdAsRoot="$2"; shift 2 ;;
@@ -57,6 +58,7 @@ while true; do
 	--setCShell ) cmdSetCShell="$2"; shift 2 ;;
 	--setBash ) cmdSetBash="$2"; shift 2 ;;
 	--ignoreFailures ) cmdIgnoreFailures="$2"; shift 2 ;;
+	--catLogOnError ) cmdCatLogOnError="$2"; shift 2 ;;
 	--suMethod ) cmdSuMethod="$2"; shift 2 ;;
 	--toolPrefix ) cmdToolPrefix="$2"; shift 2 ;;
 	-- ) shift; break ;;
@@ -89,6 +91,12 @@ if [ ! -z ${cmdIgnoreFailures} ]; then
 	exit 1
     fi
 fi
+if [ ! -z ${cmdCatLogOnError} ]; then
+    if [[ ${cmdCatLogOnError} != "no" && ${cmdCatLogOnError} != "yes" ]]; then
+	logmessage "catLogOnError option should be 'yes' or 'no'"
+	exit 1
+    fi
+fi
 if [ ! -z ${cmdSuMethod} ]; then
     if [[ ${cmdSuMethod} != "su" && ${cmdSuMethod} != "sudo" ]]; then
 	logmessage "suMethod option should be 'su' or 'sudo'"
@@ -112,6 +120,12 @@ if [ ! -z ${cmdCores} ]; then
 	logmessage "cores option should be an integer"
 	exit 1
     fi
+fi
+
+# Set defaults.
+catLogOnError="no"
+if [ -z ${cmdCatLogOnError} ]; then
+    catLogOnError=$cmdCatLogOnError
 fi
 
 # Open the log file.
@@ -911,6 +925,9 @@ do
 				echo "$rootPassword" | eval $suCommand yum -y install $yumPackage $suClose >>$glcLogFile 2>&1
 				if ! eval ${testPresence[$i]} >& /dev/null; then
 				    logmessage "   ...failed"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				installDone=1
@@ -938,6 +955,9 @@ do
 				echo "$rootPassword" | eval $suCommand apt-get -y install $aptPackage $suClose >>$glcLogFile 2>&1
 				if ! eval ${testPresence[$i]} >& /dev/null; then
 				    logmessage "   ...failed"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				installDone=1
@@ -1133,32 +1153,50 @@ EOF
 				wget http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.gz >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to download m4 source"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				tar xvfz m4-1.4.17.tar.gz >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to unpack m4 source"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				cd m4-1.4.17
 				./configure --prefix=$toolInstallPath >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to configure m4 source"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				make >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to make m4"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				make check >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to check m4"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				make install >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to install m4"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				cd $currentDir
@@ -1246,42 +1284,66 @@ EOF
 				echo "$rootPassword" | eval $suCommand make clean $suClose >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed building shared libraries for ${package[$i]} at stage 1"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				echo "$rootPassword" | eval $suCommand make -f Makefile-libbz2_so $suClose >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed building shared libraries for ${package[$i]} at stage 2"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				echo "$rootPassword" | eval $suCommand cp libbz2.so* $toolInstallPath/lib/ $suClose >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed building shared libraries for ${package[$i]} at stage 3"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				echo "$rootPassword" | eval $suCommand chmod a+r $toolInstallPath/lib/libbz2.so* $suClose >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed building shared libraries for ${package[$i]} at stage 4"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 			    else
 				make clean >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed building shared libraries for ${package[$i]} at stage 1"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				make -f Makefile-libbz2_so >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed building shared libraries for ${package[$i]} at stage 2"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				cp libbz2.so* $toolInstallPath/lib/ >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed building shared libraries for ${package[$i]} at stage 3"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 				chmod a+r $toolInstallPath/lib/libbz2.so*  >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed building shared libraries for ${package[$i]} at stage 4"
+				    if [ "$catLogOnError" = yes ]; then
+					cat $glcLogFile
+				    fi
 				    exit 1
 				fi
 			    fi
