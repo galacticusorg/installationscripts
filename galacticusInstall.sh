@@ -751,7 +751,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="http://www1.gly.bris.ac.uk/~walker/FoX/source/FoX-4.1.2-full.tar.gz"
+       sourceURL[$iPackage]="https://github.com/andreww/fox/archive/4.1.0.tar.gz"
 buildEnvironment[$iPackage]="export FC=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
