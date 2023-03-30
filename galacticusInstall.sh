@@ -2137,8 +2137,9 @@ else
     # Build Galacticus.
     if [ ! -e Galacticus.exe ]; then
 	logmessage "building Galacticus"
-	export GALACTICUS_FCFLAGS=$moduleDirs
-	export GALACTICUS_CFLAGS=$libDirs -I$toolInstallPath/include
+	export GALACTICUS_FCFLAGS="$moduleDirs"
+	export GALACTICUS_CFLAGS="$libDirs -I$toolInstallPath/include"
+	export GALACTICUS_CPPFLAGS="$libDirs -I$toolInstallPath/include"
 	logexec make -j$coreCount Galacticus.exe
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to build Galacticus"
