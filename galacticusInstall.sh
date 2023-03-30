@@ -1906,36 +1906,54 @@ fi
                     # Check for local::lib.
 		    logexec perl -e \"use local::lib\"
 		    if [ $? -ne 0 ]; then
-			wget http://search.cpan.org/CPAN/authors/id/H/HA/HAARG/local-lib-2.000015.tar.gz >>$glcLogFile 2>&1
+			wget https://cpan.metacpan.org/authors/id/H/HA/HAARG/local-lib-2.000029.tar.gz >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to download local-lib-2.000015.tar.gz"
-			    exit
+			    logmessage "Failed to download local-lib-2.000029.tar.gz"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
+			    exit 1
 			fi
-			tar xvfz local-lib-2.000015.tar.gz >>$glcLogFile 2>&1
+			tar xvfz local-lib-2.000029.tar.gz >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to unpack local-lib-2.000015.tar.gz"
-			    exit
+			    logmessage "Failed to unpack local-lib-2.000029.tar.gz"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
+			    exit 1
 			fi
-			cd local-lib-2.000015
+			cd local-lib-2.000029
 			perl Makefile.PL --bootstrap >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to bootstrap local-lib-2.000015"
-			    exit
+			    logmessage "Failed to bootstrap local-lib-2.000029"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
+			    exit 1
 			fi
 			make >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to make local-lib-2.000015"
-			    exit
+			    logmessage "Failed to make local-lib-2.000029"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
+			    exit 1
 			fi
 			make test >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Tests of local-lib-2.000015 failed" >>$glcLogFile
-			    exit
+			    logmessage "Tests of local-lib-2.000029 failed" >>$glcLogFile
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
+			    exit 1
 			fi
 			make install >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
-			    logmessage "Failed to install local-lib-2.000015"			    
-			    exit
+			    logmessage "Failed to install local-lib-2.000029"			    
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
+			    exit 1
 			fi
 		    fi
 		    # Ensure that we're using the local::lib environment.
