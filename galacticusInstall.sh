@@ -975,6 +975,9 @@ do
 		    fi
 		    if [ "$abort" = yes ]; then
 			logmessage "This installer can not currently install ${package[$i]} from source. Please install manually and then re-run this installer."
+			if [ "$catLogOnError" = yes ]; then
+			    cat $glcLogFile
+			fi
 			exit 1
 		    else
 			logmessage "This installer can not currently install ${package[$i]} from source. Ignoring and continuing, but errors may occur."
@@ -997,6 +1000,9 @@ do
 		    fi
 		    if [ $? -ne 0 ]; then
 			logmessage "Could not download ${package[$i]}"
+			if [ "$catLogOnError" = yes ]; then
+			    cat $glcLogFile
+			fi
 			exit 1
 		    fi
 		    baseName=`basename ${sourceURL[$i]}`
@@ -1007,6 +1013,9 @@ do
 			logexec tar xvf$unpack $baseName
 			if [ $? -ne 0 ]; then
 			    logmessage "Could not unpack ${package[$i]}"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
 			    exit 1
 			fi
 			dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
@@ -1075,6 +1084,9 @@ do
 EOF
                         if [ $? -ne 0 ]; then
 			    logmesage "Failed to patch make.inc in blas"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
 			    exit 1
 			fi
 			patch -p1 <<EOF
@@ -1112,12 +1124,18 @@ EOF
 EOF
 	                if [ $? -ne 0 ]; then
 			    logmessage "Failed to patch Makefile in blas"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
 			    exit 1
 			fi
 			sed -i~ -r s/"@X@"/"\t"/g Makefile >>$glcLogFile 2>&1
 			make libblas.so >>$glcLogFile 2>&1
 			if [ $? -ne 0 ]; then
 			    logmessage "Failed to make libblas.so"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
 			    exit 1
 			fi
 			mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
@@ -1213,11 +1231,17 @@ EOF
 			    else
 				echo "Can not locate Makefile.PL for ${package[$i]}"
 				echo "Can not locate Makefile.PL for ${package[$i]}" >>$glcLogFile
+				if [ "$catLogOnError" = yes ]; then
+				    cat $glcLogFile
+				fi
 				exit 1
 			    fi
 			    if [ $? -ne 0 ]; then
 				echo "Could not build Makefile for ${package[$i]}"
 				echo "Could not build Makefile for ${package[$i]}" >>$glcLogFile
+				if [ "$catLogOnError" = yes ]; then
+				    cat $glcLogFile
+				fi
 				exit 1
 			    fi
 			else
@@ -1241,11 +1265,17 @@ EOF
 			    elif [[ ${configOptions[$i]} -ne "skip" ]]; then
 				echo "Can not locate configure script for ${package[$i]}"
 				echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
+				if [ "$catLogOnError" = yes ]; then
+				    cat $glcLogFile
+				fi
 				exit 1
 			    fi
 			    if [ $? -ne 0 ]; then
 				echo "Could not configure ${package[$i]}"
 				echo "Could not configure ${package[$i]}" >>$glcLogFile
+				if [ "$catLogOnError" = yes ]; then
+				    cat $glcLogFile
+				fi
 				exit 1
 			    fi
 			fi
@@ -1258,12 +1288,18 @@ EOF
 			if [ $? -ne 0 ]; then
 			    echo "Could not make ${package[$i]}"
 			    echo "Could not make ${package[$i]}" >>$glcLogFile
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
 			    exit 1
 			fi
 		        # Run any tests of the package.
 			logexec make ${makeTest[$i]}
 			if [ $? -ne 0 ]; then
 			    logmessage "Testing ${package[$i]} failed"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
 			    exit 1
 			fi
 		        # Install the package.
@@ -1275,6 +1311,9 @@ EOF
 			if [ $? -ne 0 ]; then
 			    echo "Could not install ${package[$i]}"
 			    echo "Could not install ${package[$i]}" >>$glcLogFile
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
 			    exit 1
 			fi
                         # Hardwired magic.
@@ -1368,6 +1407,9 @@ EOF
 			echo "      ignoring [will be installed with GCC]"
 			echo "      ignoring [will be installed with GCC]" >>$glcLogFile
 		    else
+			if [ "$catLogOnError" = yes ]; then
+			    cat $glcLogFile
+			fi
 			exit 1
 		    fi
 		fi
@@ -1438,6 +1480,9 @@ EOF
 			    echo "$rootPassword" | eval $suCommand apt-get -y install gcc-multilib $suClose >>$glcLogFile 2>&1
 			    if [ ! -e /usr/include/asm/errno.h ]; then
 				logmessage "Failed to install gcc-multilib needed for compiling GNU Compiler Collection."
+				if [ "$catLogOnError" = yes ]; then
+				    cat $glcLogFile
+				fi
 				exit 1
 			    fi
 			else
@@ -1721,6 +1766,9 @@ do
 		    perl -e "use $module" >& /dev/null
 		    if [ $? -ne 0 ]; then
 			logmessage "   ...failed"
+			if [ "$catLogOnError" = yes ]; then
+			    cat $glcLogFile
+			fi
 			exit 1
 		    fi
                     installDone=1
@@ -1734,6 +1782,9 @@ do
 		perl -e "use $module" >& /dev/null
 		if [ $? -ne 0 ]; then
 		    logmessage "   ...failed"
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
                 installDone=1
@@ -1746,6 +1797,9 @@ do
 		if [ $? -ne 0 ]; then
 		    echo "Could not download ${modules[$i]}"
 		    echo "Could not download ${modules[$i]}" >>$glcLogFile
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
 		baseName=`basename ${modulesSource[$i]}`
@@ -1754,6 +1808,9 @@ do
 		if [ $? -ne 0 ]; then
 		    echo "Could not unpack ${modules[$i]}"
 		    echo "Could not unpack ${modules[$i]}" >>$glcLogFile
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
 		dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
@@ -1780,11 +1837,17 @@ fi
 		else
 		    echo "Can not locate Makefile.PL for ${modules[$i]}"
 		    echo "Can not locate Makefile.PL for ${modules[$i]}" >>$glcLogFile
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
 		if [ $? -ne 0 ]; then
 		    echo "Could not build Makefile for ${modules[$i]}"
 		    echo "Could not build Makefile for ${modules[$i]}" >>$glcLogFile
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
 		# Make the package.
@@ -1792,12 +1855,18 @@ fi
 		if [ $? -ne 0 ]; then
 		    echo "Could not make ${modules[$i]}"
 		    echo "Could not make ${modules[$i]}" >>$glcLogFile
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
 		# Run any tests of the package.
 		make -j ${makeTest[$i]} >>$glcLogFile 2>&1
 		if [ $? -ne 0 ]; then
 		    logmessage "Testing ${modules[$i]} failed"
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
 		# Install the package.
@@ -1809,6 +1878,9 @@ fi
 		if [ $? -ne 0 ]; then
 		    echo "Could not install ${modules[$i]}"
 		    echo "Could not install ${modules[$i]}" >>$glcLogFile
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
 	    fi
@@ -1884,6 +1956,9 @@ fi
 		logexec perl -e \"use $module\" >>/dev/null 2>&1
 		if [ $? -ne 0 ]; then
 		    logmessage "   ...failed"
+		    if [ "$catLogOnError" = yes ]; then
+			cat $glcLogFile
+		    fi
 		    exit 1
 		fi
                 installDone=1
@@ -1892,6 +1967,9 @@ fi
 	    if [ $installDone -eq 0 ]; then
 		echo "no method exists to install this module"
 		echo "no method exists to install this module" >> $glcLogFile
+		if [ "$catLogOnError" = yes ]; then
+		    cat $glcLogFile
+		fi
 		exit 1;
 	    fi
 	fi
@@ -1929,11 +2007,17 @@ if [ ! -e $galacticusInstallPath ]; then
 	git clone https://github.com/galacticusorg/galacticus.git galacticus 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to download Galacticus"
+	    if [ "$catLogOnError" = yes ]; then
+		cat $glcLogFile
+	    fi
 	    exit 1
 	fi
 	git clone https://github.com/galacticusorg/datasets.git datasets 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to download Galacticus datasets"
+	    if [ "$catLogOnError" = yes ]; then
+		cat $glcLogFile
+	    fi
 	    exit 1
 	fi
 	cd -
@@ -2037,6 +2121,9 @@ else
 	make Galacticus.exe >>$glcLogFile 2>&1
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to build Galacticus"
+	    if [ "$catLogOnError" = yes ]; then
+		cat $glcLogFile
+	    fi
 	    exit 1
 	fi
     fi
@@ -2050,6 +2137,9 @@ export GALACTICUS_DATA_PATH=`dirname $galacticusInstallPath`/datasets
 ./Galacticus.exe parameters/quickTest.xml >>$glcLogFile 2>&1
 if [ $? -ne 0 ]; then
     logmessage "failed to run Galacticus"
+    if [ "$catLogOnError" = yes ]; then
+	cat $glcLogFile
+    fi
     exit 1
 fi
 cd -
