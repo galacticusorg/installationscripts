@@ -1908,7 +1908,7 @@ fi
 		if [ ${modulesForce[$i]} -eq 1 ]; then
 		    cpanInstall="force('install','${modules[$i]}')"
 		else
-		    cpanInstall="install ${modules[$i]}"
+		    cpanInstall="install(${modules[$i]})"
 		fi
 		if [ $installAsRoot -eq 1 ]; then
 		    # Install as root.
