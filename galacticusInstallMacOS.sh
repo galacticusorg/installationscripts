@@ -206,7 +206,7 @@ sudo perl -MCPAN -e 'force("install","LaTeX::Encode")'
 sudo perl -MCPAN -e 'force("install","Sub::Identify")'
 
 # Clone the Galacticus repository.
-git clone https://github.com/galacticusorg/galacticus.github
+git clone https://github.com/galacticusorg/galacticus.git
 
 # Build Galacticus.
 cd galacticus
