@@ -36,6 +36,9 @@ jobs:
       - name: Check out repository code
         uses: actions/checkout@v3
       - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - name: "Set environmental variables"
+        run: |
+          echo "INSTALLER_PATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
       - name: Run the installation script
         run: |
           cd $INSTALLER_PATH
