@@ -17,7 +17,9 @@
 #              https://github.com/galacticusorg/galacticus/discussions
 
 # Ensure that XCode developer tools are installed.
-xcode-select --install
+if [[ ! $(xcode-select -p) ]]; then
+    xcode-select --install
+fi
 export PATH=$PATH:/opt/local/bin:/usr/local/bin
 
 # Determine number of CPUs available.
@@ -28,16 +30,16 @@ os_ver=$(sw_vers -productVersion)
 IFS='.' read -r -a ver <<< "$os_ver"
 
 # Select appropriate MacPorts version based on the OS version.
-if [[ "${OS_VER}" -eq 11 ]]; then
+if [[ "${ver}" -eq 11 ]]; then
     macportsversion=2.7.1
     macportsbase=2.7.1-11-BigSur
-elif [[ "${OS_VER}" -eq 12 ]]; then
+elif [[ "${ver}" -eq 12 ]]; then
     macportsversion=2.9.1
     macportsbase=2.9.1-12-Monterey
-elif [[ "${OS_VER}" -eq 13 ]]; then
+elif [[ "${ver}" -eq 13 ]]; then
     macportsversion=2.9.1
     macportsbase=2.9.1-13-Ventura
-elif [[ "${OS_VER}" -eq 14 ]]; then
+elif [[ "${ver}" -eq 14 ]]; then
     macportsversion=2.9.1
     macportsbase=2.9.1-14-Sonoma
 else
@@ -127,7 +129,7 @@ sudo cp -R include/* /usr/local/include/.
 
 # Install packages needed for CPAN install.
 ## Net::SSLeay
-if [[ "${OS_VER}" -ge 14 ]]; then
+if [[ "${ver}" -ge 14 ]]; then
     # For OS version 14 and above install OpenSSL and specify the exact version to use.
     sudo port install openssl11
     export OPENSSL_PREFIX=/opt/local/libexec/openssl11
@@ -163,7 +165,7 @@ rm -rf Sys-CPU-0.52.tar.gz Sys-CPU-0.52
 sudo perl -MCPAN -e 'install Bundle::CPAN'
 
 # Install all required Perl modules.
-if [[ "${OS_VER}" -eq 14 ]]; then
+if [[ "${ver}" -eq 14 ]]; then
     PERLCFLAGS=-I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/System/Library/Perl/5.30/darwin-thread-multi-2level/CORE perl -MCPAN -e 'force("install","Alien::Base::Wrapper")'
 else
     PERLCFLAGS=
@@ -179,7 +181,7 @@ sudo CFLAGS=${PERLCFLAGS} perl -MCPAN -e 'force("install","Alien::Base::Wrapper"
 sudo perl -MCPAN -e 'force("install","Alien::Libxml2")'
 sudo perl -MCPAN -e 'force("install","XML::LibXML::SAX")'
 sudo perl -MCPAN -e 'force("install","XML::LibXML::SAX::Parser")'
-if [[ "${OS_VER}" -ge 12 ]]; then
+if [[ "${ver}" -ge 12 ]]; then
     # For OS versions 12 and above we need to ensure that the ParserDetails.ini is set up.
     sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::SAX::PurePerl')->save_parsers()" || true
     sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::LibXML::SAX::Parser')->save_parsers()" 
