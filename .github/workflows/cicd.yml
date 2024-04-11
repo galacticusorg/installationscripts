@@ -4,12 +4,12 @@ on:
   push:
   schedule:
     - cron: '04 23 * * 1'
+concurrency:
+  group: cicd-${{ github.ref }}
+  cancel-in-progress: true  
 jobs:
   Install-NonRoot:
     runs-on: ubuntu-latest
-    concurrency:
-      group: cicd-${{ github.ref }}
-      cancel-in-progress: true
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
@@ -32,9 +32,6 @@ jobs:
       matrix:
         version: [ macos-12, macos-13, macos-14 ]
     runs-on: ${{ matrix.version }}
-    concurrency:
-      group: cicd-${{ github.ref }}
-      cancel-in-progress: true
     steps:
       - name: Check out repository code
         uses: actions/checkout@v3
