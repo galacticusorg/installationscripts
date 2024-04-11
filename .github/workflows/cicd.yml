@@ -25,3 +25,21 @@ jobs:
         run: |
           cd $INSTALLER_PATH
           ./galacticusInstall.sh --galacticusPrefix=$INSTALLER_PATH/galacticus --toolPrefix=$INSTALLER_PATH/install --asRoot=no --cores=2 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=no --catLogOnError=yes
+  Install-MacOS:
+    strategy:
+      # Ensure all jobs are run, even if some fail.
+      fail-fast: false
+      matrix:
+        version: [ macos-12, macos-13, macos-14 ]
+    runs-on: ${{ matrix.version }}
+    concurrency:
+      group: cicd-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v3
+      - run: echo "The ${{ github.repository }} repository has been cloned to the runner."
+      - name: Run the installation script
+        run: |
+          cd $INSTALLER_PATH
+          ./galacticusInstallMacOS.sh
