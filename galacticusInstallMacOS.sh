@@ -91,7 +91,19 @@ tar -vxzf hdf5-1.8.20.tar.gz
 cd hdf5-1.8.20 
 # Patch files to ensure we include sys/syslimits.h which defines PATH_MAX
 sed -E -i~ 's/^(# *include +<limits\.h>.*)$/\1\n#include <sys\/syslimits.h>\n/' src/H5private.h src/H5public.h
-CC=gcc-mp-12 CXX=g++-mp-12 FC=gfortran-mp-12 CFLAGS=-I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include ./configure --prefix=/usr/local --enable-fortran --enable-production 
+if   [[ "${ver}" -ge 13 ]]; then
+    # On MacOS 13 there is an issue with the linker no longer suppotring the '-commons' flag, so force use of the classic linker
+    # (https://www.scivision.dev/xcode-ld_classic/).
+    HDF5LDFLAGS="$LDFLAGS -Wl,-ld_classic"
+elif [[ "${ver}" -ge 14 ]]; then
+    HDF5CFLAGS=-I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include
+    # On MacOS 14 the 'sys/cdefs.h' header file contains pre-processor code which is not parseable by GCC 12. As it is
+    # Clang-specific, we just make a copy of this file and destroy the problematic code.
+    mkdir sys
+    cp /Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk/usr/include/sys/cdefs.h sys/
+    sed -E -i~ s/"clang::"/"clang"/ sys/cdefs.h
+fi
+CC=gcc-mp-12 CXX=g++-mp-12 FC=gfortran-mp-12 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-production 
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -121,7 +133,7 @@ rm -rf fftw-3.3.4 fftw-3.3.4.tar.gz
 curl -L http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz --output ann_1.1.2.tar.gz
 tar xvfz ann_1.1.2.tar.gz
 cd ann_1.1.2
-sed -E -i~ s/"C\+\+ = g\+\+"/"C\+\+ = g\+\+\-mp\-13"/ Make-config   
+sed -E -i~ s/"C\+\+ = g\+\+"/"C\+\+ = g\+\+\-mp\-12"/ Make-config
 make macosx-g++
 sudo cp bin/* /usr/local/bin/.
 sudo cp lib/* /usr/local/lib/.
