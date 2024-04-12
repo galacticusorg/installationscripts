@@ -102,6 +102,7 @@ elif [[ "${ver}" -eq 14 ]]; then
     mkdir sys
     cp /Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk/usr/include/sys/cdefs.h sys/
     sed -E -i~ s/"clang::"/"clang"/ sys/cdefs.h
+    HDF5CFLAGS="-I`pwd` ${HDF5CFLAGS}"
 fi
 CC=gcc-mp-12 CXX=g++-mp-12 FC=gfortran-mp-12 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-production 
 make -j${countCPUs}
