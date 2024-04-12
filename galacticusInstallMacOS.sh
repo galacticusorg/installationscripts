@@ -91,11 +91,11 @@ tar -vxzf hdf5-1.8.20.tar.gz
 cd hdf5-1.8.20 
 # Patch files to ensure we include sys/syslimits.h which defines PATH_MAX
 sed -E -i~ 's/^(# *include +<limits\.h>.*)$/\1\n#include <sys\/syslimits.h>\n/' src/H5private.h src/H5public.h
-if   [[ "${ver}" -ge 13 ]]; then
+if   [[ "${ver}" -eq 13 ]]; then
     # On MacOS 13 there is an issue with the linker no longer suppotring the '-commons' flag, so force use of the classic linker
     # (https://www.scivision.dev/xcode-ld_classic/).
     HDF5LDFLAGS="$LDFLAGS -Wl,-ld_classic"
-elif [[ "${ver}" -ge 14 ]]; then
+elif [[ "${ver}" -eq 14 ]]; then
     HDF5CFLAGS=-I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include
     # On MacOS 14 the 'sys/cdefs.h' header file contains pre-processor code which is not parseable by GCC 12. As it is
     # Clang-specific, we just make a copy of this file and destroy the problematic code.
