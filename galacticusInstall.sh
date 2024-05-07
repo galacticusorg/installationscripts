@@ -565,8 +565,8 @@ iPackage=$(expr $iPackage + 1)
            iZLIB=$iPackage
          package[$iPackage]="zlib"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <zlib.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lz"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <zlib.h>\" >> dummy.c; echo \"main() {printf(ZLIB_VERSION);printf(\\\"\\\\n\\\");}\" >> dummy.c; gcc dummy.c $libDirs -lz ;./a.out"
+    testPresence[$iPackage]="echo \"#include <zlib.h>\" > dummy.c; echo \"int main() {}\" >> dummy.c; gcc dummy.c $libDirs -lz"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <zlib.h>\" >> dummy.c; echo \"int main() {printf(ZLIB_VERSION);printf(\\\"\\\\n\\\");}\" >> dummy.c; gcc dummy.c $libDirs -lz ;./a.out"
       minVersion[$iPackage]="0.0.0"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="zlib-devel"
@@ -584,8 +584,8 @@ iPackage=$(expr $iPackage + 1)
             iGMP=$iPackage
          package[$iPackage]="gmp"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <gmp.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lgmp"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <gmp.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d\\\\n\\\",__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL);}\" >> dummy.c; gcc dummy.c $libDirs -lgmp; ./a.out"
+    testPresence[$iPackage]="echo \"#include <gmp.h>\" > dummy.c; echo \"int main() {}\" >> dummy.c; gcc dummy.c $libDirs -lgmp"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <gmp.h>\" >> dummy.c; echo \"int main() {printf(\\\"%d.%d.%d\\\\n\\\",__GNU_MP_VERSION,__GNU_MP_VERSION_MINOR,__GNU_MP_VERSION_PATCHLEVEL);}\" >> dummy.c; gcc dummy.c $libDirs -lgmp; ./a.out"
       minVersion[$iPackage]="4.3.2"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="gmp-devel"
@@ -603,8 +603,8 @@ iPackage=$(expr $iPackage + 1)
            iMPFR=$iPackage
          package[$iPackage]="mpfr"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <mpfr.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lmpfr"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpfr.h>\" >> dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",MPFR_VERSION_STRING);}\" >> dummy.c; gcc dummy.c $libDirs -lmpfr; ./a.out"
+    testPresence[$iPackage]="echo \"#include <mpfr.h>\" > dummy.c; echo \"int main() {}\" >> dummy.c; gcc dummy.c $libDirs -lmpfr"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpfr.h>\" >> dummy.c; echo \"int main() {printf(\\\"%s\\\\n\\\",MPFR_VERSION_STRING);}\" >> dummy.c; gcc dummy.c $libDirs -lmpfr; ./a.out"
       minVersion[$iPackage]="2.3.0999"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="mpfr-devel"
@@ -622,8 +622,8 @@ iPackage=$(expr $iPackage + 1)
             iMPC=$iPackage
          package[$iPackage]="mpc"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <mpc.h>\" > dummy.c; echo \"main() {}\" >> dummy.c; gcc dummy.c $libDirs -lmpc"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpc.h>\" >> dummy.c; echo \"main() {printf(\\\"%s\\\\n\\\",MPC_VERSION_STRING);}\" >> dummy.c; gcc dummy.c $libDirs -lmpc; ./a.out"
+    testPresence[$iPackage]="echo \"#include <mpc.h>\" > dummy.c; echo \"int main() {}\" >> dummy.c; gcc dummy.c $libDirs -lmpc"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <mpc.h>\" >> dummy.c; echo \"int main() {printf(\\\"%s\\\\n\\\",MPC_VERSION_STRING);}\" >> dummy.c; gcc dummy.c $libDirs -lmpc; ./a.out"
       minVersion[$iPackage]="1.0.0"
       maxVersion[$iPackage]="99.99.99"
       yumInstall[$iPackage]="libmpc-devel"
@@ -782,7 +782,7 @@ iPackage=$(expr $iPackage + 1)
          package[$iPackage]="hdf5"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="echo \"program test; use hdf5; end program test\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lhdf5"
-      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <H5public.h>\" >> dummy.c; echo \"main() {printf(\\\"%d.%d.%d.%d\\\\n\\\",H5_VERS_MAJOR,H5_VERS_MINOR,H5_VERS_RELEASE,H5_VERS_SUBRELEASE);}\" >> dummy.c; gcc dummy.c $libDirs -lhdf5 &> /dev/null;./a.out"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <H5public.h>\" >> dummy.c; echo \"int main() {printf(\\\"%d.%d.%d.%d\\\\n\\\",H5_VERS_MAJOR,H5_VERS_MINOR,H5_VERS_RELEASE,H5_VERS_SUBRELEASE);}\" >> dummy.c; gcc dummy.c $libDirs -lhdf5 &> /dev/null;./a.out"
       minVersion[$iPackage]="1.8.0"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="hdf5-devel"
@@ -876,7 +876,7 @@ iPackage=$(expr $iPackage + 1)
               iBZIP2=$iPackage
          package[$iPackage]="bzip2"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"main() {}\" > dummy.c; gcc dummy.c $libDirs -lbz2"
+    testPresence[$iPackage]="echo \"int main() {}\" > dummy.c; gcc dummy.c $libDirs -lbz2"
       getVersion[$iPackage]="echo 1.0.0"
       minVersion[$iPackage]="0.9.9"
       maxVersion[$iPackage]="1.0.1"
@@ -2203,7 +2203,7 @@ else
     # Hardwired magic.
     # Figure out which libstdc++ we should use. This is necessary because some
     # distributions (Ubuntu.....) don't find -lstdc++ when linking using gfortran.
-    echo "main() {}" > dummy.c
+    echo "int main() {}" > dummy.c
     logexec gcc dummy.c -lstdc++
     if [ $? -eq 0 ]; then
 	stdcppLibInfo=(`ldd a.out | grep libstdc++`)
