@@ -2045,7 +2045,7 @@ fi
 		    # Install as regular user.
 		    export PERL_MM_USE_DEFAULT=1
 		    if [ ${interactive[$i]} -eq 0 ]; then
-			logexec perl -Mlocal::lib -MCPAN -e \"$cpanInstall\"
+			logexec perl -Mlocal::lib -MCPAN -e ${cpanInstall}
 		    else
 			echo perl -Mlocal::lib -MCPAN -e ${cpanInstall} >>$glcLogFile
 			perl -Mlocal::lib -MCPAN -e ${cpanInstall}
