@@ -814,6 +814,44 @@ buildEnvironment[$iPackage]="export F9X=gfortran"
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
+# ANN
+iPackage=$(expr $iPackage + 1)
+           iANN=$iPackage
+         package[$iPackage]="ann"
+  packageAtLevel[$iPackage]=1
+    testPresence[$iPackage]="echo \"int main() {}\" > dummy.c; gcc dummy.c $libDirs -lANN"
+      getVersion[$iPackage]="echo 1.1.2"
+      minVersion[$iPackage]="1.1.1"
+      maxVersion[$iPackage]="1.1.3"
+      yumInstall[$iPackage]="null"
+      aptInstall[$iPackage]="null"
+       sourceURL[$iPackage]="http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]=""
+   parallelBuild[$iPackage]=1
+
+# QHull
+iPackage=$(expr $iPackage + 1)
+          iQHull=$iPackage
+         package[$iPackage]="qhull"
+  packageAtLevel[$iPackage]=1
+    testPresence[$iPackage]="echo \"int main() {}\" > dummy.c; gcc dummy.c $libDirs -lqhull_r"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <libqhull_r/libqhull_r.h>\" >> dummy.c; echo \"int main() {printf(\\\"%s\n\\\",qh_version2);}\" >> dummy.c; g++ dummy.c -L$toolInstallPath/lib -L$toolInstallPath/lib64 -I$toolInstallPath/include -lqhull_r; ./a.out | awk '{print $2}'"
+      minVersion[$iPackage]="8.0.1"
+      maxVersion[$iPackage]="8.0.3"
+      yumInstall[$iPackage]="null"
+      aptInstall[$iPackage]="null"
+       sourceURL[$iPackage]="http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz"
+buildEnvironment[$iPackage]="export PREFIX=$toolInstallPath"
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="skip"
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=1
+   
 # blas
 iPackage=$(expr $iPackage + 1)
    iBLAS=$iPackage
@@ -1140,6 +1178,31 @@ EOF
 			fi
 			mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
 			cp -f libblas.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
+		    elif [[ $i -eq $iANN ]]; then
+			sed -i~ -r s/"CFLAGS = \-O3"/"CFLAGS = \-O3 -fPIC"/ Make-config
+                        if [ $? -ne 0 ]; then
+			    logmesage "Failed to patch make.inc in blas"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
+			    exit 1
+			fi
+			make linux-g++ >>$glcLogFile 2>&1
+			if [ $? -ne 0 ]; then
+			    logmessage "Failed to make libann"
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
+			    fi
+			    exit 1
+			fi
+			mkdir -p $toolInstallPath/bin/ >>$glcLogFile 2>&1
+			mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
+			mkdir -p $toolInstallPath/include/ >>$glcLogFile 2>&1
+			cp -f bin/* $toolInstallPath/bin/. >>$glcLogFile 2>&1
+			cp -f lib/* $toolInstallPath/lib/. >>$glcLogFile 2>&1
+			cp -f include/* $toolInstallPath/include/. >>$glcLogFile 2>&1
+			echo DONE DONE
+			exit 1
 		    else
                         # This is a regular (configure|make|make install) package.
                         # Test whether we have an m4 installed.
