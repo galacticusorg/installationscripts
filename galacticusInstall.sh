@@ -1010,7 +1010,7 @@ do
 			dirName=`echo $baseName | sed s/"\.git"//`
 		    else
 			unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
-			logexec tar xvf$unpack $baseName
+			logexec tar xf$unpack $baseName
 			if [ $? -ne 0 ]; then
 			    logmessage "Could not unpack ${package[$i]}"
 			    if [ "$catLogOnError" = yes ]; then
