@@ -1010,7 +1010,7 @@ do
 			dirName=`echo $baseName | sed s/"\.git"//`
 		    else
 			unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
-			logexec tar xf$unpack $baseName
+			logexec tar xvf$unpack $baseName
 			if [ $? -ne 0 ]; then
 			    logmessage "Could not unpack ${package[$i]}"
 			    if [ "$catLogOnError" = yes ]; then
@@ -1906,19 +1906,19 @@ fi
 	    if [[ $installDone -eq 0 &&  $installViaCPAN -eq 1 ]]; then
 		logmessage "   Installing via CPAN"
 		if [ ${modulesForce[$i]} -eq 1 ]; then
-		    cpanInstall="force('install','${modules[$i]}')"
+		    cpanInstall="'force(\"install\",\"${modules[$i]}\")'"
 		else
-		    cpanInstall="install(${modules[$i]})"
+		    cpanInstall="'install(\"${modules[$i]}\")'"
 		fi
 		if [ $installAsRoot -eq 1 ]; then
 		    # Install as root.
                     export PERL_MM_USE_DEFAULT=1
 		    if [ ${interactive[$i]} -eq 0 ]; then
-			echo $suCommand perl -MCPAN -e "$cpanInstall" $suClose >>$glcLogFile 2>&1
-			echo "$rootPassword" | eval $suCommand perl -MCPAN -e "$cpanInstall" $suClose >>$glcLogFile 2>&1
+			echo $suCommand perl -MCPAN -e ${cpanInstall} $suClose >>$glcLogFile 2>&1
+			echo "$rootPassword" | eval $suCommand perl -MCPAN -e ${cpanInstall} $suClose >>$glcLogFile 2>&1
 		    else
-			echo $suCommand perl -MCPAN -e "$cpanInstall" $suClose >>$glcLogFile 2>&1
-			echo "$rootPassword" | eval $suCommand perl -MCPAN -e "$cpanInstall" $suClose
+			echo $suCommand perl -MCPAN -e ${cpanInstall} $suClose >>$glcLogFile 2>&1
+			echo "$rootPassword" | eval $suCommand perl -MCPAN -e ${cpanInstall} $suClose
 		    fi
 		else		    
                     # Check for local::lib.
@@ -1984,8 +1984,8 @@ fi
 		    if [ ${interactive[$i]} -eq 0 ]; then
 			logexec perl -Mlocal::lib -MCPAN -e \"$cpanInstall\"
 		    else
-			echo perl -Mlocal::lib -MCPAN -e "$cpanInstall" >>$glcLogFile
-			perl -Mlocal::lib -MCPAN -e "$cpanInstall"
+			echo perl -Mlocal::lib -MCPAN -e ${cpanInstall} >>$glcLogFile
+			perl -Mlocal::lib -MCPAN -e ${cpanInstall}
 		    fi
 		fi
 		# Check that the module was installed successfully.
