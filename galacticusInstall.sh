@@ -1132,29 +1132,20 @@ do
 			fi
 		    elif [[ $i -eq $iBLAS ]]; then
 			patch -p1 <<EOF
-*** BLAS/make.inc       2011-04-19 12:08:00.000000000 -0700
---- BLAS1/make.inc      2011-12-01 07:24:51.671999364 -0800
-***************
-*** 16,24 ****
-  #  desired load options for your machine.
-  #
-  FORTRAN  = gfortran
-! OPTS     = -O3
-  DRVOPTS  = \$(OPTS)
-! NOOPT    =
-  LOADER   = gfortran
-  LOADOPTS =
-  #
---- 16,24 ----
-  #  desired load options for your machine.
-  #
-  FORTRAN  = gfortran
-! OPTS     = -O3 -fPIC
-  DRVOPTS  = \$(OPTS)
-! NOOPT    = -fPIC
-  LOADER   = gfortran
-  LOADOPTS =
-  #
+--- BLAS/make.inc	2024-07-08 14:19:26.936218911 +0000
++++ BLAS/make.inc.orig	2024-07-08 14:17:46.337833892 +0000
+@@ -16,9 +16,9 @@
+ #  desired load options for your machine.
+ #
+ FC  = gfortran
+-FFLAGS = -O2 -frecursive
++FFLAGS = -O2 -frecursive -fPIC
+ FFLAGS_DRV = \$(FFLAGS)
+-FFLAGS_NOOPT = -O0 -frecursive
++FFLAGS_NOOPT = -O0 -frecursive -fPIC
+ #  Define LDFLAGS to the desired linker options for your machine.
+ #
+ LDFLAGS =
 EOF
                         if [ $? -ne 0 ]; then
 			    logmesage "Failed to patch make.inc in blas"
@@ -1164,37 +1155,28 @@ EOF
 			    exit 1
 			fi
 			patch -p1 <<EOF
-*** BLAS/Makefile       2007-04-05 13:59:57.000000000 -0700
---- BLAS1/Makefile      2011-12-01 07:23:50.768481902 -0800
-***************
-*** 55,61 ****
-  #
-  #######################################################################
-  
-! all: \$(BLASLIB)
-   
-  #---------------------------------------------------------
-  #  Comment out the next 6 definitions if you already have
---- 55,61 ----
-  #
-  #######################################################################
-  
-! all: \$(BLASLIB) libblas.so
-   
-  #---------------------------------------------------------
-  #  Comment out the next 6 definitions if you already have
-***************
-*** 141,146 ****
---- 141,149 ----
-        \$(ARCH) \$(ARCHFLAGS) \$@ \$(ALLOBJ)
-        \$(RANLIB) \$@
-  
-+ libblas.so: \$(ALLOBJ)
+--- BLAS-3.12.0/Makefile.orig	2024-07-08 14:24:32.551440492 +0000
++++ BLAS-3.12.0/Makefile	2024-07-08 14:26:17.961694006 +0000
+@@ -64,7 +64,7 @@
+ 	\$(FC) \$(FFLAGS) -c -o \$@ \$<
+ 
+ .PHONY: all
+-all: \$(BLASLIB)
++all: \$(BLASLIB) libblas.so
+ 
+ .PHONY: blas
+ blas: \$(BLASLIB)
+@@ -158,6 +158,10 @@
+ 	\$(RANLIB) \$@
+ 
+ .PHONY: single double complex complex16
++  
++libblas.so: \$(ALLOBJ)
 +@X@cc -shared -Wl,-soname,libblas.so -o libblas.so \$(ALLOBJ)
 + 
-  single: \$(SBLAS1) \$(ALLBLAS) \$(SBLAS2) \$(SBLAS3)
-        \$(ARCH) \$(ARCHFLAGS) \$(BLASLIB) \$(SBLAS1) \$(ALLBLAS) \\
-        \$(SBLAS2) \$(SBLAS3)
+ single: \$(SBLAS1) \$(ALLBLAS) \$(SBLAS2) \$(SBLAS3)
+ 	\$(AR) \$(ARFLAGS) \$(BLASLIB) \$^
+ 	\$(RANLIB) \$(BLASLIB)
 EOF
 	                if [ $? -ne 0 ]; then
 			    logmessage "Failed to patch Makefile in blas"
