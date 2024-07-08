@@ -1092,7 +1092,7 @@ do
 			    fi
 			    exit 1
 			fi
-			dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
+			dirName=`tar tf$unpack $baseName | grep "/" | head -1 | sed s/"\/.*"//`
 		    fi
 		    if [ ${buildInOwnDir[$i]} -eq 1 ]; then
 			mkdir -p $dirName-build
