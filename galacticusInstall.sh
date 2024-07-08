@@ -410,6 +410,24 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
+# cmp
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="cmp"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash wget"
+      getVersion[$iPackage]="versionString=(\`cmp -v\`); echo \${versionString[3]}"
+      minVersion[$iPackage]="0.0"
+      maxVersion[$iPackage]="9.99"
+      yumInstall[$iPackage]="diffutils"
+      aptInstall[$iPackage]="diffutils"
+       sourceURL[$iPackage]="null"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
 # wget
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="wget"
@@ -428,16 +446,16 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
-# cmp
+# which
 iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="cmp"
+         package[$iPackage]="which"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash wget"
-      getVersion[$iPackage]="versionString=(\`cmp -v\`); echo \${versionString[3]}"
+    testPresence[$iPackage]="hash which"
+      getVersion[$iPackage]="versionString=(\`which -V | sed -r s/\"v([0-9\\.]+).*\"/\"\\1\"/\`); echo \${versionString[2]}"
       minVersion[$iPackage]="0.0"
       maxVersion[$iPackage]="9.99"
-      yumInstall[$iPackage]="diffutils"
-      aptInstall[$iPackage]="diffutils"
+      yumInstall[$iPackage]="which"
+      aptInstall[$iPackage]="which"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
