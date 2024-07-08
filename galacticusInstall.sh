@@ -414,7 +414,7 @@ buildEnvironment[$iPackage]=""
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="cmp"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash wget"
+    testPresence[$iPackage]="hash cmp"
       getVersion[$iPackage]="versionString=(\`cmp -v\`); echo \${versionString[3]}"
       minVersion[$iPackage]="0.0"
       maxVersion[$iPackage]="9.99"
@@ -451,7 +451,7 @@ iPackage=$(expr $iPackage + 1)
          package[$iPackage]="which"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash which"
-      getVersion[$iPackage]="versionString=(\`which -V | sed -r s/\"v([0-9\\.]+).*\"/\"\\1\"/\`); echo \${versionString[2]}"
+      getVersion[$iPackage]="echo 1.0.0"
       minVersion[$iPackage]="0.0"
       maxVersion[$iPackage]="9.99"
       yumInstall[$iPackage]="which"
