@@ -548,7 +548,7 @@ iPackage=$(expr $iPackage + 1)
       getVersion[$iPackage]="versionString=(\`g++ --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGPPVMin
       maxVersion[$iPackage]="19.9.9"
-      yumInstall[$iPackage]="gcc-g++"
+      yumInstall[$iPackage]="gcc-c++"
       aptInstall[$iPackage]="g++"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
