@@ -428,6 +428,42 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
+# cmp
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="cmp"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash wget"
+      getVersion[$iPackage]="versionString=(\`cmp -v\`); echo \${versionString[3]}"
+      minVersion[$iPackage]="0.0"
+      maxVersion[$iPackage]="9.99"
+      yumInstall[$iPackage]="diffutils"
+      aptInstall[$iPackage]="diffutils"
+       sourceURL[$iPackage]="null"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
+# patch
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="patch"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash patch"
+      getVersion[$iPackage]="versionString=(\`patch -v\`); echo \${versionString[2]}"
+      minVersion[$iPackage]="0.0"
+      maxVersion[$iPackage]="9.99"
+      yumInstall[$iPackage]="patch"
+      aptInstall[$iPackage]="patch"
+       sourceURL[$iPackage]="null"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
 # sed
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="sed"
