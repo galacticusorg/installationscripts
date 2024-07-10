@@ -1237,8 +1237,6 @@ EOF
 			cp -f bin/* $toolInstallPath/bin/. >>$glcLogFile 2>&1
 			cp -f lib/* $toolInstallPath/lib/. >>$glcLogFile 2>&1
 			cp -f include/* $toolInstallPath/include/. >>$glcLogFile 2>&1
-			echo DONE DONE
-			exit 1
 		    else
                         # This is a regular (configure|make|make install) package.
                         # Test whether we have an m4 installed.
