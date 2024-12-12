@@ -1668,7 +1668,7 @@ modulesAtLevel[$iPackage]=0
 
 # Text::Levenshtein
 iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Text::Levenshetin"
+       modules[$iPackage]="Text::Levenshtein"
 modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="null"
