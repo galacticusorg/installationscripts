@@ -1666,6 +1666,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="libtext-template-perl"
    interactive[$iPackage]=0
 
+# Text::Levenshtein
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Text::Levenshetin"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="libtext-levenshtein-perl"
+   interactive[$iPackage]=0
+
 # NestedMap
 iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="NestedMap"
