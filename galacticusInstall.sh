@@ -1871,6 +1871,10 @@ do
     if [ ${modulesAtLevel[$i]} -le $installLevel ]; then
         # Get the name of the module.
 	module=${modules[$i]}
+	# Ensure we have XML::SAX parsers set up.
+	if [[ $module == "XML::Validator::Schema" ]]; then
+	    perl -MXML::SAX -e "XML::SAX->add_parser('XML::SAX::PurePerl')->save_parsers()" || true
+	fi
         # Test if the module is already present.
 	echo "Testing for Perl module $module" >>$glcLogFile
 	if [[ $module == "Inline::C" ]]; then
