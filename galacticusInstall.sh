@@ -1852,6 +1852,15 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="libfile-which-perl"
    interactive[$iPackage]=0
 
+# Sub::Identify
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="Sub::Identify"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="null"
+    modulesApt[$iPackage]="null"
+   interactive[$iPackage]=0
+
 # Install required Perl modules.
 echo "Checking for Perl modules..." 
 echo "Checking for Perl modules..." >> $glcLogFile
