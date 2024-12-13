@@ -837,14 +837,14 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="echo \"program test; use hdf5; end program test\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lhdf5"
       getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <H5public.h>\" >> dummy.c; echo \"int main() {printf(\\\"%d.%d.%d.%d\\\\n\\\",H5_VERS_MAJOR,H5_VERS_MINOR,H5_VERS_RELEASE,H5_VERS_SUBRELEASE);}\" >> dummy.c; gcc dummy.c $libDirs -lhdf5 &> /dev/null;./a.out"
-      minVersion[$iPackage]="1.8.0"
-      maxVersion[$iPackage]="1.10.11"
+      minVersion[$iPackage]="1.14.0"
+      maxVersion[$iPackage]="1.14.99"
       yumInstall[$iPackage]="hdf5-devel"
       aptInstall[$iPackage]="hdf5-tools"
-       sourceURL[$iPackage]="https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.20/src/hdf5-1.8.20.tar.gz"
+       sourceURL[$iPackage]="https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_5/downloads/hdf5-1.14.5.tar.gz"
 buildEnvironment[$iPackage]="export F9X=gfortran"
    buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath --enable-fortran --enable-production"
+   configOptions[$iPackage]="--prefix=$toolInstallPath --enable-fortran --enable-build-mode=production"
         makeTest[$iPackage]="check"
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
@@ -1110,7 +1110,7 @@ do
 			    fi
 			    exit 1
 			fi
-			dirName=`tar tf$unpack $baseName | grep "/" | head -1 | sed s/"\/.*"//`
+			dirName=`tar tf$unpack $baseName | grep "/" | head -1 | sed s/"^\.\/"// | sed s/"\/.*"//`
 		    fi
 		    if [ ${buildInOwnDir[$i]} -eq 1 ]; then
 			mkdir -p $dirName-build
