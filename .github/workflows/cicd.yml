@@ -17,6 +17,7 @@ jobs:
       - name: "Set environmental variables"
         run: |
           echo "INSTALLER_PATH=$GITHUB_WORKSPACE" >> $GITHUB_ENV
+          echo "FCCOMPILER=gfortran-12" >> $GITHUB_ENV
       - name: Install tools
         run: |
           sudo apt -y update
