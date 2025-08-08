@@ -585,9 +585,9 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]=$iFortranVMin
-      maxVersion[$iPackage]="19.9.9"
+      maxVersion[$iPackage]="12.9.9"
       yumInstall[$iPackage]="gcc-gfortran"
-      aptInstall[$iPackage]="gfortran"
+      aptInstall[$iPackage]="gfortran-12"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
@@ -781,7 +781,7 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]=$iFortranVMin
-      maxVersion[$iPackage]="19.9.9"
+      maxVersion[$iPackage]="12.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
