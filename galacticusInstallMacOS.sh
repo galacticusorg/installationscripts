@@ -85,10 +85,10 @@ sudo make install
 cd ..
 rm -rf qhull-2020-src-8.0.2.tgz qhull-2020.2
 
-# Install hdf5 v1.8.20 from source.
-curl -L https://support.hdfgroup.org/ftp/HDF5/releases/hdf5-1.8/hdf5-1.8.20/src/hdf5-1.8.20.tar.gz --output hdf5-1.8.20.tar.gz
-tar -vxzf hdf5-1.8.20.tar.gz 
-cd hdf5-1.8.20 
+# Install hdf5 v1.14.5 from source.
+curl -L https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_5/downloads/hdf5-1.14.5.tar.gz --output hdf5-1.14.5.tar.gz
+tar -vxzf hdf5-1.14.5.tar.gz
+cd hdf5-1.14.5 
 # Patch files to ensure we include sys/syslimits.h which defines PATH_MAX
 sed -E -i~ 's/^(# *include +<limits\.h>.*)$/\1\n#include <sys\/syslimits.h>\n/' src/H5private.h src/H5public.h
 if   [[ "${ver}" -eq 13 ]]; then
@@ -104,11 +104,11 @@ elif [[ "${ver}" -eq 14 ]]; then
     sed -E -i~ s/"clang::"/"clang"/ sys/cdefs.h
     HDF5CFLAGS="-I`pwd` ${HDF5CFLAGS}"
 fi
-CC=gcc-mp-12 CXX=g++-mp-12 FC=gfortran-mp-12 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-production 
+CC=gcc-mp-12 CXX=g++-mp-12 FC=gfortran-mp-12 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-build-mode=production
 make -j${countCPUs}
 sudo make install
 cd ..
-rm -rf hdf5-1.8.20 hdf5-1.8.20.tar.gz
+rm -rf hdf5-1.14.5 hdf5-1.14.5.tar.gz
 
 # Install FoX v4.1.0 from source. 
 curl -L https://github.com/andreww/fox/archive/refs/tags/4.1.0.tar.gz --output FoX-4.1.0.tar.gz
