@@ -1627,6 +1627,14 @@ if [ -e $toolInstallPath/lib/libhdf5.so ]; then
     export HDF5_PATH=$toolInstallPath
 fi
 
+# Set environment path for expat if we installed our own copy.
+if [ -e $toolInstallPath/lib/libexpat.so ]; then
+    export EXPATLIBPATH=$toolInstallPath/lib
+    export EXPATINCPATH=$toolInstallPath/include
+fi
+
+
+
 # Specify the list of Perl modules and their requirements.
 gotPerlLocalLibEnv=0
 iPackage=-1
@@ -1724,6 +1732,15 @@ modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
     modulesYum[$iPackage]="perl-XML-SAX"
     modulesApt[$iPackage]="libxml-sax-perl"
+   interactive[$iPackage]=0
+
+# XML::Parser
+iPackage=$(expr $iPackage + 1)
+       modules[$iPackage]="XML::Parser"
+modulesAtLevel[$iPackage]=0
+  modulesForce[$iPackage]=0
+    modulesYum[$iPackage]="perl-XML-Parser"
+    modulesApt[$iPackage]="libxml-parser-perl"
    interactive[$iPackage]=0
 
 # XML::Simple
