@@ -1077,15 +1077,17 @@ do
 		else
 		    logmessage "   Installing from source"
 		    if [[ ${sourceURL[$i]} =~ "git:" ]]; then
-			logexec git clone checkout \"${sourceURL[$i]}\"
+			if [ -n "${gitBranch[$i]}" ]; then
+			    branchCheckout="--branch ${gitBranch[$i]}"
+			else
+			    branchCheckout=""
+			fi
+			logexec git clone --depth 1 --single-branch ${branchCheckout} \"${sourceURL[$i]}\"
 			if [ $? -ne 0 ]; then
 			    logmessage "Trying git checkout again using http protocol instead"
 			    baseName=`basename ${sourceURL[$i]}`
 			    logexec rm -rf $baseName
-			    logexec git clone "${sourceURL[$i]/git:/http:}"
-			fi
-		        if [ -z "${gitBranch[$i]}" ]; then
-			    logexec git checkout ${gitBranch[$i]}
+			    logexec git clone --depth 1 --single-branch ${branchCheckout} "${sourceURL[$i]/git:/http:}"
 			fi
 		    else
 			logexec wget \"${sourceURL[$i]}\"
