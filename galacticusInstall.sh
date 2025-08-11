@@ -818,11 +818,11 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="echo \"program dummy; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lFoX_dom"
       getVersion[$iPackage]="echo \"program test; use FoX_common; write (*,'(a)') FoX_version; end program\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lFoX_dom; ./a.out"
-      minVersion[$iPackage]="4.0.3.999"
+      minVersion[$iPackage]="4.1.2.999"
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
-       sourceURL[$iPackage]="https://github.com/andreww/fox/archive/4.1.0.tar.gz"
+       sourceURL[$iPackage]="https://github.com/galacticusorg/fox/archive/refs/tags/v4.1.3.tar.gz"
 buildEnvironment[$iPackage]="export FC=gfortran"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
