@@ -748,7 +748,7 @@ iPackage=$(expr $iPackage + 1)
        gitBranch[$iPackage]="releases/gcc-12"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
-   configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
+   configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
@@ -766,9 +766,9 @@ iPackage=$(expr $iPackage + 1)
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
        gitBranch[$iPackage]="releases/gcc-12"
-buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
+buildEnvironment[$iPackage]="cd ../\$dirName/..; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
-   configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
+   configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
@@ -788,7 +788,7 @@ iPackage=$(expr $iPackage + 1)
        gitBranch[$iPackage]="releases/gcc-12"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
-   configOptions[$iPackage]="--prefix=$toolInstallPath --enable-languages= --disable-multilib"
+   configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
         makeTest[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
