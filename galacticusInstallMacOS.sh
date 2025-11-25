@@ -56,7 +56,7 @@ sudo installer -pkg ./MacPorts-${macportsbase}.pkg -target /
 rm ./MacPorts-${macportsbase}.pkg
 
 # Install GCC v12 via HomeBrew.
-sudo brew install gcc@12
+brew install gcc@12
 
 # Install guile v1.8 via MacPorts.
 sudo port install guile18
