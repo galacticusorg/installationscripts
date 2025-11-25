@@ -46,7 +46,7 @@ jobs:
       # Ensure all jobs are run, even if some fail.
       fail-fast: false
       matrix:
-        version: [ macos-13, macos-14 ]
+        version: [ macos-14, macos-15, macos-15-intel ]
     runs-on: ${{ matrix.version }}
     steps:
       - name: Check out repository code

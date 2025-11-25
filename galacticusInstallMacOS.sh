@@ -42,6 +42,9 @@ elif [[ "${ver}" -eq 13 ]]; then
 elif [[ "${ver}" -eq 14 ]]; then
     macportsversion=2.9.1
     macportsbase=2.9.1-14-Sonoma
+elif [[ "${OS_VER}" -eq 15 ]]; then
+    macportsversion=2.11.6
+    macportsbase=2.11.6-15-Sequoia
 else
     echo Unknown MacOS version: ${os_ver}
     exit 1
@@ -88,7 +91,7 @@ rm -rf qhull-2020-src-8.0.2.tgz qhull-2020.2
 # Install hdf5 v1.14.5 from source.
 curl -L https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_5/downloads/hdf5-1.14.5.tar.gz --output hdf5-1.14.5.tar.gz
 tar -vxzf hdf5-1.14.5.tar.gz
-cd hdf5-1.14.5 
+cd hdf5-1.14.5
 # Patch files to ensure we include sys/syslimits.h which defines PATH_MAX
 sed -E -i~ 's/^(# *include +<limits\.h>.*)$/\1\n#include <sys\/syslimits.h>\n/' src/H5private.h src/H5public.h
 if   [[ "${ver}" -eq 13 ]]; then
