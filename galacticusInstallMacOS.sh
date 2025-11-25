@@ -42,7 +42,7 @@ elif [[ "${ver}" -eq 13 ]]; then
 elif [[ "${ver}" -eq 14 ]]; then
     macportsversion=2.9.1
     macportsbase=2.9.1-14-Sonoma
-elif [[ "${OS_VER}" -eq 15 ]]; then
+elif [[ "${ver}" -eq 15 ]]; then
     macportsversion=2.11.6
     macportsbase=2.11.6-15-Sequoia
 else
