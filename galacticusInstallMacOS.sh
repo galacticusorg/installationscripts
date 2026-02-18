@@ -136,8 +136,11 @@ rm -rf fftw-3.3.4 fftw-3.3.4.tar.gz
 curl -L http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz --output ann_1.1.2.tar.gz
 tar xvfz ann_1.1.2.tar.gz
 cd ann_1.1.2
-sed -E -i~ s/"C\+\+ = g\+\+"/"C\+\+ = g\+\+\-mp\-12"/ Make-config
+sed -E -i~ s/"C\+\+ = g\+\+"/"C\+\+ = g\+\+\-12"/ Make-config
 make macosx-g++
+if [ $? -ne 0 ]; then
+    exit 1
+fi
 sudo cp bin/* /usr/local/bin/.
 sudo cp lib/* /usr/local/lib/.
 sudo cp -R include/* /usr/local/include/.
