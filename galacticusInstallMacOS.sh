@@ -55,8 +55,8 @@ curl -L https://github.com/macports/macports-base/releases/download/v${macportsv
 sudo installer -pkg ./MacPorts-${macportsbase}.pkg -target /
 rm ./MacPorts-${macportsbase}.pkg
 
-# Install GCC v16 via HomeBrew.
-brew install gcc@16
+# Install GCC v12 via HomeBrew.
+brew install gcc@12
 
 # Install guile v3.0 via MacPorts.
 sudo port install guile-3.0
@@ -71,8 +71,7 @@ tar xvfz libmatheval-1.1.13.tar.gz
 cd libmatheval-1.1.13
 # Patch following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
 sed -E -i~ s/"#undef HAVE_SCM_T_BITS"/"#define HAVE_SCM_T_BITS 1"/ config.h.in
-# Set guile paths following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
-CC=gcc-16 GUILE=/opt/local/bin/guile-3.0 GUILE_CONFIG=/opt/local/bin/guile-config-3.0 GUILE_TOOLS=/opt/local/bin/guile-tools-3.0 ./configure --prefix=/usr/local
+CC=gcc-15 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -82,7 +81,7 @@ rm -rf libmatheval-1.1.13.tar.gz libmatheval-1.1.13
 curl -L http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz --output qhull-2020-src-8.0.2.tgz
 tar xvfz qhull-2020-src-8.0.2.tgz
 cd qhull-2020.2
-make -j${countCPUs} CC=gcc-16 CXX=g++-16
+make -j${countCPUs} CC=gcc-15 CXX=g++-15
 sudo make install
 cd ..
 rm -rf qhull-2020-src-8.0.2.tgz qhull-2020.2
@@ -106,7 +105,7 @@ elif [[ "${ver}" -eq 14 ]]; then
     sed -E -i~ s/"clang::"/"clang"/ sys/cdefs.h
     HDF5CFLAGS="-I`pwd` ${HDF5CFLAGS}"
 fi
-CC=gcc-16 CXX=g++-16 FC=gfortran-16 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-build-mode=production
+CC=gcc-15 CXX=g++-15 FC=gfortran-12 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-build-mode=production
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -116,7 +115,7 @@ rm -rf hdf5-1.14.5 hdf5-1.14.5.tar.gz
 curl -L https://github.com/andreww/fox/archive/refs/tags/4.1.0.tar.gz --output FoX-4.1.0.tar.gz
 tar xvfz FoX-4.1.0.tar.gz
 cd fox-4.1.0
-FC=gfortran-16 ./configure --prefix=/usr/local
+FC=gfortran-12 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -126,7 +125,7 @@ rm -rf fox-4.1.0 FoX-4.1.0.tar.gz
 curl -L ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4.tar.gz --output fftw-3.3.4.tar.gz
 tar xvfz fftw-3.3.4.tar.gz
 cd fftw-3.3.4
-F77=gfortran-16 CC=gcc-16 ./configure --prefix=/usr/local
+F77=gfortran-12 CC=gcc-15 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -136,8 +135,7 @@ rm -rf fftw-3.3.4 fftw-3.3.4.tar.gz
 curl -L http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz --output ann_1.1.2.tar.gz
 tar xvfz ann_1.1.2.tar.gz
 cd ann_1.1.2
-sed -E -i~ s/"C\+\+ = g\+\+"/"C\+\+ = g\+\+\-16"/ Make-config
-sed -E -i~ s/"CFLAGS = \-O3"/"CFLAGS = \-O3 \-std=c\+\+17"/ Make-config &&\
+sed -E -i~ s/"C\+\+ = g\+\+"/"C\+\+ = g\+\+\-mp\-12"/ Make-config
 make macosx-g++
 sudo cp bin/* /usr/local/bin/.
 sudo cp lib/* /usr/local/lib/.
@@ -228,9 +226,9 @@ git clone https://github.com/galacticusorg/galacticus.git
 # Build Galacticus.
 cd galacticus
 export GALACTICUS_EXEC_PATH=`pwd`
-export FCCOMPILER=gfortran-16
-export CCOMPILER=gcc-16
-export CPPCOMPILER=g++-16
+export FCCOMPILER=gfortran-12
+export CCOMPILER=gcc-15
+export CPPCOMPILER=g++-15
 export GALACTICUS_FCFLAGS="-fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/local/finclude -L/usr/local/lib -L/opt/local/lib"
 if [[ "${ver}" -eq 13 ]]; then
     export GALACTICUS_FCFLAGS="$GALACTICUS_FCFLAGS -Wl,-ld_classic"
