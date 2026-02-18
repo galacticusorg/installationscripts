@@ -71,7 +71,8 @@ tar xvfz libmatheval-1.1.13.tar.gz
 cd libmatheval-1.1.13
 # Patch following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
 sed -E -i~ s/"#undef HAVE_SCM_T_BITS"/"#define HAVE_SCM_T_BITS 1"/ config.h.in
-CC=gcc-15 ./configure --prefix=/usr/local
+# Set guile paths following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
+CC=gcc-15 GUILE=/opt/local/bin/guile-3.0 GUILE_CONFIG=/opt/local/bin/guile-config-3.0 GUILE_TOOLS=/opt/local/bin/guile-tools-3.0 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
