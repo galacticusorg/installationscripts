@@ -545,7 +545,7 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gcc"
       getVersion[$iPackage]="versionString=(\`gcc --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGCCVMin
-      maxVersion[$iPackage]="99.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="gcc"
       aptInstall[$iPackage]="gcc"
        sourceURL[$iPackage]="null"
@@ -565,7 +565,7 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash g++"
       getVersion[$iPackage]="versionString=(\`g++ --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGPPVMin
-      maxVersion[$iPackage]="99.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="gcc-c++"
       aptInstall[$iPackage]="g++"
        sourceURL[$iPackage]="null"
@@ -579,15 +579,15 @@ buildEnvironment[$iPackage]=""
 # GFortran (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
         iFortran=$iPackage
-    iFortranVMin="16.0.1"
+    iFortranVMin="10.1.0"
          package[$iPackage]="gfortran"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]=$iFortranVMin
-      maxVersion[$iPackage]="99.9.9"
+      maxVersion[$iPackage]="12.9.9"
       yumInstall[$iPackage]="gcc-gfortran"
-      aptInstall[$iPackage]="gfortran-16"
+      aptInstall[$iPackage]="gfortran-12"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
@@ -741,11 +741,11 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gcc"
       getVersion[$iPackage]="versionString=(\`gcc --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGCCVMin
-      maxVersion[$iPackage]="99.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-16"
+       gitBranch[$iPackage]="releases/gcc-12"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -761,11 +761,11 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash g++"
       getVersion[$iPackage]="versionString=(\`g++ --version\`); echo \${versionString[2]}"
       minVersion[$iPackage]=$iGPPVMin
-      maxVersion[$iPackage]="99.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-16"
+       gitBranch[$iPackage]="releases/gcc-12"
 buildEnvironment[$iPackage]="cd ../\$dirName/..; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -781,11 +781,11 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]=$iFortranVMin
-      maxVersion[$iPackage]="99.9.9"
+      maxVersion[$iPackage]="12.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-16"
+       gitBranch[$iPackage]="releases/gcc-12"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -1217,7 +1217,7 @@ EOF
 			mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
 			cp -f libblas.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
 		    elif [[ $i -eq $iANN ]]; then
-			sed -i~ -r s/"CFLAGS = \-O3"/"CFLAGS = \-O3 \-fPIC \-std=c\+\+17"/ Make-config
+			sed -i~ -r s/"CFLAGS = \-O3"/"CFLAGS = \-O3 -fPIC"/ Make-config
                         if [ $? -ne 0 ]; then
 			    logmesage "Failed to patch make.inc in blas"
 			    if [ "$catLogOnError" = yes ]; then
