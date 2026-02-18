@@ -149,23 +149,23 @@ if [[ "${ver}" -ge 14 ]]; then
     sudo port install openssl11
     export OPENSSL_PREFIX=/opt/local/libexec/openssl11
 fi
-curl -L https://cpan.metacpan.org/authors/id/C/CH/CHRISN/Net-SSLeay-1.90.tar.gz --output Net-SSLeay-1.90.tar.gz
-tar xvfz Net-SSLeay-1.90.tar.gz
-cd Net-SSLeay-1.90
+curl -L https://cpan.metacpan.org/authors/id/C/CH/CHRISN/Net-SSLeay-1.94.tar.gz --output Net-SSLeay-1.94.tar.gz
+tar xvfz Net-SSLeay-1.94.tar.gz
+cd Net-SSLeay-1.94
 perl Makefile.PL
 make -j${countCPUs}
 sudo make install
 cd ..
-rm -rf Net-SSLeay-1.90.tar.gz Net-SSLeay-1.90
+rm -rf Net-SSLeay-1.94.tar.gz Net-SSLeay-1.94
 ## IO::Socket::SSL
-curl -L https://cpan.metacpan.org/authors/id/S/SU/SULLR/IO-Socket-SSL-1.966.tar.gz --output IO-Socket-SSL-1.966.tar.gz
-tar xvfz IO-Socket-SSL-1.966.tar.gz
-cd IO-Socket-SSL-1.966
+curl -L https://cpan.metacpan.org/authors/id/S/SU/SULLR/IO-Socket-SSL-2.098.tar.gz --output IO-Socket-SSL-2.098.tar.gz
+tar xvfz IO-Socket-SSL-2.098.tar.gz
+cd IO-Socket-SSL-2.098
 perl Makefile.PL
 make -j${countCPUs}
 sudo make install
 cd ..
-rm -rf IO-Socket-SSL-1.966.tar.gz IO-Socket-SSL-1.966
+rm -rf IO-Socket-SSL-2.098.tar.gz IO-Socket-SSL-2.098
 ## Sys::CPU
 curl -L https://cpan.metacpan.org/authors/id/M/MK/MKODERER/Sys-CPU-0.52.tar.gz --output Sys-CPU-0.52.tar.gz
 tar xvfz Sys-CPU-0.52.tar.gz
