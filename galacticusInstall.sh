@@ -625,7 +625,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="zlib-devel"
       aptInstall[$iPackage]="zlib1g-dev"
-       sourceURL[$iPackage]="http://zlib.net/zlib-1.3.1.tar.gz"
+       sourceURL[$iPackage]="http://zlib.net/zlib-1.3.2.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
