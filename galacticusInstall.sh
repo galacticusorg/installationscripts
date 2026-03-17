@@ -944,6 +944,24 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install PREFIX=$toolInstallPath"
    parallelBuild[$iPackage]=0
 
+# xz
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="xz"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash xz"
+      getVersion[$iPackage]="versionString=(\`xz --version\`); echo \${versionString[3]}"
+      minVersion[$iPackage]="0.9.9"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="xz"
+      aptInstall[$iPackage]="xz-utils"
+       sourceURL[$iPackage]="https://github.com/tukaani-project/xz/releases/download/v5.8.2/xz-5.8.2.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
 # git
 iPackage=$(expr $iPackage + 1)
             iGIT=$iPackage
@@ -956,6 +974,25 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="git"
       aptInstall[$iPackage]="git-all"
        sourceURL[$iPackage]="https://github.com/git/git/archive/refs/tags/v2.40.0.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
+# libxml2
+iPackage=$(expr $iPackage + 1)
+            iGIT=$iPackage
+         package[$iPackage]="libxml2"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="echo \"#include <libxml/xmlversion.h>\" > dummy.c; echo \"int main() {}\" > dummy.c; gcc -I/usr/include/libxml2 dummy.c $libDirs -lxml2"
+      getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <libxml/xmlversion.h>\" >> dummy.c; echo \"int main() {printf(\\\"%s\\\\n\\\",LIBXML_DOTTED_VERSION);}\" >> dummy.c; gcc -I/usr/include/libxml2 dummy.c $libDirs -lxml2 ;./a.out"
+      minVersion[$iPackage]="2.0.0"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="libxml2-devel"
+      aptInstall[$iPackage]="libxml2-dev"
+       sourceURL[$iPackage]="https://download.gnome.org/sources/libxml2/2.15/libxml2-2.15.2.tar.xz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -1103,7 +1140,7 @@ do
 		    if [[ ${sourceURL[$i]} =~ "git:" ]]; then  
 			dirName=`echo $baseName | sed s/"\.git"//`
 		    else
-			unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
+			unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.xz/J/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
 			logexec tar xvf$unpack $baseName
 			if [ $? -ne 0 ]; then
 			    logmessage "Could not unpack ${package[$i]}"
@@ -1840,8 +1877,8 @@ iPackage=$(expr $iPackage + 1)
        modules[$iPackage]="XML::LibXML"
 modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="libxml-libxml-perl"
-    modulesApt[$iPackage]="perl-XML-LibXML"
+    modulesYum[$iPackage]="perl-XML-LibXML"
+    modulesApt[$iPackage]="libxml2-dev"
    interactive[$iPackage]=0
 
 # List::MoreUtils
@@ -1959,7 +1996,7 @@ do
 		    exit 1
 		fi
 		baseName=`basename ${modulesSource[$i]}`
-		unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
+		unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.xz/J/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
 		tar xvf$unpack $baseName >>$glcLogFile 2>&1
 		if [ $? -ne 0 ]; then
 		    echo "Could not unpack ${modules[$i]}"
