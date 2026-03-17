@@ -206,7 +206,7 @@ if [[ "${ver}" -ge 12 ]]; then
     sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::LibXML::SAX')->save_parsers()" 
 fi
 sudo perl -MCPAN -e 'force("install","XML::SAX::ParserFactory")'
-sudo perl -MCPAN -e 'force("install","XML::Validator::Schema")'
+sudo perl -MCPAN -e 'force("install","XML::LibXML")'
 sudo perl -MCPAN -e 'force("install","Text::Template")'
 sudo perl -MCPAN -e 'force("install","Text::Levenshtein")'
 sudo perl -MCPAN -e 'force("install","List::Uniq")'

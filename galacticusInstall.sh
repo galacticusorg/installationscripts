@@ -1835,13 +1835,13 @@ modulesAtLevel[$iPackage]=0
     modulesApt[$iPackage]="null"
    interactive[$iPackage]=0
 
-# XML::Validator::Schema
+# XML::LibXML
 iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="XML::Validator::Schema"
+       modules[$iPackage]="XML::LibXML"
 modulesAtLevel[$iPackage]=0
   modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
+    modulesYum[$iPackage]="libxml-libxml-perl"
+    modulesApt[$iPackage]="perl-XML-LibXML"
    interactive[$iPackage]=0
 
 # List::MoreUtils
