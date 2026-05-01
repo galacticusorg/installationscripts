@@ -145,87 +145,18 @@ sudo cp bin/* /usr/local/bin/.
 sudo cp lib/* /usr/local/lib/.
 sudo cp -R include/* /usr/local/include/.
 
-# Install packages needed for CPAN install.
-## Net::SSLeay
-if [[ "${ver}" -ge 14 ]]; then
-    # For OS version 14 and above install OpenSSL and specify the exact version to use.
-    sudo port install openssl11
-    export OPENSSL_PREFIX=/opt/local/libexec/openssl11
-fi
-curl -L https://cpan.metacpan.org/authors/id/C/CH/CHRISN/Net-SSLeay-1.94.tar.gz --output Net-SSLeay-1.94.tar.gz
-tar xvfz Net-SSLeay-1.94.tar.gz
-cd Net-SSLeay-1.94
-perl Makefile.PL
-make -j${countCPUs}
-sudo make install
-cd ..
-rm -rf Net-SSLeay-1.94.tar.gz Net-SSLeay-1.94
-## IO::Socket::SSL
-curl -L https://cpan.metacpan.org/authors/id/S/SU/SULLR/IO-Socket-SSL-2.098.tar.gz --output IO-Socket-SSL-2.098.tar.gz
-tar xvfz IO-Socket-SSL-2.098.tar.gz
-cd IO-Socket-SSL-2.098
-perl Makefile.PL
-make -j${countCPUs}
-sudo make install
-cd ..
-rm -rf IO-Socket-SSL-2.098.tar.gz IO-Socket-SSL-2.098
-## Sys::CPU
-curl -L https://cpan.metacpan.org/authors/id/M/MK/MKODERER/Sys-CPU-0.52.tar.gz --output Sys-CPU-0.52.tar.gz
-tar xvfz Sys-CPU-0.52.tar.gz
-cd Sys-CPU-0.52
-perl Makefile.PL CCFLAGS=-Wno-error=implicit-function-declaration
-make -j${countCPUs}
-sudo make install
-cd ..
-rm -rf Sys-CPU-0.52.tar.gz Sys-CPU-0.52
-
-# Install CPAN.
-sudo perl -MCPAN -e 'install Bundle::CPAN'
-
-# Install all required Perl modules.
-if [[ "${ver}" -eq 14 ]]; then
-    PERLCFLAGS=-I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/System/Library/Perl/5.30/darwin-thread-multi-2level/CORE perl -MCPAN -e 'force("install","Alien::Base::Wrapper")'
-else
-    PERLCFLAGS=
-fi
-sudo perl -MCPAN -e 'force("install","NestedMap")'
-sudo perl -MCPAN -e 'force("install","Scalar::Util")'
-sudo perl -MCPAN -e 'force("install","Term::ANSIColor")'
-sudo perl -MCPAN -e 'force("install","Text::Table")'
-sudo perl -MCPAN -e 'force("install","ExtUtils::ParseXS")'
-sudo perl -MCPAN -e 'force("install","Path::Tiny")'
-sudo perl -MCPAN -e 'force("install","PkgConfig")'
-sudo CFLAGS=${PERLCFLAGS} perl -MCPAN -e 'force("install","Alien::Base::Wrapper")'
-sudo perl -MCPAN -e 'force("install","Alien::Libxml2")'
-sudo perl -MCPAN -e 'force("install","XML::LibXML::SAX")'
-sudo perl -MCPAN -e 'force("install","XML::LibXML::SAX::Parser")'
-if [[ "${ver}" -ge 12 ]]; then
-    # For OS versions 12 and above we need to ensure that the ParserDetails.ini is set up.
-    sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::SAX::PurePerl')->save_parsers()" || true
-    sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::LibXML::SAX::Parser')->save_parsers()" 
-    sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::LibXML::SAX')->save_parsers()" 
-fi
-sudo perl -MCPAN -e 'force("install","XML::SAX::ParserFactory")'
-sudo perl -MCPAN -e 'force("install","XML::LibXML")'
-sudo perl -MCPAN -e 'force("install","Text::Template")'
-sudo perl -MCPAN -e 'force("install","Text::Levenshtein")'
-sudo perl -MCPAN -e 'force("install","List::Uniq")'
-sudo perl -MCPAN -e 'force("install","IO::Util")'
-sudo perl -MCPAN -e 'force("install","Class::Util")'
-sudo perl -MCPAN -e 'force("install","CGI::Builder")'
-sudo perl -MCPAN -e 'force("install","Simple")'
-sudo perl -MCPAN -e 'force("install","Readonly")'
-sudo perl -MCPAN -e 'force("install","File::Slurp")'
-sudo perl -MCPAN -e 'force("install","XML::Simple")'
-sudo CFLAGS=${PERLCFLAGS} perl -MCPAN -e 'force("install","List::MoreUtils")'
-sudo perl -MCPAN -e 'force("install","Clone")'
-sudo perl -MCPAN -e 'force("install","IO::Scalar")'
-sudo perl -MCPAN -e 'force("install","Regexp::Common")'
-sudo perl -MCPAN -e 'force("install","LaTeX::Encode")'
-sudo perl -MCPAN -e 'force("install","Sub::Identify")'
+# Install Python 3 (with pip) via MacPorts. This is needed to install Galacticus' Python build dependencies.
+sudo port install python312 py312-pip
+sudo port select --set python3 python312
+sudo port select --set pip3 pip312
 
 # Clone the Galacticus repository.
 git clone https://github.com/galacticusorg/galacticus.git
+
+# Create a Python virtual environment and install Galacticus' Python build dependencies (declared in pyproject.toml).
+/opt/local/bin/python3.12 -m venv galacticus/python-venv
+source galacticus/python-venv/bin/activate
+pip install -e galacticus
 
 # Build Galacticus.
 cd galacticus

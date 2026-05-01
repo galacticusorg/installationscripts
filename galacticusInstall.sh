@@ -164,7 +164,7 @@ fi
 while [ $installAsRoot -eq -1 ]
 do
     if [ -z ${cmdAsRoot} ]; then
-	read -p "Install required libraries and Perl modules as root (requires root password)? [no/yes]: " RESPONSE
+	read -p "Install required libraries as root (requires root password)? [no/yes]: " RESPONSE
     else
 	RESPONSE=${cmdAsRoot}
     fi
@@ -204,8 +204,8 @@ do
 	    echo "$pName password was incorrect, exiting"
 	    exit 1
 	fi
-	echo "Libraries and Perl modules will be installed as root"
-	echo "Libraries and Perl modules will be installed as root" >> $glcLogFile
+	echo "Libraries will be installed as root"
+	echo "Libraries will be installed as root" >> $glcLogFile
 
 	# Set up a suitable install path.
 	if [ -z ${cmdToolPrefix} ]; then
@@ -220,8 +220,8 @@ do
     elif [ "$RESPONSE" = no ] ; then
 	# Install as regular user.
         installAsRoot=0
-	echo "Libraries and Perl modules will be installed as regular user"
-	echo "Libraries and Perl modules will be installed as regular user" >> $glcLogFile
+	echo "Libraries will be installed as regular user"
+	echo "Libraries will be installed as regular user" >> $glcLogFile
 
 	# Set yp a suitable install path.
 	if [ -z ${cmdToolPrefix} ]; then
@@ -270,17 +270,6 @@ if [ -n "${C_INCLUDE_PATH}" ]; then
 else
     export C_INCLUDE_PATH=$toolInstallPath/include
 fi
-if [ -n "${PERLLIB}" ]; then
-    export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl:$PERLLIB
-else
-    export PERLLIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl
-fi
-if [ -n "${PERL5LIB}" ]; then
-    export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl:$PERL5LIB
-else
-    export PERL5LIB=$HOME/perl5/lib/perl5:$toolInstallPath/lib/perl5:$HOME/perl5/lib64/perl5:$toolInstallPath/lib64/perl5:$HOME/perl5/lib/perl5/site_perl:$toolInstallPath/lib/perl5/site_perl:$HOME/perl5/lib64/perl5/site_perl:$toolInstallPath/lib64/perl5/site_perl
-fi
-
 # Ensure that we use GNU compilers.
 export CC=gcc
 export CXX=g++
@@ -376,14 +365,6 @@ if [[ $installAsRoot -eq 1 && $usePackageManager -eq 1 ]]; then
         echo "$rootPassword" | eval $suCommand apt-get update $suClose
     fi
 fi
-installViaCPAN=0
-if hash perl >& /dev/null; then
-    perl -e "use CPAN" >& /dev/null
-    if [ $? -eq 0 ]; then
-	installViaCPAN=1
-    fi
-fi
-
 # Specify a list of paths to search for Fortran modules and libraries.
 moduleDirs="-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -fintrinsic-modules-path /usr/local/finclude -fintrinsic-modules-path /usr/local/include/gfortran -fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/lib/gfortran/modules -fintrinsic-modules-path /usr/include/gfortran -fintrinsic-modules-path /usr/include -fintrinsic-modules-path /usr/finclude -fintrinsic-modules-path /usr/lib64/gfortran/modules -L$toolInstallPath/lib -L$toolInstallPath/lib64"
 
@@ -1000,6 +981,24 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
+# Python 3 (with pip and the venv module - required to install Galacticus' Python build dependencies via pyproject.toml).
+iPackage=$(expr $iPackage + 1)
+         package[$iPackage]="python3"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash python3 && python3 -m venv --help >& /dev/null && python3 -m pip --version >& /dev/null"
+      getVersion[$iPackage]="versionString=(\`python3 --version\`); echo \${versionString[1]}"
+      minVersion[$iPackage]="3.8.0"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="python3 python3-pip"
+      aptInstall[$iPackage]="python3 python3-pip python3-venv"
+       sourceURL[$iPackage]="null"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
 # Install packages.
 echo "Checking for required tools and libraries..." 
 echo "Checking for required tools and libraries..." >> $glcLogFile
@@ -1163,20 +1162,10 @@ do
 			find . -name "*.c" | xargs sed -r -i~ /"^\s*\/\/"/d
 		    fi
      		    # Check for special package.
-		    if [ -z "${buildEnvironment[$i]}" ]; then
-			isPerl=0
-			isCopy=0
+		    if [ "${buildEnvironment[$i]}" = "copy" ]; then
+			isCopy=1
 		    else
-			if [ "${buildEnvironment[$i]}" = "perl" ]; then
-			    isPerl=1
-			else
-			    isPerl=0
-			fi
-			if [ "${buildEnvironment[$i]}" = "copy" ]; then
-			    isCopy=1
-			else
-			    isCopy=0
-			fi
+			isCopy=0
 		    fi
 		    if [ $isCopy -eq 1 ]; then
 		        # This is a package that we simply copy.
@@ -1357,63 +1346,38 @@ EOF
 			    fi
 			fi
 		        # Configure the source.
-			if [ $isPerl -eq 1 ]; then
-			    if [ -e ../$dirName/Makefile.PL ]; then
-				if [ $installAsRoot -eq 1 ]; then
-				    perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
-				else
-				    perl ../$dirName/Makefile.PL PREFIX=$toolInstallPath >>$glcLogFile 2>&1
-				fi
-			    else
-				echo "Can not locate Makefile.PL for ${package[$i]}"
-				echo "Can not locate Makefile.PL for ${package[$i]}" >>$glcLogFile
-				if [ "$catLogOnError" = yes ]; then
-				    cat $glcLogFile
-				fi
-				exit 1
+		        # Hardwired magic.
+		        # For HDF5 on older kernel versions we need to reduce optimization to prevent bug HDFFV-7829
+		        # from occuring during testing.
+			preConfig=" "
+			if [ $i -eq $iHDF5 ]; then
+			    version=`uname -r`
+			    testLow=`echo "$version test:3.4.999:9.9.9" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
+			    testHigh=`echo "$version test:3.4.999:9.9.9" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
+			    if [[ "$testLow" == "test" ]]; then
+				preConfig="env CFLAGS=-O0 "
 			    fi
-			    if [ $? -ne 0 ]; then
-				echo "Could not build Makefile for ${package[$i]}"
-				echo "Could not build Makefile for ${package[$i]}" >>$glcLogFile
-				if [ "$catLogOnError" = yes ]; then
-				    cat $glcLogFile
-				fi
-				exit 1
+			fi
+			eval ${buildEnvironment[$i]}
+			if [ -e ../$dirName/configure ]; then
+			    logexec $preConfig ../$dirName/configure ${configOptions[$i]}
+			elif [ -e ../$dirName/config ]; then
+			    logexec $preConfig ../$dirName/config ${configOptions[$i]}
+			elif [[ ${configOptions[$i]} -ne "skip" ]]; then
+			    echo "Can not locate configure script for ${package[$i]}"
+			    echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
 			    fi
-			else
-			    # Hardwired magic.
-			    # For HDF5 on older kernel versions we need to reduce optimization to prevent bug HDFFV-7829 
-			    # from occuring during testing.
-			    preConfig=" "
-			    if [ $i -eq $iHDF5 ]; then
-				version=`uname -r`
-				testLow=`echo "$version test:3.4.999:9.9.9" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
-				testHigh=`echo "$version test:3.4.999:9.9.9" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
-				if [[ "$testLow" == "test" ]]; then
-				    preConfig="env CFLAGS=-O0 "
-				fi
+			    exit 1
+			fi
+			if [ $? -ne 0 ]; then
+			    echo "Could not configure ${package[$i]}"
+			    echo "Could not configure ${package[$i]}" >>$glcLogFile
+			    if [ "$catLogOnError" = yes ]; then
+				cat $glcLogFile
 			    fi
-			    eval ${buildEnvironment[$i]}
-			    if [ -e ../$dirName/configure ]; then
-				logexec $preConfig ../$dirName/configure ${configOptions[$i]}
-			    elif [ -e ../$dirName/config ]; then
-				logexec $preConfig ../$dirName/config ${configOptions[$i]}
-			    elif [[ ${configOptions[$i]} -ne "skip" ]]; then
-				echo "Can not locate configure script for ${package[$i]}"
-				echo "Can not locate configure script for ${package[$i]}" >>$glcLogFile
-				if [ "$catLogOnError" = yes ]; then
-				    cat $glcLogFile
-				fi
-				exit 1
-			    fi
-			    if [ $? -ne 0 ]; then
-				echo "Could not configure ${package[$i]}"
-				echo "Could not configure ${package[$i]}" >>$glcLogFile
-				if [ "$catLogOnError" = yes ]; then
-				    cat $glcLogFile
-				fi
-				exit 1
-			    fi
+			    exit 1
 			fi
 		        # Make the package.
 			makeOptions=" "
@@ -1674,523 +1638,6 @@ fi
 
 
 
-# Specify the list of Perl modules and their requirements.
-gotPerlLocalLibEnv=0
-iPackage=-1
-# CPAN
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="CPAN"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-CPAN"
-    modulesApt[$iPackage]="perl-modules"
-   interactive[$iPackage]=0
-
-# Clone
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Clone"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Clone"
-    modulesApt[$iPackage]="libclone-perl"
-   interactive[$iPackage]=0
-
-# Text::Table
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Text::Table"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Text-Table"
-    modulesApt[$iPackage]="libtext-table-perl"
-   interactive[$iPackage]=0
-
-# Text::Template
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Text::Template"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Text-Template"
-    modulesApt[$iPackage]="libtext-template-perl"
-   interactive[$iPackage]=0
-
-# Text::Levenshtein
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Text::Levenshtein"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="libtext-levenshtein-perl"
-   interactive[$iPackage]=0
-
-# NestedMap
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="NestedMap"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# Regexp::Common
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Regexp::Common"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Regexp-Common"
-    modulesApt[$iPackage]="libregexp-common-perl"
-   interactive[$iPackage]=0
-
-# LaTeX::Encode
-#! <workaround>
-#!  <description>Global symbols are not correctly imported with a modern Perl</description>
-#!  <url>https://rt.cpan.org/Public/Bug/Display.html?id=87908</url>
-#! </workaround>
-iPackage=$(expr $iPackage + 1)
-  iLaTeXEncode=$iPackage
-       modules[$iPackage]="LaTeX::Encode"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
- modulesSource[$iPackage]="http://search.cpan.org/CPAN/authors/id/A/AN/ANDREWF/LaTeX-Encode-0.08.tar.gz"
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="liblatex-encode-perl"
-   interactive[$iPackage]=0
-
-# File::Copy
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Copy"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# XML::SAX
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="XML::SAX"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-XML-SAX"
-    modulesApt[$iPackage]="libxml-sax-perl"
-   interactive[$iPackage]=0
-
-# XML::Parser
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="XML::Parser"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-XML-Parser"
-    modulesApt[$iPackage]="libxml-parser-perl"
-   interactive[$iPackage]=0
-
-# XML::Simple
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="XML::Simple"
-modulesAtLevel[$iPackage]=-1
-  modulesForce[$iPackage]=1
-    modulesYum[$iPackage]="perl-XML-Simple"
-    modulesApt[$iPackage]="libxml-simple-perl"
-   interactive[$iPackage]=0
-
-# Cwd
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Cwd"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# Data::Dumper
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Data::Dumper"
-modulesAtLevel[$iPackage]=-1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-Data-Dump"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# DateTime
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="DateTime"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=1
-    modulesYum[$iPackage]="perl-DateTime"
-    modulesApt[$iPackage]="libdatetime-perl"
-   interactive[$iPackage]=0
-
-# Date::Format
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Date::Format"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="libdatetime-perl"
-   interactive[$iPackage]=0
-
-# Exporter
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Exporter"
-modulesAtLevel[$iPackage]=1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# Fcntl
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Fcntl"
-modulesAtLevel[$iPackage]=-1
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# File::Slurp
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Slurp"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="libfile-slurp-perl"
-   interactive[$iPackage]=0
-
-# Scalar::Util
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Scalar::Util"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# List::Uniq
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="List::Uniq"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# XML::LibXML
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="XML::LibXML"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-XML-LibXML"
-    modulesApt[$iPackage]="libxml2-dev"
-   interactive[$iPackage]=0
-
-# List::MoreUtils
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="List::MoreUtils"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-List-MoreUtils"
-    modulesApt[$iPackage]="liblist-moreutils-perl"
-   interactive[$iPackage]=0
-
-# IO::Scalar
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="IO::Scalar"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-IO-stringy"
-    modulesApt[$iPackage]="libio-stringy-perl"
-   interactive[$iPackage]=0
-
-# File::Which
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="File::Which"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="perl-File-Which"
-    modulesApt[$iPackage]="libfile-which-perl"
-   interactive[$iPackage]=0
-
-# Sub::Identify
-iPackage=$(expr $iPackage + 1)
-       modules[$iPackage]="Sub::Identify"
-modulesAtLevel[$iPackage]=0
-  modulesForce[$iPackage]=0
-    modulesYum[$iPackage]="null"
-    modulesApt[$iPackage]="null"
-   interactive[$iPackage]=0
-
-# Install required Perl modules.
-echo "Checking for Perl modules..." 
-echo "Checking for Perl modules..." >> $glcLogFile
-
-for (( i = 0 ; i < ${#modules[@]} ; i++ ))
-do
-    # Test if this module should be installed at this level.
-    if [ ${modulesAtLevel[$i]} -le $installLevel ]; then
-        # Get the name of the module.
-	module=${modules[$i]}
-	# Ensure we have XML::SAX parsers set up.
-	if [[ $module == "XML::Validator::Schema" ]]; then
-	    perl -MXML::SAX -e "XML::SAX->add_parser('XML::SAX::PurePerl')->save_parsers()" || true
-	fi
-        # Test if the module is already present.
-	echo "Testing for Perl module $module" >>$glcLogFile
-	if [[ $module == "Inline::C" ]]; then
-	    # Hardwired magic to test for Inline::C.
-	    perl -e 'use Inline C=>q{void testpres(){printf("inline c present\n");}};testpres' >>$glcLogFile 2>&1
-	else
-	    perl -e "use $module" >>$glcLogFile 2>&1
-	fi
-	if [ $? -eq 0 ]; then
-	    # Module already exists.
-	    echo $module - found
-	    echo $module - found >> $glcLogFile
-	else
-	    # Module must be installed.
-	    echo $module - not found - will be installed
-	    echo $module - not found - will be installed >> $glcLogFile
-            installDone=0
-	    # Try installing via yum.
-	    if [[ $installDone -eq 0 && $installViaYum -eq 1 && ${modulesYum[$i]} != "null" ]]; then
-                # Check for presence in yum repos.
-                echo "$rootPassword" | eval $suCommand yum -y list ${modulesYum[$i]} $suClose >& /dev/null
-                if [ $? -eq 0 ]; then
-		    echo "   Installing via yum"
-		    echo "   Installing via yum" >> $glcLogFile
-		    echo "$rootPassword" | eval $suCommand yum -y install ${modulesYum[$i]} $suClose >>$glcLogFile 2>&1
-		    perl -e "use $module" >& /dev/null
-		    if [ $? -ne 0 ]; then
-			logmessage "   ...failed"
-			if [ "$catLogOnError" = yes ]; then
-			    cat $glcLogFile
-			fi
-			exit 1
-		    fi
-                    installDone=1
-                fi
-            fi 
-	    # Try installing via apt.
-	    if [[ $installDone -eq 0 &&  $installViaApt -eq 1 && ${modulesApt[$i]} != "null" ]]; then
-		echo "   Installing via apt-get"
-		echo "   Installing via apt-get" >> $glcLogFile
-		echo "$rootPassword" | eval $suCommand apt-get -y install ${modulesApt[$i]} $suClose >>$glcLogFile 2>&1
-		perl -e "use $module" >& /dev/null
-		if [ $? -ne 0 ]; then
-		    logmessage "   ...failed"
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-                installDone=1
-            fi
-	    # Try installing from source.
-	    if [[ $installDone -eq 0 && ${modulesSource[$i]} != "" ]]; then
-		echo "   Installing from source"
-		echo "   Installing from source" >>$glcLogFile
-		wget "${modulesSource[$i]}" >>$glcLogFile 2>&1
-		if [ $? -ne 0 ]; then
-		    echo "Could not download ${modules[$i]}"
-		    echo "Could not download ${modules[$i]}" >>$glcLogFile
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-		baseName=`basename ${modulesSource[$i]}`
-		unpack=`echo $baseName | sed -e s/.*\.bz2/j/ -e s/.*\.xz/J/ -e s/.*\.gz/z/ -e s/.*\.tgz/z/ -e s/.*\.tar//`
-		tar xvf$unpack $baseName >>$glcLogFile 2>&1
-		if [ $? -ne 0 ]; then
-		    echo "Could not unpack ${modules[$i]}"
-		    echo "Could not unpack ${modules[$i]}" >>$glcLogFile
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-		dirName=`tar tf$unpack $baseName | head -1 | sed s/"\/.*"//`
-		cd $dirName
-# Hardwired magic.
-#! <workaround>
-#!  <description>Global symbols are not correctly imported with a modern Perl</description>
-#!  <url>https://rt.cpan.org/Public/Bug/Display.html?id=87908</url>
-#! </workaround>
-# Apply a patch to LaTeX::Encode to fix symbol import issues.
-if [ $i -eq $iLaTeXEncode ]; then
-cd lib/LaTeX
-sed -i~ s/"use LaTeX::Encode::EncodingTable;"/"#use LaTeX::Encode::EncodingTable;"/ Encode.pm
-sed -i~ s/"use base qw(Exporter);"/"use base qw(Exporter);\nuse LaTeX::Encode::EncodingTable;"/ Encode.pm
-cd -
-fi
-		# Configure the source.
-		if [ -e ../$dirName/Makefile.PL ]; then
-		    if [ $installAsRoot -eq 1 ]; then
-			perl ../$dirName/Makefile.PL >>$glcLogFile 2>&1
-		    else
-			perl -Mlocal::lib ../$dirName/Makefile.PL >>$glcLogFile 2>&1
-		    fi
-		else
-		    echo "Can not locate Makefile.PL for ${modules[$i]}"
-		    echo "Can not locate Makefile.PL for ${modules[$i]}" >>$glcLogFile
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-		if [ $? -ne 0 ]; then
-		    echo "Could not build Makefile for ${modules[$i]}"
-		    echo "Could not build Makefile for ${modules[$i]}" >>$glcLogFile
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-		# Make the package.
-		make -j >>$glcLogFile 2>&1
-		if [ $? -ne 0 ]; then
-		    echo "Could not make ${modules[$i]}"
-		    echo "Could not make ${modules[$i]}" >>$glcLogFile
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-		# Run any tests of the package.
-		make -j ${makeTest[$i]} >>$glcLogFile 2>&1
-		if [ $? -ne 0 ]; then
-		    logmessage "Testing ${modules[$i]} failed"
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-		# Install the package.
-		if [ $installAsRoot -eq 1 ]; then
-		    echo "$rootPassword" | eval $suCommand make PATH=${PATH} install $suClose >>$glcLogFile 2>&1
-		else
-		    make install >>$glcLogFile 2>&1
-		fi
-		if [ $? -ne 0 ]; then
-		    echo "Could not install ${modules[$i]}"
-		    echo "Could not install ${modules[$i]}" >>$glcLogFile
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-	    fi
-	    # Try installing via CPAN.
-	    if [[ $installDone -eq 0 &&  $installViaCPAN -eq 1 ]]; then
-		logmessage "   Installing via CPAN"
-		if [ ${modulesForce[$i]} -eq 1 ]; then
-		    cpanInstall="'force(\"install\",\"${modules[$i]}\")'"
-		else
-		    cpanInstall="'install(\"${modules[$i]}\")'"
-		fi
-		if [ $installAsRoot -eq 1 ]; then
-		    # Install as root.
-                    export PERL_MM_USE_DEFAULT=1
-		    if [ ${interactive[$i]} -eq 0 ]; then
-			echo $suCommand perl -MCPAN -e ${cpanInstall} $suClose >>$glcLogFile 2>&1
-			echo "$rootPassword" | eval $suCommand perl -MCPAN -e ${cpanInstall} $suClose >>$glcLogFile 2>&1
-		    else
-			echo $suCommand perl -MCPAN -e ${cpanInstall} $suClose >>$glcLogFile 2>&1
-			echo "$rootPassword" | eval $suCommand perl -MCPAN -e ${cpanInstall} $suClose
-		    fi
-		else		    
-                    # Check for local::lib.
-		    logexec perl -e \"use local::lib\"
-		    if [ $? -ne 0 ]; then
-			wget https://cpan.metacpan.org/authors/id/H/HA/HAARG/local-lib-2.000029.tar.gz >>$glcLogFile 2>&1
-			if [ $? -ne 0 ]; then
-			    logmessage "Failed to download local-lib-2.000029.tar.gz"
-			    if [ "$catLogOnError" = yes ]; then
-				cat $glcLogFile
-			    fi
-			    exit 1
-			fi
-			tar xvfz local-lib-2.000029.tar.gz >>$glcLogFile 2>&1
-			if [ $? -ne 0 ]; then
-			    logmessage "Failed to unpack local-lib-2.000029.tar.gz"
-			    if [ "$catLogOnError" = yes ]; then
-				cat $glcLogFile
-			    fi
-			    exit 1
-			fi
-			cd local-lib-2.000029
-			perl Makefile.PL --bootstrap >>$glcLogFile 2>&1
-			if [ $? -ne 0 ]; then
-			    logmessage "Failed to bootstrap local-lib-2.000029"
-			    if [ "$catLogOnError" = yes ]; then
-				cat $glcLogFile
-			    fi
-			    exit 1
-			fi
-			make >>$glcLogFile 2>&1
-			if [ $? -ne 0 ]; then
-			    logmessage "Failed to make local-lib-2.000029"
-			    if [ "$catLogOnError" = yes ]; then
-				cat $glcLogFile
-			    fi
-			    exit 1
-			fi
-			make test >>$glcLogFile 2>&1
-			if [ $? -ne 0 ]; then
-			    logmessage "Tests of local-lib-2.000029 failed" >>$glcLogFile
-			    if [ "$catLogOnError" = yes ]; then
-				cat $glcLogFile
-			    fi
-			    exit 1
-			fi
-			make install >>$glcLogFile 2>&1
-			if [ $? -ne 0 ]; then
-			    logmessage "Failed to install local-lib-2.000029"			    
-			    if [ "$catLogOnError" = yes ]; then
-				cat $glcLogFile
-			    fi
-			    exit 1
-			fi
-		    fi
-		    # Ensure that we're using the local::lib environment.
-		    if [ $gotPerlLocalLibEnv -eq 0 ]; then
-			eval $(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)
-			gotPerlLocalLibEnv=1
-		    fi
-		    # Install as regular user.
-		    export PERL_MM_USE_DEFAULT=1
-		    if [ ${interactive[$i]} -eq 0 ]; then
-			logexec perl -Mlocal::lib -MCPAN -e ${cpanInstall}
-		    else
-			echo perl -Mlocal::lib -MCPAN -e ${cpanInstall} >>$glcLogFile
-			perl -Mlocal::lib -MCPAN -e ${cpanInstall}
-		    fi
-		fi
-		# Check that the module was installed successfully.
-		logexec perl -e \"use $module\" >>/dev/null 2>&1
-		if [ $? -ne 0 ]; then
-		    logmessage "   ...failed"
-		    if [ "$catLogOnError" = yes ]; then
-			cat $glcLogFile
-		    fi
-		    exit 1
-		fi
-                installDone=1
-	    fi
-	    # We were unable to install the module by any method.
-	    if [ $installDone -eq 0 ]; then
-		echo "no method exists to install this module"
-		echo "no method exists to install this module" >> $glcLogFile
-		if [ "$catLogOnError" = yes ]; then
-		    cat $glcLogFile
-		fi
-		exit 1;
-	    fi
-	fi
-        # If we installed CPAN then make this an available method for future installs.
-	if [[ $installViaCPAN -eq 0 && $module -eq "CPAN" ]]; then
-	    installViaCPAN=1
-	fi
-    fi
-    
-done
 
 # Retrieve Galacticus via Git.
 if [[ $runningAsRoot -eq 1 ]]; then
@@ -2233,8 +1680,32 @@ if [ ! -e $galacticusInstallPath ]; then
 	    fi
 	    exit 1
 	fi
+	# Create a Python virtual environment and install Galacticus' Python build dependencies (declared in pyproject.toml).
+	logmessage "creating Python virtual environment for Galacticus"
+	logexec python3 -m venv $galacticusInstallPath/python-venv
+	if [ $? -ne 0 ]; then
+	    logmessage "failed to create Python virtual environment"
+	    if [ "$catLogOnError" = yes ]; then
+		cat $glcLogFile
+	    fi
+	    exit 1
+	fi
+	logmessage "installing Galacticus Python build dependencies"
+	logexec $galacticusInstallPath/python-venv/bin/pip install -e $galacticusInstallPath
+	if [ $? -ne 0 ]; then
+	    logmessage "failed to install Galacticus Python build dependencies"
+	    if [ "$catLogOnError" = yes ]; then
+		cat $glcLogFile
+	    fi
+	    exit 1
+	fi
 	cd -
     fi
+fi
+
+# Activate the Python virtual environment so that the build (which invokes Galacticus' Python tooling) can find it.
+if [[ $installLevel -ne -1 && -e $galacticusInstallPath/python-venv/bin/activate ]]; then
+    source $galacticusInstallPath/python-venv/bin/activate
 fi
 
 # Add commands to .bashrc and/or .cshrc.
@@ -2262,8 +1733,8 @@ if [ "$RESPONSE" = yes ] ; then
     echo " else" >> $HOME/.bashrc
     echo "  export PATH=$toolInstallPath/bin" >> $HOME/.bashrc
     echo " fi" >> $HOME/.bashrc
-    if [ -e $HOME/perl5/lib/perl5/local/lib.pm ]; then
-	echo " eval \$(perl -I$HOME/perl5/lib/perl5 -Mlocal::lib)" >> $HOME/.bashrc
+    if [ -e $galacticusInstallPath/python-venv/bin/activate ]; then
+	echo " source $galacticusInstallPath/python-venv/bin/activate" >> $HOME/.bashrc
     fi
     echo " export GALACTICUS_FCFLAGS=\"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.bashrc
     echo " export GALACTICUS_CFLAGS=\"$libDirs -I$toolInstallPath/include\"" >> $HOME/.bashrc
@@ -2294,8 +1765,8 @@ if [ "$RESPONSE" = yes ] ; then
     echo "else \\" >> $HOME/.cshrc
     echo " setenv PATH $toolInstallPath/bin \\" >> $HOME/.cshrc
     echo "endif \\" >> $HOME/.cshrc
-    if [ -e $HOME/perl5/lib/perl5/local/lib.pm ]; then
-	echo "eval \`perl -I$HOME/perl5/lib/perl5 -Mlocal::lib\` \\" >> $HOME/.cshrc
+    if [ -e $galacticusInstallPath/python-venv/bin/activate.csh ]; then
+	echo "source $galacticusInstallPath/python-venv/bin/activate.csh \\" >> $HOME/.cshrc
     fi
     echo "setenv GALACTICUS_FCFLAGS \"-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules $libDirs\"" >> $HOME/.cshrc
     echo "setenv GALACTICUS_CFLAGS \"$libDirs -I$toolInstallPath/include\"" >> $HOME/.cshrc
