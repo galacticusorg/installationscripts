@@ -22,6 +22,12 @@ if [[ ! $(xcode-select -p) ]]; then
 fi
 export PATH=/opt/gcc-16/bin:$PATH:/opt/local/bin:/usr/local/bin
 
+# Point GCC 16's Darwin driver at the active SDK. The hosted GCC 16 binary is not built with a sysroot baked in, so
+# without SDKROOT it fails to locate system headers (e.g. <stdlib.h>, <limits.h>) and libraries on macOS 14 runners,
+# causing libmatheval's configure ("C compiler cannot create executables"), qhull's build (missing limits.h), and the
+# stdlib.h failure already worked around in the ANN build.
+export SDKROOT="$(xcrun --show-sdk-path)"
+
 # Determine number of CPUs available.
 countCPUs=`sysctl -n hw.ncpu`
 
