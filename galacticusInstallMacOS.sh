@@ -162,9 +162,11 @@ tar xvfz ann_1.1.2.tar.gz
 cd ann_1.1.2
 sed -E -i~ s,"C\+\+ = g\+\+","C\+\+ = /opt/gcc-16/bin/g\+\+", Make-config
 # ANN's ann_test.cpp uses an `istream >> char*` idiom that newer C++ standards no longer match against any operator>>
-# overload — force -std=c++17 to keep it accepted. Also pass -isysroot so GCC 16 finds the system stdlib.h (its
-# default header search path does not include the active SDK on macOS 14).
-sed -E -i~ s,"CFLAGS = -O3","CFLAGS = -O3 -std=c++17 -isysroot $(xcrun --show-sdk-path)", Make-config
+# overload — force -std=gnu++17 to keep it accepted. We pick gnu++17 over c++17 because the strict-ISO mode triggered
+# by c++17 sets __STRICT_ANSI__, which causes the macOS SDK headers to hide non-strict declarations (at_quick_exit /
+# quick_exit, which GCC's <cstdlib> expects in the global namespace; FILE in <stdio.h>). With SDKROOT exported above
+# GCC 16 already finds the SDK, so no explicit -isysroot is needed here.
+sed -E -i~ s,"CFLAGS = -O3","CFLAGS = -O3 -std=gnu++17", Make-config
 make macosx-g++
 if [ $? -ne 0 ]; then
     exit 1

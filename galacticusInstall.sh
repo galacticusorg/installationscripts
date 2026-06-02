@@ -1253,9 +1253,11 @@ EOF
 			mkdir -p $toolInstallPath/lib/ >>$glcLogFile 2>&1
 			cp -f libblas.so $toolInstallPath/lib/ >>$glcLogFile 2>&1
 		    elif [[ $i -eq $iANN ]]; then
-			# Add -fPIC for shared-library linking, and -std=c++17 because ann_test.cpp's
+			# Add -fPIC for shared-library linking, and -std=gnu++17 because ann_test.cpp's
 			# `istream >> char*` idiom no longer matches any operator>> overload in newer C++ standards.
-			sed -i~ -r s/"CFLAGS = \-O3"/"CFLAGS = \-O3 -fPIC -std=c++17"/ Make-config
+			# We pick gnu++17 over c++17 so that __STRICT_ANSI__ stays off — strict-ISO mode hides platform
+			# extensions in system headers (e.g. at_quick_exit/quick_exit, POSIX FILE in stdio.h on macOS).
+			sed -i~ -r s/"CFLAGS = \-O3"/"CFLAGS = \-O3 -fPIC -std=gnu++17"/ Make-config
                         if [ $? -ne 0 ]; then
 			    logmesage "Failed to patch make.inc in blas"
 			    if [ "$catLogOnError" = yes ]; then
