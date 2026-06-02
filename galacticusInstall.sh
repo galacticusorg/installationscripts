@@ -520,7 +520,7 @@ buildEnvironment[$iPackage]=""
 # gcc (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
             iGCC=$iPackage
-	iGCCVMin="4.0.0"
+	iGCCVMin="16.0.0"
          package[$iPackage]="gcc"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gcc"
@@ -528,7 +528,8 @@ iPackage=$(expr $iPackage + 1)
       minVersion[$iPackage]=$iGCCVMin
       maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="gcc"
-      aptInstall[$iPackage]="gcc"
+      aptInstall[$iPackage]="gcc-16"
+  postAptInstall[$iPackage]="update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-16 100"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
@@ -540,7 +541,7 @@ buildEnvironment[$iPackage]=""
 # g++ (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
             iGPP=$iPackage
-	iGPPVMin="4.0.0"
+	iGPPVMin="16.0.0"
          package[$iPackage]="g++"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash g++"
@@ -548,7 +549,8 @@ iPackage=$(expr $iPackage + 1)
       minVersion[$iPackage]=$iGPPVMin
       maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="gcc-c++"
-      aptInstall[$iPackage]="g++"
+      aptInstall[$iPackage]="g++-16"
+  postAptInstall[$iPackage]="update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-16 100"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
@@ -560,15 +562,16 @@ buildEnvironment[$iPackage]=""
 # GFortran (initial attempt - allow install via package manager only)
 iPackage=$(expr $iPackage + 1)
         iFortran=$iPackage
-    iFortranVMin="10.1.0"
+    iFortranVMin="16.0.0"
          package[$iPackage]="gfortran"
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]=$iFortranVMin
-      maxVersion[$iPackage]="12.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="gcc-gfortran"
-      aptInstall[$iPackage]="gfortran-12"
+      aptInstall[$iPackage]="gfortran-16"
+  postAptInstall[$iPackage]="update-alternatives --install /usr/bin/gfortran gfortran /usr/bin/gfortran-16 100"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=1
@@ -726,7 +729,7 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-12"
+       gitBranch[$iPackage]="releases/gcc-16"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -746,7 +749,7 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-12"
+       gitBranch[$iPackage]="releases/gcc-16"
 buildEnvironment[$iPackage]="cd ../\$dirName/..; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -762,11 +765,11 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="hash gfortran"
       getVersion[$iPackage]="versionString=(\`gfortran --version\`); echo \${versionString[3]}"
       minVersion[$iPackage]=$iFortranVMin
-      maxVersion[$iPackage]="12.9.9"
+      maxVersion[$iPackage]="19.9.9"
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-12"
+       gitBranch[$iPackage]="releases/gcc-16"
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -1081,6 +1084,10 @@ do
 				echo "   Installing via apt-get"
 				echo "   Installing via apt-get" >> $glcLogFile
 				echo "$rootPassword" | eval $suCommand apt-get -y install $aptPackage $suClose >>$glcLogFile 2>&1
+				# Run any post-apt-install hook (e.g., update-alternatives for version-pinned packages).
+				if [[ -n "${postAptInstall[$i]:-}" && "${postAptInstall[$i]:-}" != "null" ]]; then
+				    echo "$rootPassword" | eval $suCommand ${postAptInstall[$i]} $suClose >>$glcLogFile 2>&1
+				fi
 				if ! eval ${testPresence[$i]} >& /dev/null; then
 				    logmessage "   ...failed"
 				    if [ "$catLogOnError" = yes ]; then
