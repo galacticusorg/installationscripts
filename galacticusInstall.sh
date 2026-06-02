@@ -365,15 +365,18 @@ if [[ $installAsRoot -eq 1 && $usePackageManager -eq 1 ]]; then
         echo "$rootPassword" | eval $suCommand apt-get update $suClose
     fi
 fi
-# On RHEL/Rocky/CentOS, bootstrap a system gcc/g++/make/git. The version-checked iGCC entry below requires GCC >= 16,
-# newer than what yum currently provides, so the yum install of gcc would be skipped and source-build scheduled —
-# leaving no `gcc` on PATH for the testPresence probes of subsequent packages (zlib, gmp, ...) to compile their dummy
-# programs. The system gcc also serves as the bootstrap compiler for the GCC 16 source build itself, and git is needed
-# to clone that source from gcc.gnu.org (the iGIT package entry is processed much later in the install loop).
+# On RHEL/Rocky/CentOS, bootstrap a handful of build tools that the version-checked package entries below would
+# otherwise install too late. iGCC requires GCC >= 16 — newer than what yum currently provides — so the gcc install
+# gets skipped and source-build scheduled. That leaves the system without:
+#   - gcc/g++/make: needed by the testPresence probes of later packages (zlib, gmp, ...) to compile dummy programs,
+#     and as the bootstrap compiler for the GCC 16 source build itself.
+#   - git: used to clone the GCC source from gcc.gnu.org (iGIT is processed much later in the install loop).
+#   - bzip2: used by GCC's contrib/download_prerequisites to extract GMP/MPFR/MPC .tar.bz2 tarballs (iBZIP2 is
+#     processed much later in the install loop).
 if [[ $installViaYum -eq 1 ]]; then
-    echo "Bootstrapping system gcc/gcc-c++/make/git via yum (for testPresence probes and GCC 16 source build)."
-    echo "Bootstrapping system gcc/gcc-c++/make/git via yum (for testPresence probes and GCC 16 source build)." >> $glcLogFile
-    echo "$rootPassword" | eval $suCommand yum -y install gcc gcc-c++ make git $suClose >>$glcLogFile 2>&1
+    echo "Bootstrapping system gcc/gcc-c++/make/git/bzip2 via yum (for testPresence probes and GCC 16 source build)."
+    echo "Bootstrapping system gcc/gcc-c++/make/git/bzip2 via yum (for testPresence probes and GCC 16 source build)." >> $glcLogFile
+    echo "$rootPassword" | eval $suCommand yum -y install gcc gcc-c++ make git bzip2 $suClose >>$glcLogFile 2>&1
 fi
 # Specify a list of paths to search for Fortran modules and libraries.
 moduleDirs="-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modules-path $toolInstallPath/include -fintrinsic-modules-path $toolInstallPath/include/gfortran -fintrinsic-modules-path $toolInstallPath/lib/gfortran/modules -fintrinsic-modules-path /usr/local/finclude -fintrinsic-modules-path /usr/local/include/gfortran -fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/lib/gfortran/modules -fintrinsic-modules-path /usr/include/gfortran -fintrinsic-modules-path /usr/include -fintrinsic-modules-path /usr/finclude -fintrinsic-modules-path /usr/lib64/gfortran/modules -L$toolInstallPath/lib -L$toolInstallPath/lib64"
