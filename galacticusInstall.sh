@@ -1048,7 +1048,11 @@ do
 			    if [[ "$testLow" != "test" && "$testHigh" != "test" ]]; then
 				echo "   Installing via yum"
 				echo "   Installing via yum" >> $glcLogFile
-				echo "$rootPassword" | eval $suCommand yum -y install $yumPackage $suClose >>$glcLogFile 2>&1
+				# The yumInstall list is complementary (all packages are needed together — e.g.
+				# `python3 python3-pip`, `bzip2 bzip2-devel bzip2-libs`), not alternatives. Install
+				# the full list at once; the surrounding loop is only used to find the first package
+				# whose available version is in range, which we treat as the principal package.
+				echo "$rootPassword" | eval $suCommand yum -y install ${yumInstall[$i]} $suClose >>$glcLogFile 2>&1
 				if ! eval ${testPresence[$i]} >& /dev/null; then
 				    logmessage "   ...failed"
 				    if [ "$catLogOnError" = yes ]; then
@@ -1078,7 +1082,11 @@ do
 			    if [[ "$testLow" != "test" && "$testHigh" != "test" ]]; then
 				echo "   Installing via apt-get"
 				echo "   Installing via apt-get" >> $glcLogFile
-				echo "$rootPassword" | eval $suCommand apt-get -y install $aptPackage $suClose >>$glcLogFile 2>&1
+				# The aptInstall list is complementary (all packages are needed together — e.g.
+				# `python3 python3-pip python3-venv`, `bzip2 libbz2-dev`), not alternatives.
+				# Install the full list at once; the surrounding loop is only used to find the first
+				# package whose available version is in range, which we treat as the principal package.
+				echo "$rootPassword" | eval $suCommand apt-get -y install ${aptInstall[$i]} $suClose >>$glcLogFile 2>&1
 				# Run any post-apt-install hook (e.g., update-alternatives for version-pinned packages).
 				if [[ -n "${postAptInstall[$i]:-}" && "${postAptInstall[$i]:-}" != "null" ]]; then
 				    echo "$rootPassword" | eval $suCommand ${postAptInstall[$i]} $suClose >>$glcLogFile 2>&1
