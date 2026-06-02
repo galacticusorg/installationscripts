@@ -580,24 +580,6 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
-# expat
-iPackage=$(expr $iPackage + 1)
-         package[$iPackage]="expat"
-  packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="echo \"#include <expat.h>\" > dummy.c; echo \"int main() {}\" >> dummy.c; gcc dummy.c $libDirs -lexpat"
-      getVersion[$iPackage]="echo 1.0.0"
-      minVersion[$iPackage]="0.0.0"
-      maxVersion[$iPackage]="99.99"
-      yumInstall[$iPackage]="expat-devel"
-      aptInstall[$iPackage]="libexpat1-dev"
-       sourceURL[$iPackage]="https://github.com/libexpat/libexpat/releases/download/R_2_5_0/expat-2.5.0.tar.gz"
-buildEnvironment[$iPackage]=""
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath"
-        makeTest[$iPackage]="check"
-     makeInstall[$iPackage]="install"
-   parallelBuild[$iPackage]=0
-
 # Zlib
 iPackage=$(expr $iPackage + 1)
            iZLIB=$iPackage
@@ -1637,14 +1619,6 @@ done
 if [ -e $toolInstallPath/lib/libhdf5.so ]; then
     export HDF5_PATH=$toolInstallPath
 fi
-
-# Set environment path for expat if we installed our own copy.
-if [ -e $toolInstallPath/lib/libexpat.so ]; then
-    export EXPATLIBPATH=$toolInstallPath/lib
-    export EXPATINCPATH=$toolInstallPath/include
-fi
-
-
 
 
 # Retrieve Galacticus via Git.
