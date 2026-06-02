@@ -1579,8 +1579,9 @@ EOF
 		fi
                 # Hardwired magic.
                 # On Ubuntu, we need to ensure that gcc-multilib is installed so that we can compile the gcc compilers.
-		uname -v | grep -i ubuntu >& /dev/null
-		if [ $? -eq 0 ]; then
+                # Detect by the presence of apt-get rather than `uname -v`, which on container CI runners reports the
+                # host kernel's build string (e.g. "Ubuntu" on a GitHub Actions Rocky container).
+		if hash apt-get >& /dev/null; then
 		    if [ ! -e /usr/include/asm/errno.h ]; then
                         # gcc-multilib is not installed. If we don't have root access, we have a problem.
 			if [ $installAsRoot -eq 1 ]; then
