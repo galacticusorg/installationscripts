@@ -155,6 +155,10 @@ curl -L http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz --output a
 tar xvfz ann_1.1.2.tar.gz
 cd ann_1.1.2
 sed -E -i~ s,"C\+\+ = g\+\+","C\+\+ = /opt/gcc-16/bin/g\+\+", Make-config
+# ANN's ann_test.cpp uses an `istream >> char*` idiom that newer C++ standards no longer match against any operator>>
+# overload — force -std=c++17 to keep it accepted. Also pass -isysroot so GCC 16 finds the system stdlib.h (its
+# default header search path does not include the active SDK on macOS 14).
+sed -E -i~ s,"CFLAGS = -O3","CFLAGS = -O3 -std=c++17 -isysroot $(xcrun --show-sdk-path)", Make-config
 make macosx-g++
 if [ $? -ne 0 ]; then
     exit 1
