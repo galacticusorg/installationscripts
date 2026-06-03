@@ -22,20 +22,14 @@ if [[ ! $(xcode-select -p) ]]; then
 fi
 export PATH=/opt/gcc-16/bin:$PATH:/opt/local/bin:/usr/local/bin
 
-# The hosted GCC 16 binary is built against a macOS 15 / Xcode 16 SDK, and bakes assumptions about that SDK into its own
-# <cstdlib> (using ::at_quick_exit / ::quick_exit) and fixincludes headers. The macOS 14 runner defaults to Xcode 15.4,
-# whose older SDK is incompatible — pointing GCC at it breaks <cstdlib> and triggers the <stdio.h> 'FILE' cascade, which
-# fails libmatheval/qhull/fftw/HDF5/ANN. Select an Xcode 16 toolchain if one is present so SDKROOT below resolves to a
-# compatible SDK. (macOS 15 runners already default to Xcode 16, so this is a no-op there.)
-for xcode in /Applications/Xcode_16*.app; do
-    if [[ -d "${xcode}" ]]; then
-        sudo xcode-select -s "${xcode}/Contents/Developer"
-        break
-    fi
-done
-
 # Point GCC 16's Darwin driver at the active SDK. The hosted GCC 16 binary is not built with a sysroot baked in, so
 # without SDKROOT it fails to locate system headers (e.g. <stdlib.h>, <limits.h>) and libraries.
+#
+# Note: the hosted GCC 16 binary is built against the macOS 15.6 SDK (its target triple is aarch64-apple-darwin24.6.0),
+# and its fixincludes copy of <_stdio.h> hardcodes "#include <_bounds.h>", a header that only exists in the macOS 15.4+
+# SDK. It therefore requires an SDK at least that new. macOS 15 runners default to Xcode 16.4 (macOS 15.5 SDK), which is
+# compatible; macOS 14 runners only offer up to Xcode 16.2 (macOS 15.2 SDK), which lacks <_bounds.h>, so macOS 14 cannot
+# build with this binary and is not included in CI.
 export SDKROOT="$(xcrun --show-sdk-path)"
 
 # Determine number of CPUs available.
@@ -173,8 +167,8 @@ cd ann_1.1.2
 sed -E -i~ s,"C\+\+ = g\+\+","C\+\+ = /opt/gcc-16/bin/g\+\+", Make-config
 # ANN's ann_test.cpp uses an `istream >> char*` idiom that newer C++ standards no longer match against any operator>>
 # overload — force -std=gnu++17 to keep it accepted. We pick gnu++17 over c++17 because the strict-ISO mode triggered
-# by c++17 sets __STRICT_ANSI__, which causes the macOS SDK headers to hide non-strict declarations. (The GCC/SDK
-# version match is handled by the Xcode 16 selection and SDKROOT export near the top of this script.)
+# by c++17 sets __STRICT_ANSI__, which causes the macOS SDK headers to hide non-strict declarations. (GCC finds the SDK
+# via the SDKROOT export near the top of this script.)
 sed -E -i~ s,"CFLAGS = -O3","CFLAGS = -O3 -std=gnu++17", Make-config
 make macosx-g++
 if [ $? -ne 0 ]; then
