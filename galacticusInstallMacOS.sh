@@ -22,10 +22,20 @@ if [[ ! $(xcode-select -p) ]]; then
 fi
 export PATH=/opt/gcc-16/bin:$PATH:/opt/local/bin:/usr/local/bin
 
+# The hosted GCC 16 binary is built against a macOS 15 / Xcode 16 SDK, and bakes assumptions about that SDK into its own
+# <cstdlib> (using ::at_quick_exit / ::quick_exit) and fixincludes headers. The macOS 14 runner defaults to Xcode 15.4,
+# whose older SDK is incompatible — pointing GCC at it breaks <cstdlib> and triggers the <stdio.h> 'FILE' cascade, which
+# fails libmatheval/qhull/fftw/HDF5/ANN. Select an Xcode 16 toolchain if one is present so SDKROOT below resolves to a
+# compatible SDK. (macOS 15 runners already default to Xcode 16, so this is a no-op there.)
+for xcode in /Applications/Xcode_16*.app; do
+    if [[ -d "${xcode}" ]]; then
+        sudo xcode-select -s "${xcode}/Contents/Developer"
+        break
+    fi
+done
+
 # Point GCC 16's Darwin driver at the active SDK. The hosted GCC 16 binary is not built with a sysroot baked in, so
-# without SDKROOT it fails to locate system headers (e.g. <stdlib.h>, <limits.h>) and libraries on macOS 14 runners,
-# causing libmatheval's configure ("C compiler cannot create executables"), qhull's build (missing limits.h), and the
-# stdlib.h failure already worked around in the ANN build.
+# without SDKROOT it fails to locate system headers (e.g. <stdlib.h>, <limits.h>) and libraries.
 export SDKROOT="$(xcrun --show-sdk-path)"
 
 # Determine number of CPUs available.
@@ -163,9 +173,8 @@ cd ann_1.1.2
 sed -E -i~ s,"C\+\+ = g\+\+","C\+\+ = /opt/gcc-16/bin/g\+\+", Make-config
 # ANN's ann_test.cpp uses an `istream >> char*` idiom that newer C++ standards no longer match against any operator>>
 # overload — force -std=gnu++17 to keep it accepted. We pick gnu++17 over c++17 because the strict-ISO mode triggered
-# by c++17 sets __STRICT_ANSI__, which causes the macOS SDK headers to hide non-strict declarations (at_quick_exit /
-# quick_exit, which GCC's <cstdlib> expects in the global namespace; FILE in <stdio.h>). With SDKROOT exported above
-# GCC 16 already finds the SDK, so no explicit -isysroot is needed here.
+# by c++17 sets __STRICT_ANSI__, which causes the macOS SDK headers to hide non-strict declarations. (The GCC/SDK
+# version match is handled by the Xcode 16 selection and SDKROOT export near the top of this script.)
 sed -E -i~ s,"CFLAGS = -O3","CFLAGS = -O3 -std=gnu++17", Make-config
 make macosx-g++
 if [ $? -ne 0 ]; then
