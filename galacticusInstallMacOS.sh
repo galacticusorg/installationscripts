@@ -20,7 +20,17 @@
 if [[ ! $(xcode-select -p) ]]; then
     xcode-select --install
 fi
-export PATH=$PATH:/opt/local/bin:/usr/local/bin
+export PATH=/opt/gcc-16/bin:$PATH:/opt/local/bin:/usr/local/bin
+
+# Point GCC 16's Darwin driver at the active SDK. The hosted GCC 16 binary is not built with a sysroot baked in, so
+# without SDKROOT it fails to locate system headers (e.g. <stdlib.h>, <limits.h>) and libraries.
+#
+# Note: the hosted GCC 16 binary is built against the macOS 15.6 SDK (its target triple is aarch64-apple-darwin24.6.0),
+# and its fixincludes copy of <_stdio.h> hardcodes "#include <_bounds.h>", a header that only exists in the macOS 15.4+
+# SDK. It therefore requires an SDK at least that new. macOS 15 runners default to Xcode 16.4 (macOS 15.5 SDK), which is
+# compatible; macOS 14 runners only offer up to Xcode 16.2 (macOS 15.2 SDK), which lacks <_bounds.h>, so macOS 14 cannot
+# build with this binary and is not included in CI.
+export SDKROOT="$(xcrun --show-sdk-path)"
 
 # Determine number of CPUs available.
 countCPUs=`sysctl -n hw.ncpu`
@@ -55,8 +65,26 @@ curl -L https://github.com/macports/macports-base/releases/download/v${macportsv
 sudo installer -pkg ./MacPorts-${macportsbase}.pkg -target /
 rm ./MacPorts-${macportsbase}.pkg
 
-# Install GCC v12 via HomeBrew.
-brew install gcc@12
+# Install GCC 16 from pre-built binaries (HomeBrew does not currently provide GCC 16). Binaries are hosted at
+# users.obs.carnegiescience.edu and extract into /opt/gcc-16.
+gccBase="https://users.obs.carnegiescience.edu/abenson/galacticus"
+case "$(uname -m)" in
+    arm64)  gccTarball="gcc-16.0.1-arm64-78d52d13407.tar.gz" ;;
+    x86_64) gccTarball="gcc-16.1.0-x86_64-release.tar.gz"    ;;
+    *) echo "Unsupported arch: $(uname -m)" >&2; exit 1 ;;
+esac
+curl -fsSL --retry 3 -o gcc16.tar.gz        "${gccBase}/${gccTarball}"
+curl -fsSL --retry 3 -o gcc16.tar.gz.sha256 "${gccBase}/${gccTarball}.sha256"
+gccExpected=$(awk '{print $1}' gcc16.tar.gz.sha256)
+gccActual=$(shasum -a 256 gcc16.tar.gz | awk '{print $1}')
+if [ "${gccExpected}" != "${gccActual}" ]; then
+    echo "Checksum mismatch for ${gccTarball}" >&2
+    echo "  expected: ${gccExpected}"           >&2
+    echo "  actual:   ${gccActual}"             >&2
+    exit 1
+fi
+sudo tar -C / -xzf gcc16.tar.gz
+rm gcc16.tar.gz gcc16.tar.gz.sha256
 
 # Install guile v3.0 via MacPorts.
 sudo port install guile-3.0
@@ -72,7 +100,7 @@ cd libmatheval-1.1.13
 # Patch following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
 sed -E -i~ s/"#undef HAVE_SCM_T_BITS"/"#define HAVE_SCM_T_BITS 1"/ config.h.in
 # Set guile paths following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
-CC=gcc-15 PKG_CONFIG=/opt/local/bin/pkg-config GUILE=/opt/local/bin/guile-3.0 GUILE_CONFIG=/opt/local/bin/guile-config-3.0 GUILE_TOOLS=/opt/local/bin/guile-tools-3.0 ./configure --prefix=/usr/local
+CC=/opt/gcc-16/bin/gcc PKG_CONFIG=/opt/local/bin/pkg-config GUILE=/opt/local/bin/guile-3.0 GUILE_CONFIG=/opt/local/bin/guile-config-3.0 GUILE_TOOLS=/opt/local/bin/guile-tools-3.0 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -82,7 +110,7 @@ rm -rf libmatheval-1.1.13.tar.gz libmatheval-1.1.13
 curl -L http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz --output qhull-2020-src-8.0.2.tgz
 tar xvfz qhull-2020-src-8.0.2.tgz
 cd qhull-2020.2
-make -j${countCPUs} CC=gcc-15 CXX=g++-15
+make -j${countCPUs} CC=/opt/gcc-16/bin/gcc CXX=/opt/gcc-16/bin/g++
 sudo make install
 cd ..
 rm -rf qhull-2020-src-8.0.2.tgz qhull-2020.2
@@ -99,14 +127,14 @@ if   [[ "${ver}" -eq 13 ]]; then
     HDF5LDFLAGS="$LDFLAGS -Wl,-ld_classic"
 elif [[ "${ver}" -eq 14 ]]; then
     HDF5CFLAGS=-I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include
-    # On MacOS 14 the 'sys/cdefs.h' header file contains pre-processor code which is not parseable by GCC 12. As it is
+    # On MacOS 14 the 'sys/cdefs.h' header file contains pre-processor code which is not parseable by GCC. As it is
     # Clang-specific, we just make a copy of this file and destroy the problematic code.
     mkdir sys
     cp /Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk/usr/include/sys/cdefs.h sys/
     sed -E -i~ s/"clang::"/"clang"/ sys/cdefs.h
     HDF5CFLAGS="-I`pwd` ${HDF5CFLAGS}"
 fi
-CC=gcc-15 CXX=g++-15 FC=gfortran-12 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-build-mode=production
+CC=/opt/gcc-16/bin/gcc CXX=/opt/gcc-16/bin/g++ FC=/opt/gcc-16/bin/gfortran CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-build-mode=production
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -116,7 +144,7 @@ rm -rf hdf5-1.14.5 hdf5-1.14.5.tar.gz
 curl -L https://github.com/andreww/fox/archive/refs/tags/4.1.0.tar.gz --output FoX-4.1.0.tar.gz
 tar xvfz FoX-4.1.0.tar.gz
 cd fox-4.1.0
-FC=gfortran-12 ./configure --prefix=/usr/local
+FC=/opt/gcc-16/bin/gfortran ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -126,7 +154,7 @@ rm -rf fox-4.1.0 FoX-4.1.0.tar.gz
 curl -L ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4.tar.gz --output fftw-3.3.4.tar.gz
 tar xvfz fftw-3.3.4.tar.gz
 cd fftw-3.3.4
-F77=gfortran-12 CC=gcc-15 ./configure --prefix=/usr/local
+F77=/opt/gcc-16/bin/gfortran CC=/opt/gcc-16/bin/gcc ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -136,7 +164,12 @@ rm -rf fftw-3.3.4 fftw-3.3.4.tar.gz
 curl -L http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz --output ann_1.1.2.tar.gz
 tar xvfz ann_1.1.2.tar.gz
 cd ann_1.1.2
-sed -E -i~ s/"C\+\+ = g\+\+"/"C\+\+ = g\+\+\-12"/ Make-config
+sed -E -i~ s,"C\+\+ = g\+\+","C\+\+ = /opt/gcc-16/bin/g\+\+", Make-config
+# ANN's ann_test.cpp uses an `istream >> char*` idiom that newer C++ standards no longer match against any operator>>
+# overload — force -std=gnu++17 to keep it accepted. We pick gnu++17 over c++17 because the strict-ISO mode triggered
+# by c++17 sets __STRICT_ANSI__, which causes the macOS SDK headers to hide non-strict declarations. (GCC finds the SDK
+# via the SDKROOT export near the top of this script.)
+sed -E -i~ s,"CFLAGS = -O3","CFLAGS = -O3 -std=gnu++17", Make-config
 make macosx-g++
 if [ $? -ne 0 ]; then
     exit 1
@@ -145,95 +178,26 @@ sudo cp bin/* /usr/local/bin/.
 sudo cp lib/* /usr/local/lib/.
 sudo cp -R include/* /usr/local/include/.
 
-# Install packages needed for CPAN install.
-## Net::SSLeay
-if [[ "${ver}" -ge 14 ]]; then
-    # For OS version 14 and above install OpenSSL and specify the exact version to use.
-    sudo port install openssl11
-    export OPENSSL_PREFIX=/opt/local/libexec/openssl11
-fi
-curl -L https://cpan.metacpan.org/authors/id/C/CH/CHRISN/Net-SSLeay-1.94.tar.gz --output Net-SSLeay-1.94.tar.gz
-tar xvfz Net-SSLeay-1.94.tar.gz
-cd Net-SSLeay-1.94
-perl Makefile.PL
-make -j${countCPUs}
-sudo make install
-cd ..
-rm -rf Net-SSLeay-1.94.tar.gz Net-SSLeay-1.94
-## IO::Socket::SSL
-curl -L https://cpan.metacpan.org/authors/id/S/SU/SULLR/IO-Socket-SSL-2.098.tar.gz --output IO-Socket-SSL-2.098.tar.gz
-tar xvfz IO-Socket-SSL-2.098.tar.gz
-cd IO-Socket-SSL-2.098
-perl Makefile.PL
-make -j${countCPUs}
-sudo make install
-cd ..
-rm -rf IO-Socket-SSL-2.098.tar.gz IO-Socket-SSL-2.098
-## Sys::CPU
-curl -L https://cpan.metacpan.org/authors/id/M/MK/MKODERER/Sys-CPU-0.52.tar.gz --output Sys-CPU-0.52.tar.gz
-tar xvfz Sys-CPU-0.52.tar.gz
-cd Sys-CPU-0.52
-perl Makefile.PL CCFLAGS=-Wno-error=implicit-function-declaration
-make -j${countCPUs}
-sudo make install
-cd ..
-rm -rf Sys-CPU-0.52.tar.gz Sys-CPU-0.52
-
-# Install CPAN.
-sudo perl -MCPAN -e 'install Bundle::CPAN'
-
-# Install all required Perl modules.
-if [[ "${ver}" -eq 14 ]]; then
-    PERLCFLAGS=-I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/System/Library/Perl/5.30/darwin-thread-multi-2level/CORE perl -MCPAN -e 'force("install","Alien::Base::Wrapper")'
-else
-    PERLCFLAGS=
-fi
-sudo perl -MCPAN -e 'force("install","NestedMap")'
-sudo perl -MCPAN -e 'force("install","Scalar::Util")'
-sudo perl -MCPAN -e 'force("install","Term::ANSIColor")'
-sudo perl -MCPAN -e 'force("install","Text::Table")'
-sudo perl -MCPAN -e 'force("install","ExtUtils::ParseXS")'
-sudo perl -MCPAN -e 'force("install","Path::Tiny")'
-sudo perl -MCPAN -e 'force("install","PkgConfig")'
-sudo CFLAGS=${PERLCFLAGS} perl -MCPAN -e 'force("install","Alien::Base::Wrapper")'
-sudo perl -MCPAN -e 'force("install","Alien::Libxml2")'
-sudo perl -MCPAN -e 'force("install","XML::LibXML::SAX")'
-sudo perl -MCPAN -e 'force("install","XML::LibXML::SAX::Parser")'
-if [[ "${ver}" -ge 12 ]]; then
-    # For OS versions 12 and above we need to ensure that the ParserDetails.ini is set up.
-    sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::SAX::PurePerl')->save_parsers()" || true
-    sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::LibXML::SAX::Parser')->save_parsers()" 
-    sudo perl -MXML::SAX -e "XML::SAX->add_parser('XML::LibXML::SAX')->save_parsers()" 
-fi
-sudo perl -MCPAN -e 'force("install","XML::SAX::ParserFactory")'
-sudo perl -MCPAN -e 'force("install","XML::LibXML")'
-sudo perl -MCPAN -e 'force("install","Text::Template")'
-sudo perl -MCPAN -e 'force("install","Text::Levenshtein")'
-sudo perl -MCPAN -e 'force("install","List::Uniq")'
-sudo perl -MCPAN -e 'force("install","IO::Util")'
-sudo perl -MCPAN -e 'force("install","Class::Util")'
-sudo perl -MCPAN -e 'force("install","CGI::Builder")'
-sudo perl -MCPAN -e 'force("install","Simple")'
-sudo perl -MCPAN -e 'force("install","Readonly")'
-sudo perl -MCPAN -e 'force("install","File::Slurp")'
-sudo perl -MCPAN -e 'force("install","XML::Simple")'
-sudo CFLAGS=${PERLCFLAGS} perl -MCPAN -e 'force("install","List::MoreUtils")'
-sudo perl -MCPAN -e 'force("install","Clone")'
-sudo perl -MCPAN -e 'force("install","IO::Scalar")'
-sudo perl -MCPAN -e 'force("install","Regexp::Common")'
-sudo perl -MCPAN -e 'force("install","LaTeX::Encode")'
-sudo perl -MCPAN -e 'force("install","Sub::Identify")'
+# Install Python 3 (with pip) via MacPorts. This is needed to install Galacticus' Python build dependencies.
+sudo port install python312 py312-pip
+sudo port select --set python3 python312
+sudo port select --set pip3 pip312
 
 # Clone the Galacticus repository.
 git clone https://github.com/galacticusorg/galacticus.git
 
+# Create a Python virtual environment and install Galacticus' Python build dependencies (declared in pyproject.toml).
+/opt/local/bin/python3.12 -m venv galacticus/python-venv
+source galacticus/python-venv/bin/activate
+pip install -e galacticus
+
 # Build Galacticus.
 cd galacticus
 export GALACTICUS_EXEC_PATH=`pwd`
-export FCCOMPILER=gfortran-12
-export CCOMPILER=gcc-15
-export CPPCOMPILER=g++-15
-export GALACTICUS_FCFLAGS="-fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/local/finclude -L/usr/local/lib -L/opt/local/lib"
+export FCCOMPILER=/opt/gcc-16/bin/gfortran
+export CCOMPILER=/opt/gcc-16/bin/gcc
+export CPPCOMPILER=/opt/gcc-16/bin/g++
+export GALACTICUS_FCFLAGS="-fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/local/finclude -L/usr/local/lib -L/opt/local/lib -L/opt/gcc-16/lib"
 if [[ "${ver}" -eq 13 ]]; then
     export GALACTICUS_FCFLAGS="$GALACTICUS_FCFLAGS -Wl,-ld_classic"
 fi
