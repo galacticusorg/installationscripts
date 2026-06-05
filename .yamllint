@@ -1,0 +1,15 @@
+# yamllint configuration for this repository.
+#
+# Relaxes a few of yamllint's stricter defaults that are impractical for GitHub
+# Actions workflows: the installer is invoked with a long single-line command, so
+# line-length is disabled, and the `on:` workflow trigger key is a legitimate
+# (not "truthy") use.
+extends: default
+
+rules:
+  line-length: disable
+  document-start: disable
+  truthy:
+    check-keys: false
+  brackets:
+    max-spaces-inside: 1

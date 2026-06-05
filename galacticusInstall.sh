@@ -33,7 +33,7 @@ function logmessage()
 glcLogFile=`pwd`"/galacticusInstall.log"
 
 # Get arugments.
-TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError:: -- "$@"`
+TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError::,cleanUp:: -- "$@"`
 eval set -- "$TEMP"
 cmdToolPrefix=
 cmdAsRoot=
@@ -47,6 +47,7 @@ cmdSetCShell=
 cmdSetBash=
 cmdIgnoreFailures=
 cmdCatLogOnError=
+cmdCleanUp=
 while true; do
     case "$1" in
 	--asRoot ) cmdAsRoot="$2"; shift 2 ;;
@@ -59,6 +60,7 @@ while true; do
 	--setBash ) cmdSetBash="$2"; shift 2 ;;
 	--ignoreFailures ) cmdIgnoreFailures="$2"; shift 2 ;;
 	--catLogOnError ) cmdCatLogOnError="$2"; shift 2 ;;
+	--cleanUp ) cmdCleanUp="$2"; shift 2 ;;
 	--suMethod ) cmdSuMethod="$2"; shift 2 ;;
 	--toolPrefix ) cmdToolPrefix="$2"; shift 2 ;;
 	-- ) shift; break ;;
@@ -97,6 +99,12 @@ if [ ! -z ${cmdCatLogOnError} ]; then
 	exit 1
     fi
 fi
+if [ ! -z ${cmdCleanUp} ]; then
+    if [[ ${cmdCleanUp} != "no" && ${cmdCleanUp} != "yes" ]]; then
+	logmessage "cleanUp option should be 'yes' or 'no'"
+	exit 1
+    fi
+fi
 if [ ! -z ${cmdSuMethod} ]; then
     if [[ ${cmdSuMethod} != "su" && ${cmdSuMethod} != "sudo" ]]; then
 	logmessage "suMethod option should be 'su' or 'sudo'"
@@ -126,6 +134,12 @@ fi
 catLogOnError="no"
 if [ ! -z ${cmdCatLogOnError} ]; then
     catLogOnError=$cmdCatLogOnError
+fi
+# Whether to remove the downloaded tarball (or cloned repo) and the source/build directories after a successful
+# install from source. Defaults to "no" (keep them); set to "yes" (e.g. in CI) to reduce disk-space usage.
+cleanUp="no"
+if [ ! -z ${cmdCleanUp} ]; then
+    cleanUp=$cmdCleanUp
 fi
 
 # Open the log file.
@@ -1504,6 +1518,21 @@ EOF
 		    fi
 		fi
 		cd ..
+		# Optionally clean up the downloaded tarball (or cloned repo) and the source/build directories now
+		# that the install from source has succeeded. This helps keep disk-space usage low (e.g. in CI), which
+		# matters because these installs compile many large packages (GCC, HDF5, ...) from source.
+		if [ "$cleanUp" = yes ]; then
+		    echo "   Cleaning up source for ${package[$i]}"
+		    echo "   Cleaning up source for ${package[$i]}" >> $glcLogFile
+		    # baseName/dirName are set above when the source was fetched/unpacked. Guard against empty values so
+		    # we never run a destructive "rm -rf" with a missing path.
+		    if [ -n "$baseName" ]; then
+			logexec rm -rf \"$baseName\"
+		    fi
+		    if [ -n "$dirName" ]; then
+			logexec rm -rf \"$dirName\" \"$dirName-build\"
+		    fi
+		fi
 		# Re-export the PATH so that the newly installed executable gets picked up.
 		export PATH=$PATH
 		installDone=1

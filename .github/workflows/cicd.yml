@@ -6,7 +6,7 @@ on:
     - cron: '04 23 * * 1'
 concurrency:
   group: cicd-${{ github.ref }}
-  cancel-in-progress: true  
+  cancel-in-progress: true
 jobs:
   Install-Ubuntu-NonRoot:
     runs-on: ubuntu-latest
@@ -24,7 +24,7 @@ jobs:
       - name: Run the installation script
         run: |
           cd $INSTALLER_PATH
-          ./galacticusInstall.sh --galacticusPrefix=$INSTALLER_PATH/galacticus --toolPrefix=$INSTALLER_PATH/install --asRoot=no --cores=4 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=no --catLogOnError=yes
+          ./galacticusInstall.sh --galacticusPrefix=$INSTALLER_PATH/galacticus --toolPrefix=$INSTALLER_PATH/install --asRoot=no --cores=4 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=no --catLogOnError=yes --cleanUp=yes
   Install-Rocky-Root:
     runs-on: ubuntu-latest
     container:
@@ -40,7 +40,7 @@ jobs:
       - name: Run the installation script
         run: |
           cd $INSTALLER_PATH
-          ./galacticusInstall.sh --galacticusPrefix=$INSTALLER_PATH/galacticus --toolPrefix=$INSTALLER_PATH/install --asRoot=yes --cores=4 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=yes --catLogOnError=yes
+          ./galacticusInstall.sh --galacticusPrefix=$INSTALLER_PATH/galacticus --toolPrefix=$INSTALLER_PATH/install --asRoot=yes --cores=4 --installLevel=minimal --setBash=yes --setCShell=no --ignoreFailures=no --packageManager=yes --catLogOnError=yes --cleanUp=yes
   Install-MacOS:
     strategy:
       # Ensure all jobs are run, even if some fail.
