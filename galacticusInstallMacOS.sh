@@ -16,6 +16,11 @@
 #
 #              https://github.com/galacticusorg/galacticus/discussions
 
+# Abort immediately if any command fails (including a failed download or a failure in a pipeline), so that problems such as
+# a failed HDF5 download cause the script to exit with an error status right away, rather than surfacing much later as a
+# confusing build failure.
+set -eo pipefail
+
 # Ensure that XCode developer tools are installed.
 if [[ ! $(xcode-select -p) ]]; then
     xcode-select --install
@@ -61,7 +66,7 @@ else
 fi
 
 # Download and install MacPorts.
-curl -L https://github.com/macports/macports-base/releases/download/v${macportsversion}/MacPorts-${macportsbase}.pkg --output MacPorts-${macportsbase}.pkg
+curl -fL --retry 3 https://github.com/macports/macports-base/releases/download/v${macportsversion}/MacPorts-${macportsbase}.pkg --output MacPorts-${macportsbase}.pkg
 sudo installer -pkg ./MacPorts-${macportsbase}.pkg -target /
 rm ./MacPorts-${macportsbase}.pkg
 
@@ -94,7 +99,7 @@ sudo port select --set guile guile-3.0
 sudo port install gsl
 
 # Install libmatheval v1.1.13 from source.
-curl -L https://github.com/galacticusorg/libmatheval/releases/download/latest/libmatheval-1.1.13.tar.gz --output libmatheval-1.1.13.tar.gz
+curl -fL --retry 3 https://github.com/galacticusorg/libmatheval/releases/download/latest/libmatheval-1.1.13.tar.gz --output libmatheval-1.1.13.tar.gz
 tar xvfz libmatheval-1.1.13.tar.gz
 cd libmatheval-1.1.13
 # Patch following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
@@ -107,7 +112,7 @@ cd ..
 rm -rf libmatheval-1.1.13.tar.gz libmatheval-1.1.13
 
 # Install qhull from source.
-curl -L http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz --output qhull-2020-src-8.0.2.tgz
+curl -fL --retry 3 http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz --output qhull-2020-src-8.0.2.tgz
 tar xvfz qhull-2020-src-8.0.2.tgz
 cd qhull-2020.2
 make -j${countCPUs} CC=/opt/gcc-16/bin/gcc CXX=/opt/gcc-16/bin/g++
@@ -116,7 +121,7 @@ cd ..
 rm -rf qhull-2020-src-8.0.2.tgz qhull-2020.2
 
 # Install hdf5 v1.14.5 from source.
-curl -L https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_5/downloads/hdf5-1.14.5.tar.gz --output hdf5-1.14.5.tar.gz
+curl -fL --retry 3 https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_5/downloads/hdf5-1.14.5.tar.gz --output hdf5-1.14.5.tar.gz
 tar -vxzf hdf5-1.14.5.tar.gz
 cd hdf5-1.14.5
 # Patch files to ensure we include sys/syslimits.h which defines PATH_MAX
@@ -141,7 +146,7 @@ cd ..
 rm -rf hdf5-1.14.5 hdf5-1.14.5.tar.gz
 
 # Install FoX v4.1.0 from source. 
-curl -L https://github.com/andreww/fox/archive/refs/tags/4.1.0.tar.gz --output FoX-4.1.0.tar.gz
+curl -fL --retry 3 https://github.com/andreww/fox/archive/refs/tags/4.1.0.tar.gz --output FoX-4.1.0.tar.gz
 tar xvfz FoX-4.1.0.tar.gz
 cd fox-4.1.0
 FC=/opt/gcc-16/bin/gfortran ./configure --prefix=/usr/local
@@ -151,7 +156,7 @@ cd ..
 rm -rf fox-4.1.0 FoX-4.1.0.tar.gz
 
 # Install FFTW v3.3.4 from source.
-curl -L ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4.tar.gz --output fftw-3.3.4.tar.gz
+curl -fL --retry 3 ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4.tar.gz --output fftw-3.3.4.tar.gz
 tar xvfz fftw-3.3.4.tar.gz
 cd fftw-3.3.4
 F77=/opt/gcc-16/bin/gfortran CC=/opt/gcc-16/bin/gcc ./configure --prefix=/usr/local
@@ -161,7 +166,7 @@ cd ..
 rm -rf fftw-3.3.4 fftw-3.3.4.tar.gz
 
 # Install ANN from source.
-curl -L http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz --output ann_1.1.2.tar.gz
+curl -fL --retry 3 http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz --output ann_1.1.2.tar.gz
 tar xvfz ann_1.1.2.tar.gz
 cd ann_1.1.2
 sed -E -i~ s,"C\+\+ = g\+\+","C\+\+ = /opt/gcc-16/bin/g\+\+", Make-config
