@@ -9,7 +9,7 @@ There are two scripts:
 | Script                      | Platform | Notes                                                              |
 | --------------------------- | -------- | ------------------------------------------------------------------ |
 | `galacticusInstall.sh`      | Linux    | Highly configurable; can install as root or as a regular user.     |
-| `galacticusInstallMacOS.sh` | macOS    | Uses [MacPorts](https://www.macports.org/) plus a prebuilt GCC 16. |
+| `galacticusInstallMacOS.sh` | macOS    | Uses [MacPorts](https://www.macports.org/) plus GCC 16 from [HomeBrew](https://brew.sh/). |
 
 ## Linux: `galacticusInstall.sh`
 
@@ -86,6 +86,6 @@ Notes:
 * You will need `sudo` privileges and will be prompted for your password (possibly several times) during the installation.
 * If prompted to make a choice during installation, accept the default (just press <kbd>Enter</kbd>).
 * If a pop-up appears saying *“Terminal” would like to administer your computer*, approve it.
-* It installs the Xcode command-line tools, [MacPorts](https://www.macports.org/), and a prebuilt GCC 16, then builds the remaining dependencies (HDF5, FoX, FFTW, ANN, …) from source before cloning and building Galacticus.
+* It installs the Xcode command-line tools, [MacPorts](https://www.macports.org/), and GCC 16 from [HomeBrew](https://brew.sh/), then builds the remaining dependencies (HDF5, FoX, FFTW, ANN, …) from source before cloning and building Galacticus.
 
 This script should be considered a **beta release**. If you run into problems, please report them on the [Galacticus discussion forum](https://github.com/galacticusorg/galacticus/discussions).
