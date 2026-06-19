@@ -66,10 +66,15 @@ curl -fL --retry 3 https://github.com/macports/macports-base/releases/download/v
 sudo installer -pkg ./MacPorts-${macportsbase}.pkg -target /
 rm ./MacPorts-${macportsbase}.pkg
 
-# Install GCC 16 via HomeBrew. The `gcc` formula now provides GCC 16, installing version-suffixed binaries
-# (`gcc-16`, `g++-16`, `gfortran-16`) into the HomeBrew prefix, which is already on PATH. Because the bottle is
-# built against the runner's own SDK, no SDK pinning or SDKROOT override is needed.
-brew install gcc
+# Install GCC 16 via HomeBrew. As of GCC 16.1 the `gcc` formula provides GCC 16, installing version-suffixed
+# binaries (`gcc-16`, `g++-16`, `gfortran-16`) into the HomeBrew prefix, which is already on PATH.
+#
+# The runner images (and many user machines) ship a pre-installed, older `gcc`, so `brew update` is required
+# first to refresh the formula index; without it `brew install gcc` reports the stale version as "already
+# installed and up-to-date" and GCC 16 is never fetched. We then upgrade an existing `gcc` to 16, or install it
+# if it is absent.
+brew update
+brew upgrade gcc || brew install gcc
 
 # Install guile v3.0 via MacPorts.
 sudo port install guile-3.0
