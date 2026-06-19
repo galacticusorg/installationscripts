@@ -27,6 +27,12 @@ if [[ ! $(xcode-select -p) ]]; then
 fi
 export PATH=$PATH:/opt/local/bin:/usr/local/bin
 
+# Point GCC 16's Darwin driver at the active SDK. Without SDKROOT, GCC 16 fails to locate the system headers
+# (e.g. <stdlib.h>, <limits.h>) and libraries, so even a trivial compile fails ("C compiler cannot create
+# executables"). We resolve the SDK dynamically from the runner's own toolchain, so this tracks whatever SDK is
+# current rather than pinning to a fixed version.
+export SDKROOT="$(xcrun --show-sdk-path)"
+
 # Determine number of CPUs available.
 countCPUs=`sysctl -n hw.ncpu`
 
