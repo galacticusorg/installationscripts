@@ -25,16 +25,12 @@ set -eo pipefail
 if [[ ! $(xcode-select -p) ]]; then
     xcode-select --install
 fi
-export PATH=/opt/gcc-16/bin:$PATH:/opt/local/bin:/usr/local/bin
+export PATH=$PATH:/opt/local/bin:/usr/local/bin
 
-# Point GCC 16's Darwin driver at the active SDK. The hosted GCC 16 binary is not built with a sysroot baked in, so
-# without SDKROOT it fails to locate system headers (e.g. <stdlib.h>, <limits.h>) and libraries.
-#
-# Note: the hosted GCC 16 binary is built against the macOS 15.6 SDK (its target triple is aarch64-apple-darwin24.6.0),
-# and its fixincludes copy of <_stdio.h> hardcodes "#include <_bounds.h>", a header that only exists in the macOS 15.4+
-# SDK. It therefore requires an SDK at least that new. macOS 15 runners default to Xcode 16.4 (macOS 15.5 SDK), which is
-# compatible; macOS 14 runners only offer up to Xcode 16.2 (macOS 15.2 SDK), which lacks <_bounds.h>, so macOS 14 cannot
-# build with this binary and is not included in CI.
+# Point GCC 16's Darwin driver at the active SDK. Without SDKROOT, GCC 16 fails to locate the system headers
+# (e.g. <stdlib.h>, <limits.h>) and libraries, so even a trivial compile fails ("C compiler cannot create
+# executables"). We resolve the SDK dynamically from the runner's own toolchain, so this tracks whatever SDK is
+# current rather than pinning to a fixed version.
 export SDKROOT="$(xcrun --show-sdk-path)"
 
 # Determine number of CPUs available.
@@ -70,26 +66,15 @@ curl -fL --retry 3 https://github.com/macports/macports-base/releases/download/v
 sudo installer -pkg ./MacPorts-${macportsbase}.pkg -target /
 rm ./MacPorts-${macportsbase}.pkg
 
-# Install GCC 16 from pre-built binaries (HomeBrew does not currently provide GCC 16). Binaries are hosted at
-# users.obs.carnegiescience.edu and extract into /opt/gcc-16.
-gccBase="https://users.obs.carnegiescience.edu/abenson/galacticus"
-case "$(uname -m)" in
-    arm64)  gccTarball="gcc-16.0.1-arm64-78d52d13407.tar.gz" ;;
-    x86_64) gccTarball="gcc-16.1.0-x86_64-release.tar.gz"    ;;
-    *) echo "Unsupported arch: $(uname -m)" >&2; exit 1 ;;
-esac
-curl -fsSL --retry 3 -o gcc16.tar.gz        "${gccBase}/${gccTarball}"
-curl -fsSL --retry 3 -o gcc16.tar.gz.sha256 "${gccBase}/${gccTarball}.sha256"
-gccExpected=$(awk '{print $1}' gcc16.tar.gz.sha256)
-gccActual=$(shasum -a 256 gcc16.tar.gz | awk '{print $1}')
-if [ "${gccExpected}" != "${gccActual}" ]; then
-    echo "Checksum mismatch for ${gccTarball}" >&2
-    echo "  expected: ${gccExpected}"           >&2
-    echo "  actual:   ${gccActual}"             >&2
-    exit 1
-fi
-sudo tar -C / -xzf gcc16.tar.gz
-rm gcc16.tar.gz gcc16.tar.gz.sha256
+# Install GCC 16 via HomeBrew. As of GCC 16.1 the `gcc` formula provides GCC 16, installing version-suffixed
+# binaries (`gcc-16`, `g++-16`, `gfortran-16`) into the HomeBrew prefix, which is already on PATH.
+#
+# The runner images (and many user machines) ship a pre-installed, older `gcc`, so `brew update` is required
+# first to refresh the formula index; without it `brew install gcc` reports the stale version as "already
+# installed and up-to-date" and GCC 16 is never fetched. We then upgrade an existing `gcc` to 16, or install it
+# if it is absent.
+brew update
+brew upgrade gcc || brew install gcc
 
 # Install guile v3.0 via MacPorts.
 sudo port install guile-3.0
@@ -105,7 +90,7 @@ cd libmatheval-1.1.13
 # Patch following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
 sed -E -i~ s/"#undef HAVE_SCM_T_BITS"/"#define HAVE_SCM_T_BITS 1"/ config.h.in
 # Set guile paths following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
-CC=/opt/gcc-16/bin/gcc PKG_CONFIG=/opt/local/bin/pkg-config GUILE=/opt/local/bin/guile-3.0 GUILE_CONFIG=/opt/local/bin/guile-config-3.0 GUILE_TOOLS=/opt/local/bin/guile-tools-3.0 ./configure --prefix=/usr/local
+CC=gcc-16 PKG_CONFIG=/opt/local/bin/pkg-config GUILE=/opt/local/bin/guile-3.0 GUILE_CONFIG=/opt/local/bin/guile-config-3.0 GUILE_TOOLS=/opt/local/bin/guile-tools-3.0 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -115,7 +100,7 @@ rm -rf libmatheval-1.1.13.tar.gz libmatheval-1.1.13
 curl -fL --retry 3 http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz --output qhull-2020-src-8.0.2.tgz
 tar xvfz qhull-2020-src-8.0.2.tgz
 cd qhull-2020.2
-make -j${countCPUs} CC=/opt/gcc-16/bin/gcc CXX=/opt/gcc-16/bin/g++
+make -j${countCPUs} CC=gcc-16 CXX=g++-16
 sudo make install
 cd ..
 rm -rf qhull-2020-src-8.0.2.tgz qhull-2020.2
@@ -139,7 +124,7 @@ elif [[ "${ver}" -eq 14 ]]; then
     sed -E -i~ s/"clang::"/"clang"/ sys/cdefs.h
     HDF5CFLAGS="-I`pwd` ${HDF5CFLAGS}"
 fi
-CC=/opt/gcc-16/bin/gcc CXX=/opt/gcc-16/bin/g++ FC=/opt/gcc-16/bin/gfortran CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-build-mode=production
+CC=gcc-16 CXX=g++-16 FC=gfortran-16 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-build-mode=production
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -149,7 +134,7 @@ rm -rf hdf5-1.14.5 hdf5-1.14.5.tar.gz
 curl -fL --retry 3 https://github.com/andreww/fox/archive/refs/tags/4.1.0.tar.gz --output FoX-4.1.0.tar.gz
 tar xvfz FoX-4.1.0.tar.gz
 cd fox-4.1.0
-FC=/opt/gcc-16/bin/gfortran ./configure --prefix=/usr/local
+FC=gfortran-16 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -159,7 +144,7 @@ rm -rf fox-4.1.0 FoX-4.1.0.tar.gz
 curl -fL --retry 3 ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4.tar.gz --output fftw-3.3.4.tar.gz
 tar xvfz fftw-3.3.4.tar.gz
 cd fftw-3.3.4
-F77=/opt/gcc-16/bin/gfortran CC=/opt/gcc-16/bin/gcc ./configure --prefix=/usr/local
+F77=gfortran-16 CC=gcc-16 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
@@ -169,11 +154,10 @@ rm -rf fftw-3.3.4 fftw-3.3.4.tar.gz
 curl -fL --retry 3 http://www.cs.umd.edu/~mount/ANN/Files/1.1.2/ann_1.1.2.tar.gz --output ann_1.1.2.tar.gz
 tar xvfz ann_1.1.2.tar.gz
 cd ann_1.1.2
-sed -E -i~ s,"C\+\+ = g\+\+","C\+\+ = /opt/gcc-16/bin/g\+\+", Make-config
+sed -E -i~ s/"C\+\+ = g\+\+"/"C\+\+ = g\+\+\-16"/ Make-config
 # ANN's ann_test.cpp uses an `istream >> char*` idiom that newer C++ standards no longer match against any operator>>
 # overload — force -std=gnu++17 to keep it accepted. We pick gnu++17 over c++17 because the strict-ISO mode triggered
-# by c++17 sets __STRICT_ANSI__, which causes the macOS SDK headers to hide non-strict declarations. (GCC finds the SDK
-# via the SDKROOT export near the top of this script.)
+# by c++17 sets __STRICT_ANSI__, which causes the macOS SDK headers to hide non-strict declarations.
 sed -E -i~ s,"CFLAGS = -O3","CFLAGS = -O3 -std=gnu++17", Make-config
 make macosx-g++
 if [ $? -ne 0 ]; then
@@ -199,10 +183,10 @@ pip install -e galacticus
 # Build Galacticus.
 cd galacticus
 export GALACTICUS_EXEC_PATH=`pwd`
-export FCCOMPILER=/opt/gcc-16/bin/gfortran
-export CCOMPILER=/opt/gcc-16/bin/gcc
-export CPPCOMPILER=/opt/gcc-16/bin/g++
-export GALACTICUS_FCFLAGS="-fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/local/finclude -L/usr/local/lib -L/opt/local/lib -L/opt/gcc-16/lib"
+export FCCOMPILER=gfortran-16
+export CCOMPILER=gcc-16
+export CPPCOMPILER=g++-16
+export GALACTICUS_FCFLAGS="-fintrinsic-modules-path /usr/local/include -fintrinsic-modules-path /usr/local/finclude -L/usr/local/lib -L/opt/local/lib"
 if [[ "${ver}" -eq 13 ]]; then
     export GALACTICUS_FCFLAGS="$GALACTICUS_FCFLAGS -Wl,-ld_classic"
 fi

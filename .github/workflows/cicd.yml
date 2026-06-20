@@ -46,9 +46,7 @@ jobs:
       # Ensure all jobs are run, even if some fail.
       fail-fast: false
       matrix:
-        # macos-14 is excluded: the hosted GCC 16 binary requires the macOS 15.4+ SDK (its fixincludes <_stdio.h>
-        # references <_bounds.h>), but the macos-14 runner image only provides up to Xcode 16.2 (macOS 15.2 SDK).
-        version: [ macos-15, macos-15-intel ]
+        version: [ macos-14, macos-15, macos-15-intel ]
     runs-on: ${{ matrix.version }}
     steps:
       - name: Check out repository code
