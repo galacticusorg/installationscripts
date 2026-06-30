@@ -837,6 +837,25 @@ buildEnvironment[$iPackage]="export FC=gfortran"
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
+# cmake (required to build HDF5: the Autotools build system was removed in HDF5 2.0, so HDF5 is now built with CMake)
+iPackage=$(expr $iPackage + 1)
+          iCMake=$iPackage
+         package[$iPackage]="cmake"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="hash cmake"
+      getVersion[$iPackage]="versionString=(\`cmake --version\`); echo \${versionString[2]}"
+      minVersion[$iPackage]="3.26.0"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="cmake"
+      aptInstall[$iPackage]="cmake"
+       sourceURL[$iPackage]="null"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]=""
+        makeTest[$iPackage]=""
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=0
+
 # HDF5
 iPackage=$(expr $iPackage + 1)
            iHDF5=$iPackage
@@ -845,14 +864,15 @@ iPackage=$(expr $iPackage + 1)
     testPresence[$iPackage]="echo \"program test; use hdf5; end program test\" > dummy.F90; gfortran dummy.F90 $moduleDirs $libDirs -lhdf5"
       getVersion[$iPackage]="echo \"#include <stdio.h>\" > dummy.c; echo \"#include <H5public.h>\" >> dummy.c; echo \"int main() {printf(\\\"%d.%d.%d.%d\\\\n\\\",H5_VERS_MAJOR,H5_VERS_MINOR,H5_VERS_RELEASE,H5_VERS_SUBRELEASE);}\" >> dummy.c; gcc dummy.c $libDirs -lhdf5 &> /dev/null;./a.out"
       minVersion[$iPackage]="1.14.0"
-      maxVersion[$iPackage]="1.14.99"
+      maxVersion[$iPackage]="2.99.99"
       yumInstall[$iPackage]="hdf5-devel"
       aptInstall[$iPackage]="hdf5-tools"
-       sourceURL[$iPackage]="https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_5/downloads/hdf5-1.14.5.tar.gz"
-buildEnvironment[$iPackage]="export F9X=gfortran"
-   buildInOwnDir[$iPackage]=0
-   configOptions[$iPackage]="--prefix=$toolInstallPath --enable-fortran --enable-build-mode=production"
-        makeTest[$iPackage]="check"
+       sourceURL[$iPackage]="https://github.com/HDFGroup/hdf5/releases/download/2.1.0/hdf5-2.1.0.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=1
+     buildSystem[$iPackage]="cmake"
+   configOptions[$iPackage]="-DCMAKE_INSTALL_PREFIX=$toolInstallPath -DCMAKE_BUILD_TYPE=Release -DBUILD_SHARED_LIBS=ON -DBUILD_STATIC_LIBS=ON -DBUILD_TESTING=OFF -DHDF5_BUILD_FORTRAN=ON -DHDF5_BUILD_HL_LIB=ON -DHDF5_BUILD_CPP_LIB=OFF -DHDF5_BUILD_TOOLS=ON -DHDF5_BUILD_EXAMPLES=OFF -DHDF5_ENABLE_PARALLEL=OFF -DHDF5_ENABLE_ZLIB_SUPPORT=ON -DHDF5_ENABLE_SZIP_SUPPORT=OFF -DHDF5_ENABLE_DEPRECATED_SYMBOLS=OFF -DHDF5_DEFAULT_API_VERSION=v200"
+        makeTest[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
@@ -1198,11 +1218,6 @@ do
 		    else
 			cd $dirName
 		    fi
-		    # Hardwired magic.
-		    # For HDF5, fix non-compliant comments (by simply removing such comment lines).
-		    if [ $i -eq $iHDF5 ]; then
-			find . -name "*.c" | xargs sed -r -i~ /"^\s*\/\/"/d
-		    fi
      		    # Check for special package.
 		    if [ "${buildEnvironment[$i]}" = "copy" ]; then
 			isCopy=1
@@ -1405,7 +1420,12 @@ EOF
 			    fi
 			fi
 			eval ${buildEnvironment[$i]}
-			if [ -e ../$dirName/configure ]; then
+			if [ "${buildSystem[$i]}" = "cmake" ]; then
+			    # CMake-based package (e.g. HDF5 2.x). The source is always at ../$dirName; configure an
+			    # out-of-source build in the current (build) directory. The subsequent "make"/"make install"
+			    # steps operate on the CMake-generated Makefiles exactly as for an Autotools package.
+			    logexec cmake -S ../$dirName -B . ${configOptions[$i]}
+			elif [ -e ../$dirName/configure ]; then
 			    logexec $preConfig ../$dirName/configure ${configOptions[$i]}
 			elif [ -e ../$dirName/config ]; then
 			    logexec $preConfig ../$dirName/config ${configOptions[$i]}
