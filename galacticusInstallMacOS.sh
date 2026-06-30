@@ -130,15 +130,15 @@ sudo make install
 cd ..
 rm -rf hdf5-1.14.5 hdf5-1.14.5.tar.gz
 
-# Install FoX v4.1.0 from source. 
-curl -fL --retry 3 https://github.com/andreww/fox/archive/refs/tags/4.1.0.tar.gz --output FoX-4.1.0.tar.gz
-tar xvfz FoX-4.1.0.tar.gz
-cd fox-4.1.0
+# Install FoX v4.1.4 from source. 
+curl -fL --retry 3 https://github.com/galacticusorg/fox/archive/refs/tags/v4.1.4.tar.gz --output FoX-4.1.4.tar.gz
+tar xvfz FoX-4.1.4.tar.gz
+cd fox-4.1.4
 FC=gfortran-16 ./configure --prefix=/usr/local
 make -j${countCPUs}
 sudo make install
 cd ..
-rm -rf fox-4.1.0 FoX-4.1.0.tar.gz
+rm -rf fox-4.1.4 FoX-4.1.4.tar.gz
 
 # Install FFTW v3.3.4 from source.
 curl -fL --retry 3 ftp://ftp.fftw.org/pub/fftw/fftw-3.3.4.tar.gz --output fftw-3.3.4.tar.gz
