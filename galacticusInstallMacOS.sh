@@ -73,6 +73,9 @@ rm ./MacPorts-${macportsbase}.pkg
 # first to refresh the formula index; without it `brew install gcc` reports the stale version as "already
 # installed and up-to-date" and GCC 16 is never fetched. We then upgrade an existing `gcc` to 16, or install it
 # if it is absent.
+# Remove the untrusted `aws/tap` tap that ships on the GitHub runner images; otherwise `brew update` emits a noisy
+# "taps are not trusted" warning. Ignore failure in case the tap is not present (e.g. on a user's machine).
+brew untap aws/tap 2>/dev/null || true
 brew update
 brew upgrade gcc || brew install gcc
 
