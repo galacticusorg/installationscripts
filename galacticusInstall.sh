@@ -398,6 +398,12 @@ moduleDirs="-fintrinsic-modules-path $toolInstallPath/finclude -fintrinsic-modul
 # Specify a list of paths to search for library files.
 libDirs="-L$toolInstallPath/lib -L$toolInstallPath/lib64"
 
+# Candidate Python interpreters to probe, newest first. Galacticus' pyproject.toml declares `requires-python = ">=3.10"`,
+# but on some systems (e.g. RHEL/Rocky 9) the default `python3` is 3.9, with newer interpreters available only under a
+# versioned name (e.g. `python3.12`). This list is used both to detect/install a suitable interpreter below and to pick
+# the one used to build the Galacticus virtual environment.
+pythonCandidates="python3.13 python3.12 python3.11 python3.10 python3"
+
 # Define packages.
 iPackage=-1
 # sort
@@ -726,6 +732,14 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
+# Pin the GCC source build to the 16.1.0 release tag rather than tracking the tip of the `releases/gcc-16` branch. As of
+# June 2026 the branch tip (16.1.1 prerelease) triggers an internal compiler error during Galacticus' whole-program LTO
+# link ("internal compiler error: in copy_function_or_variable, at lto-streamer-out.cc:2637", during IPA pass
+# static-var). The 16.1.0 release is the last known-good point: its compiler sources are identical to the 16.0.1
+# prerelease that builds cleanly (the release commit only bumps version metadata, touching no compiler code). Revisit
+# this pin once a fixed 16.1.x release is available.
+iGCCSourceBranch="releases/gcc-16.1.0"
+
 # gcc (second attempt - install from source)
 iPackage=$(expr $iPackage + 1)
       iGCCsource=$iPackage
@@ -738,7 +752,7 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-16"
+       gitBranch[$iPackage]=$iGCCSourceBranch
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -758,7 +772,7 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-16"
+       gitBranch[$iPackage]=$iGCCSourceBranch
 buildEnvironment[$iPackage]="cd ../\$dirName/..; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -778,7 +792,7 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="null"
       aptInstall[$iPackage]="null"
        sourceURL[$iPackage]="git://gcc.gnu.org/git/gcc.git"
-       gitBranch[$iPackage]="releases/gcc-16"
+       gitBranch[$iPackage]=$iGCCSourceBranch
 buildEnvironment[$iPackage]="cd ../\$dirName; ./contrib/download_prerequisites; cd -"
    buildInOwnDir[$iPackage]=1
    configOptions[$iPackage]="--prefix=$toolInstallPath --disable-bootstrap --enable-languages= --disable-multilib"
@@ -994,14 +1008,18 @@ buildEnvironment[$iPackage]=""
    parallelBuild[$iPackage]=0
 
 # Python 3 (with pip and the venv module - required to install Galacticus' Python build dependencies via pyproject.toml).
+# Galacticus requires Python >= 3.10 (see its pyproject.toml). We probe every candidate interpreter (newest first) and
+# report the highest version found, so that a system whose default `python3` is too old (e.g. 3.9 on RHEL/Rocky 9) is
+# correctly flagged for an upgrade. On yum-based systems we install `python3.12` (a versioned package available in the
+# base repositories) rather than `python3`, which would only reinstall the too-old default.
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="python3"
   packageAtLevel[$iPackage]=0
-    testPresence[$iPackage]="hash python3 && python3 -m venv --help >& /dev/null && python3 -m pip --version >& /dev/null"
-      getVersion[$iPackage]="versionString=(\`python3 --version\`); echo \${versionString[1]}"
-      minVersion[$iPackage]="3.8.0"
+    testPresence[$iPackage]="(for c in $pythonCandidates; do hash \$c >& /dev/null && \$c -m venv --help >& /dev/null && \$c -m pip --version >& /dev/null && exit 0; done; exit 1)"
+      getVersion[$iPackage]="for c in $pythonCandidates; do hash \$c >& /dev/null && \$c -c 'import sys; print(\".\".join(map(str, sys.version_info[:3])))'; done | sort --version-sort | tail -1"
+      minVersion[$iPackage]="3.10.0"
       maxVersion[$iPackage]="9.9.9"
-      yumInstall[$iPackage]="python3 python3-pip"
+      yumInstall[$iPackage]="python3.12 python3.12-pip"
       aptInstall[$iPackage]="python3 python3-pip python3-venv"
        sourceURL[$iPackage]="null"
 buildEnvironment[$iPackage]=""
@@ -1717,8 +1735,29 @@ if [ ! -e $galacticusInstallPath ]; then
 	    exit 1
 	fi
 	# Create a Python virtual environment and install Galacticus' Python build dependencies (declared in pyproject.toml).
-	logmessage "creating Python virtual environment for Galacticus"
-	logexec python3 -m venv $galacticusInstallPath/python-venv
+	# Galacticus requires Python >= 3.10, so select the newest available interpreter that meets this requirement rather
+	# than assuming the default `python3` does (on RHEL/Rocky 9, for example, `python3` is 3.9 and a compliant
+	# interpreter is installed under a versioned name such as `python3.12`).
+	pythonInterpreter=""
+	for c in $pythonCandidates; do
+	    if hash $c >& /dev/null && $c -m venv --help >& /dev/null; then
+		cVersion=`$c -c 'import sys; print("%d.%d" % sys.version_info[:2])' 2>/dev/null`
+		cLowest=`printf '3.10\n%s\n' "$cVersion" | sort --version-sort | head -1`
+		if [ "$cLowest" = "3.10" ]; then
+		    pythonInterpreter=$c
+		    break
+		fi
+	    fi
+	done
+	if [ -z "$pythonInterpreter" ]; then
+	    logmessage "no suitable Python interpreter (>= 3.10, as required by Galacticus) was found"
+	    if [ "$catLogOnError" = yes ]; then
+		cat $glcLogFile
+	    fi
+	    exit 1
+	fi
+	logmessage "creating Python virtual environment for Galacticus using $pythonInterpreter"
+	logexec $pythonInterpreter -m venv $galacticusInstallPath/python-venv
 	if [ $? -ne 0 ]; then
 	    logmessage "failed to create Python virtual environment"
 	    if [ "$catLogOnError" = yes ]; then
