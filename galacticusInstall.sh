@@ -736,8 +736,10 @@ buildEnvironment[$iPackage]=""
 # June 2026 the branch tip (16.1.1 prerelease) triggers an internal compiler error during Galacticus' whole-program LTO
 # link ("internal compiler error: in copy_function_or_variable, at lto-streamer-out.cc:2637", during IPA pass
 # static-var). The 16.1.0 release is the last known-good point: its compiler sources are identical to the 16.0.1
-# prerelease that builds cleanly (the release commit only bumps version metadata, touching no compiler code). Revisit
-# this pin once a fixed 16.1.x release is available.
+# prerelease that builds cleanly (the release commit only bumps version metadata, touching no compiler code). The bug
+# was introduced by commit c5367155 ("Fortran: Allow access to coarray elements within modules", GCC PR 126170;
+# https://gcc.gnu.org/bugzilla/show_bug.cgi?id=126170).
+# Revisit this pin once a fixed 16.1.x release is available.
 iGCCSourceBranch="releases/gcc-16.1.0"
 
 # gcc (second attempt - install from source)
