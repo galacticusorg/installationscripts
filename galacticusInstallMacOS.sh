@@ -117,6 +117,11 @@ tar -vxzf hdf5-2.1.0.tar.gz
 cd hdf5-2.1.0
 # Patch files to ensure we include sys/syslimits.h which defines PATH_MAX
 sed -E -i~ 's/^(# *include +<limits\.h>.*)$/\1\n#include <sys\/syslimits.h>\n/' src/H5private.h src/H5public.h
+# Work around an upstream typo in HDF5 2.1.0: config/lt_vers.am declares the high-level Fortran shared-library interface
+# version as `LT_HL_F_VERS_INTERFACE1` (stray trailing `1`), so the CMake build emits an empty dylib compatibility version
+# (`.0.0`) for libhdf5_hl_f90cstub, which the newer macOS linker (ld-prime on Apple Silicon / macOS 14+) rejects. Correct
+# the variable name so the compatibility version becomes `320.0.0`.
+sed -i~ 's/LT_HL_F_VERS_INTERFACE1/LT_HL_F_VERS_INTERFACE/' config/lt_vers.am
 cmakeExtraFlags=()
 if   [[ "${ver}" -eq 13 ]]; then
     # On MacOS 13 there is an issue with the linker no longer supporting the '-commons' flag, so force use of the classic linker
