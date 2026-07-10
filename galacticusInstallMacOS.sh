@@ -137,6 +137,9 @@ elif [[ "${ver}" -eq 14 ]]; then
     HDF5CFLAGS="-I`pwd` ${HDF5CFLAGS}"
     cmakeExtraFlags=(-DCMAKE_C_FLAGS="${HDF5CFLAGS}")
 fi
+# HDF5_BUILD_WITH_INSTALL_NAME=ON gives the installed dylibs absolute install_names (/usr/local/lib/...) rather than CMake's
+# default @rpath, so an executable linked against them records absolute paths and dyld can load libhdf5*.dylib at run time
+# without needing an rpath entry (matching the Autotools HDF5 1.14 behaviour).
 cmake -S . -B build -G "Unix Makefiles" \
     -DCMAKE_INSTALL_PREFIX=/usr/local \
     -DCMAKE_BUILD_TYPE=Release \
@@ -156,6 +159,7 @@ cmake -S . -B build -G "Unix Makefiles" \
     -DHDF5_ENABLE_SZIP_SUPPORT=OFF \
     -DHDF5_ENABLE_DEPRECATED_SYMBOLS=OFF \
     -DHDF5_ENABLE_NONSTANDARD_FEATURE_FLOAT16=OFF \
+    -DHDF5_BUILD_WITH_INSTALL_NAME=ON \
     -DHDF5_DEFAULT_API_VERSION=v200 \
     "${cmakeExtraFlags[@]}"
 cmake --build build -j${countCPUs}
