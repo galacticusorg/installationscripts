@@ -86,6 +86,10 @@ sudo port select --set guile guile-3.0
 # Install GSL via MacPorts.
 sudo port install gsl
 
+# Install CMake via MacPorts. This is required to build HDF5: the Autotools build system was removed in HDF5 2.0,
+# so HDF5 is now built with CMake.
+sudo port install cmake
+
 # Install libmatheval v1.1.13 from source.
 curl -fL --retry 3 https://github.com/galacticusorg/libmatheval/releases/download/latest/libmatheval-1.1.13.tar.gz --output libmatheval-1.1.13.tar.gz
 tar xvfz libmatheval-1.1.13.tar.gz
@@ -108,16 +112,24 @@ sudo make install
 cd ..
 rm -rf qhull-2020-src-8.0.2.tgz qhull-2020.2
 
-# Install hdf5 v1.14.5 from source.
-curl -fL --retry 3 https://support.hdfgroup.org/releases/hdf5/v1_14/v1_14_5/downloads/hdf5-1.14.5.tar.gz --output hdf5-1.14.5.tar.gz
-tar -vxzf hdf5-1.14.5.tar.gz
-cd hdf5-1.14.5
+# Install hdf5 from source. HDF5 2.x uses CMake (the Autotools build system was removed in HDF5 2.0). Deprecated symbols
+# are disabled to build against the strict HDF5 2.x API surface; Galacticus caps its own output format at the HDF5 1.14
+# version so that output remains readable by HDF5 1.14 readers.
+curl -fL --retry 3 https://github.com/HDFGroup/hdf5/releases/download/2.1.0/hdf5-2.1.0.tar.gz --output hdf5-2.1.0.tar.gz
+tar -vxzf hdf5-2.1.0.tar.gz
+cd hdf5-2.1.0
 # Patch files to ensure we include sys/syslimits.h which defines PATH_MAX
 sed -E -i~ 's/^(# *include +<limits\.h>.*)$/\1\n#include <sys\/syslimits.h>\n/' src/H5private.h src/H5public.h
+# Work around an upstream typo in HDF5 2.1.0: config/lt_vers.am declares the high-level Fortran shared-library interface
+# version as `LT_HL_F_VERS_INTERFACE1` (stray trailing `1`), so the CMake build emits an empty dylib compatibility version
+# (`.0.0`) for libhdf5_hl_f90cstub, which the newer macOS linker (ld-prime on Apple Silicon / macOS 14+) rejects. Correct
+# the variable name so the compatibility version becomes `320.0.0`.
+sed -i~ 's/LT_HL_F_VERS_INTERFACE1/LT_HL_F_VERS_INTERFACE/' config/lt_vers.am
+cmakeExtraFlags=()
 if   [[ "${ver}" -eq 13 ]]; then
-    # On MacOS 13 there is an issue with the linker no longer suppotring the '-commons' flag, so force use of the classic linker
+    # On MacOS 13 there is an issue with the linker no longer supporting the '-commons' flag, so force use of the classic linker
     # (https://www.scivision.dev/xcode-ld_classic/).
-    HDF5LDFLAGS="$LDFLAGS -Wl,-ld_classic"
+    cmakeExtraFlags=(-DCMAKE_EXE_LINKER_FLAGS="$LDFLAGS -Wl,-ld_classic" -DCMAKE_SHARED_LINKER_FLAGS="$LDFLAGS -Wl,-ld_classic" -DCMAKE_MODULE_LINKER_FLAGS="$LDFLAGS -Wl,-ld_classic")
 elif [[ "${ver}" -eq 14 ]]; then
     HDF5CFLAGS=-I/Library/Developer/CommandLineTools/SDKs/MacOSX14.2.sdk/usr/include
     # On MacOS 14 the 'sys/cdefs.h' header file contains pre-processor code which is not parseable by GCC. As it is
@@ -126,12 +138,37 @@ elif [[ "${ver}" -eq 14 ]]; then
     cp /Library/Developer/CommandLineTools/SDKs/MacOSX14.sdk/usr/include/sys/cdefs.h sys/
     sed -E -i~ s/"clang::"/"clang"/ sys/cdefs.h
     HDF5CFLAGS="-I`pwd` ${HDF5CFLAGS}"
+    cmakeExtraFlags=(-DCMAKE_C_FLAGS="${HDF5CFLAGS}")
 fi
-CC=gcc-16 CXX=g++-16 FC=gfortran-16 CFLAGS=${HDF5CFLAGS} LDFLAGS=${HDF5LDFLAGS} ./configure --prefix=/usr/local --enable-fortran --enable-build-mode=production
-make -j${countCPUs}
-sudo make install
+# HDF5_BUILD_WITH_INSTALL_NAME=ON gives the installed dylibs absolute install_names (/usr/local/lib/...) rather than CMake's
+# default @rpath, so an executable linked against them records absolute paths and dyld can load libhdf5*.dylib at run time
+# without needing an rpath entry (matching the Autotools HDF5 1.14 behaviour).
+cmake -S . -B build -G "Unix Makefiles" \
+    -DCMAKE_INSTALL_PREFIX=/usr/local \
+    -DCMAKE_BUILD_TYPE=Release \
+    -DCMAKE_C_COMPILER=gcc-16 \
+    -DCMAKE_CXX_COMPILER=g++-16 \
+    -DCMAKE_Fortran_COMPILER=gfortran-16 \
+    -DBUILD_SHARED_LIBS=ON \
+    -DBUILD_STATIC_LIBS=ON \
+    -DBUILD_TESTING=OFF \
+    -DHDF5_BUILD_FORTRAN=ON \
+    -DHDF5_BUILD_HL_LIB=ON \
+    -DHDF5_BUILD_CPP_LIB=OFF \
+    -DHDF5_BUILD_TOOLS=ON \
+    -DHDF5_BUILD_EXAMPLES=OFF \
+    -DHDF5_ENABLE_PARALLEL=OFF \
+    -DHDF5_ENABLE_ZLIB_SUPPORT=ON \
+    -DHDF5_ENABLE_SZIP_SUPPORT=OFF \
+    -DHDF5_ENABLE_DEPRECATED_SYMBOLS=OFF \
+    -DHDF5_ENABLE_NONSTANDARD_FEATURE_FLOAT16=OFF \
+    -DHDF5_BUILD_WITH_INSTALL_NAME=ON \
+    -DHDF5_DEFAULT_API_VERSION=v200 \
+    "${cmakeExtraFlags[@]}"
+cmake --build build -j${countCPUs}
+sudo cmake --install build
 cd ..
-rm -rf hdf5-1.14.5 hdf5-1.14.5.tar.gz
+rm -rf hdf5-2.1.0 hdf5-2.1.0.tar.gz
 
 # Install FoX v4.1.4 from source. 
 curl -fL --retry 3 https://github.com/galacticusorg/fox/archive/refs/tags/v4.1.4.tar.gz --output FoX-4.1.4.tar.gz
