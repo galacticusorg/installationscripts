@@ -412,11 +412,11 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash sort && (echo 1.2.3 | sort --version-sort)"
       getVersion[$iPackage]="versionString=(\`sort --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="6.99"
-      maxVersion[$iPackage]="9.99"
+      minVersion[$iPackage]="0.0"
+      maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="coreutils"
       aptInstall[$iPackage]="coreutils"
-       sourceURL[$iPackage]="http://ftp.gnu.org/gnu/coreutils/coreutils-8.13.tar.gz"
+       sourceURL[$iPackage]="http://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
