@@ -17,6 +17,11 @@ function contains() {
     return 1
 }
 
+# Test whether installation of the named package has been forced on the command line.
+function isForced() {
+    [ "$(contains "${forcedPackages[@]}" "$1")" == "y" ]
+}
+
 function logexec()
 {
     echo \-\-\> "$@" >> $glcLogFile
@@ -32,8 +37,16 @@ function logmessage()
 # Define a log file.
 glcLogFile=`pwd`"/galacticusInstall.log"
 
-# Get arugments.
-TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError::,cleanUp:: -- "$@"`
+# Get arugments. The `--force-PACKAGE` options are extracted first, as getopt can only match a fixed list of option names.
+forcedPackages=()
+getoptArguments=()
+for argument in "$@"; do
+    case "$argument" in
+	--force-* ) forcedPackages+=("${argument#--force-}") ;;
+	* ) getoptArguments+=("$argument") ;;
+    esac
+done
+TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError::,cleanUp:: -- "${getoptArguments[@]}"`
 eval set -- "$TEMP"
 cmdToolPrefix=
 cmdAsRoot=
@@ -1051,6 +1064,14 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
+# Validate any forced packages.
+for forcedPackage in "${forcedPackages[@]}"; do
+    if [ "$(contains "${package[@]}" "$forcedPackage")" != "y" ]; then
+	logmessage "Unknown package in option --force-$forcedPackage; packages are: `printf '%s\n' "${package[@]}" | awk '!seen[$0]++' | paste -sd ' ' -`"
+	exit 1
+    fi
+done
+
 # Install packages.
 echo "Checking for required tools and libraries..." 
 echo "Checking for required tools and libraries..." >> $glcLogFile
@@ -1076,8 +1097,7 @@ do
 	    echo "  Test results for ${package[$i]}: $testLow $testHigh" >> $glcLogFile
         fi
         # Check if installation is to be forced for this package.
-	test $(contains "$@" "--force-${package[$i]}") == "y"
-	if [ $? -eq 0 ]; then
+	if isForced "${package[$i]}"; then
 	    installPackage=1
 	fi
         # Install package if necessary.
@@ -1601,12 +1621,21 @@ EOF
         # Hardwired magic.        
         # Check if GCC/G++/Fortran are installed - delist MPFR, GMP and MPC if so.
 	if [ $i -eq $iFortran ]; then
-	    eval ${testPresence[$iFortran]} | test $(contains "$@" "--force-gfortran") == "y" >& /dev/null
-	    gotFortran=$?
-	    eval ${testPresence[$iGCC]} | test $(contains "$@" "--force-gcc") == "y" >& /dev/null
-	    gotGCC=$?
-	    eval ${testPresence[$iGPP]} | test $(contains "$@" "--force-g++") == "y" >& /dev/null
-	    gotGPP=$?
+	    if eval ${testPresence[$iFortran]} >& /dev/null && ! isForced "gfortran"; then
+		gotFortran=0
+	    else
+		gotFortran=1
+	    fi
+	    if eval ${testPresence[$iGCC]} >& /dev/null && ! isForced "gcc"; then
+		gotGCC=0
+	    else
+		gotGCC=1
+	    fi
+	    if eval ${testPresence[$iGPP]} >& /dev/null && ! isForced "g++"; then
+		gotGPP=0
+	    else
+		gotGPP=1
+	    fi
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
                 # Check installed versions.
 		version=`eval ${getVersion[$iFortran]}`
