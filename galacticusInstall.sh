@@ -22,6 +22,20 @@ function isForced() {
     [ "$(contains "${forcedPackages[@]}" "$1")" == "y" ]
 }
 
+# Test whether a suitable version of the compiler with the given package index and name is available for use. A compiler whose
+# installation has been forced is never considered to be available.
+function compilerAvailable() {
+    local index=$1
+    local name=$2
+    if isForced "$name" || ! eval ${testPresence[$index]} >& /dev/null; then
+	return 1
+    fi
+    local version=`eval ${getVersion[$index]}`
+    local testLow=`echo "$version test:${minVersion[$index]}:${maxVersion[$index]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
+    local testHigh=`echo "$version test:${minVersion[$index]}:${maxVersion[$index]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
+    [[ "$testLow" != "test" && "$testHigh" != "test" ]]
+}
+
 function logexec()
 {
     echo \-\-\> "$@" >> $glcLogFile
@@ -1621,42 +1635,12 @@ EOF
         # Hardwired magic.        
         # Check if GCC/G++/Fortran are installed - delist MPFR, GMP and MPC if so.
 	if [ $i -eq $iFortran ]; then
-	    if eval ${testPresence[$iFortran]} >& /dev/null && ! isForced "gfortran"; then
-		gotFortran=0
-	    else
-		gotFortran=1
-	    fi
-	    if eval ${testPresence[$iGCC]} >& /dev/null && ! isForced "gcc"; then
-		gotGCC=0
-	    else
-		gotGCC=1
-	    fi
-	    if eval ${testPresence[$iGPP]} >& /dev/null && ! isForced "g++"; then
-		gotGPP=0
-	    else
-		gotGPP=1
-	    fi
-	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
-                # Check installed versions.
-		version=`eval ${getVersion[$iFortran]}`
-		testLow=`echo "$version test:${minVersion[$iFortran]}:${maxVersion[$iFortran]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
-		testHigh=`echo "$version test:${minVersion[$iFortran]}:${maxVersion[$iFortran]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
-		if [[ "$testLow" = "test" || "$testHigh" = "test" ]]; then
-		    gotFortran=1
-		fi
-		version=`eval ${getVersion[$iGCC]}`
-		testLow=`echo "$version test:${minVersion[$iGCC]}:${maxVersion[$iGCC]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
-		testHigh=`echo "$version test:${minVersion[$iGCC]}:${maxVersion[$iGCC]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
-		if [[ "$testLow" = "test" || "$testHigh" = "test" ]]; then
-		    gotGCC=1
-		fi
-		version=`eval ${getVersion[$iGPP]}`
-		testLow=`echo "$version test:${minVersion[$iGPP]}:${maxVersion[$iGPP]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
-		testHigh=`echo "$version test:${minVersion[$iGPP]}:${maxVersion[$iGPP]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
-		if [[ "$testLow" = "test" || "$testHigh" = "test" ]]; then
-		    gotGPP=1
-		fi
-	    fi
+	    compilerAvailable $iFortran "gfortran"
+	    gotFortran=$?
+	    compilerAvailable $iGCC "gcc"
+	    gotGCC=$?
+	    compilerAvailable $iGPP "g++"
+	    gotGPP=$?
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
 		# We have all GNU Compiler Collection components, so we don't need GMP, MPFR, MPC, flex, or bison.
 		packageAtLevel[$iGMP]=100
