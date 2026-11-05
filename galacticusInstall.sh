@@ -17,6 +17,25 @@ function contains() {
     return 1
 }
 
+# Test whether installation of the named package has been forced on the command line.
+function isForced() {
+    [ "$(contains "${forcedPackages[@]}" "$1")" == "y" ]
+}
+
+# Test whether a suitable version of the compiler with the given package index and name is available for use. A compiler whose
+# installation has been forced is never considered to be available.
+function compilerAvailable() {
+    local index=$1
+    local name=$2
+    if isForced "$name" || ! eval ${testPresence[$index]} >& /dev/null; then
+	return 1
+    fi
+    local version=`eval ${getVersion[$index]}`
+    local testLow=`echo "$version test:${minVersion[$index]}:${maxVersion[$index]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
+    local testHigh=`echo "$version test:${minVersion[$index]}:${maxVersion[$index]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
+    [[ "$testLow" != "test" && "$testHigh" != "test" ]]
+}
+
 function logexec()
 {
     echo \-\-\> "$@" >> $glcLogFile
@@ -32,8 +51,16 @@ function logmessage()
 # Define a log file.
 glcLogFile=`pwd`"/galacticusInstall.log"
 
-# Get arugments.
-TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError::,cleanUp:: -- "$@"`
+# Get arugments. The `--force-PACKAGE` options are extracted first, as getopt can only match a fixed list of option names.
+forcedPackages=()
+getoptArguments=()
+for argument in "$@"; do
+    case "$argument" in
+	--force-* ) forcedPackages+=("${argument#--force-}") ;;
+	* ) getoptArguments+=("$argument") ;;
+    esac
+done
+TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError::,cleanUp:: -- "${getoptArguments[@]}"`
 eval set -- "$TEMP"
 cmdToolPrefix=
 cmdAsRoot=
@@ -412,11 +439,11 @@ iPackage=$(expr $iPackage + 1)
   packageAtLevel[$iPackage]=0
     testPresence[$iPackage]="hash sort && (echo 1.2.3 | sort --version-sort)"
       getVersion[$iPackage]="versionString=(\`sort --version\`); echo \${versionString[3]}"
-      minVersion[$iPackage]="6.99"
-      maxVersion[$iPackage]="9.99"
+      minVersion[$iPackage]="0.0"
+      maxVersion[$iPackage]="99.99"
       yumInstall[$iPackage]="coreutils"
       aptInstall[$iPackage]="coreutils"
-       sourceURL[$iPackage]="http://ftp.gnu.org/gnu/coreutils/coreutils-8.13.tar.gz"
+       sourceURL[$iPackage]="http://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -1051,6 +1078,14 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=0
 
+# Validate any forced packages.
+for forcedPackage in "${forcedPackages[@]}"; do
+    if [ "$(contains "${package[@]}" "$forcedPackage")" != "y" ]; then
+	logmessage "Unknown package in option --force-$forcedPackage; packages are: `printf '%s\n' "${package[@]}" | awk '!seen[$0]++' | paste -sd ' ' -`"
+	exit 1
+    fi
+done
+
 # Install packages.
 echo "Checking for required tools and libraries..." 
 echo "Checking for required tools and libraries..." >> $glcLogFile
@@ -1076,8 +1111,7 @@ do
 	    echo "  Test results for ${package[$i]}: $testLow $testHigh" >> $glcLogFile
         fi
         # Check if installation is to be forced for this package.
-	test $(contains "$@" "--force-${package[$i]}") == "y"
-	if [ $? -eq 0 ]; then
+	if isForced "${package[$i]}"; then
 	    installPackage=1
 	fi
         # Install package if necessary.
@@ -1601,33 +1635,12 @@ EOF
         # Hardwired magic.        
         # Check if GCC/G++/Fortran are installed - delist MPFR, GMP and MPC if so.
 	if [ $i -eq $iFortran ]; then
-	    eval ${testPresence[$iFortran]} | test $(contains "$@" "--force-gfortran") == "y" >& /dev/null
+	    compilerAvailable $iFortran "gfortran"
 	    gotFortran=$?
-	    eval ${testPresence[$iGCC]} | test $(contains "$@" "--force-gcc") == "y" >& /dev/null
+	    compilerAvailable $iGCC "gcc"
 	    gotGCC=$?
-	    eval ${testPresence[$iGPP]} | test $(contains "$@" "--force-g++") == "y" >& /dev/null
+	    compilerAvailable $iGPP "g++"
 	    gotGPP=$?
-	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
-                # Check installed versions.
-		version=`eval ${getVersion[$iFortran]}`
-		testLow=`echo "$version test:${minVersion[$iFortran]}:${maxVersion[$iFortran]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
-		testHigh=`echo "$version test:${minVersion[$iFortran]}:${maxVersion[$iFortran]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
-		if [[ "$testLow" = "test" || "$testHigh" = "test" ]]; then
-		    gotFortran=1
-		fi
-		version=`eval ${getVersion[$iGCC]}`
-		testLow=`echo "$version test:${minVersion[$iGCC]}:${maxVersion[$iGCC]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
-		testHigh=`echo "$version test:${minVersion[$iGCC]}:${maxVersion[$iGCC]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
-		if [[ "$testLow" = "test" || "$testHigh" = "test" ]]; then
-		    gotGCC=1
-		fi
-		version=`eval ${getVersion[$iGPP]}`
-		testLow=`echo "$version test:${minVersion[$iGPP]}:${maxVersion[$iGPP]}" | sed s/:/\\\\n/g | sort --version-sort | head -1 | cut -d " " -f 2`
-		testHigh=`echo "$version test:${minVersion[$iGPP]}:${maxVersion[$iGPP]}" | sed s/:/\\\n/g | sort --version-sort | tail -1 | cut -d " " -f 2`
-		if [[ "$testLow" = "test" || "$testHigh" = "test" ]]; then
-		    gotGPP=1
-		fi
-	    fi
 	    if [[ $gotFortran -eq 0 && $gotGCC -eq 0 && $gotGPP -eq 0 ]]; then
 		# We have all GNU Compiler Collection components, so we don't need GMP, MPFR, MPC, flex, or bison.
 		packageAtLevel[$iGMP]=100
