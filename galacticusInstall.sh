@@ -875,6 +875,29 @@ buildEnvironment[$iPackage]=""
      makeInstall[$iPackage]="install"
    parallelBuild[$iPackage]=1
 
+# libmatheval
+#  Galacticus needs the galacticusorg fork, which adds functions (e.g. min() and max()) and fixes not present in GNU
+#  libmatheval. Distribution packages (e.g. libmatheval-dev) provide the GNU version, so this is built from source only.
+#  matheval.h carries no version number, so the presence test checks for the fork's functionality directly: the GNU
+#  version fails to parse "min(x,1)". The test program avoids "*" and "?", as presence tests are expanded unquoted.
+iPackage=$(expr $iPackage + 1)
+     iLibMathEval=$iPackage
+         package[$iPackage]="libmatheval"
+  packageAtLevel[$iPackage]=0
+    testPresence[$iPackage]="echo \"#include <matheval.h>\" > dummy.c; echo \"int main() {if (evaluator_create(\\\"min(x,1)\\\") == 0) return 1; return evaluator_evaluate_x(evaluator_create(\\\"min(x,1)\\\"),3.0) != 1.0;}\" >> dummy.c; gcc dummy.c $libDirs -I$toolInstallPath/include -lmatheval && ./a.out"
+      getVersion[$iPackage]="echo 1.1.13"
+      minVersion[$iPackage]="1.1.13"
+      maxVersion[$iPackage]="9.9.9"
+      yumInstall[$iPackage]="null"
+      aptInstall[$iPackage]="null"
+       sourceURL[$iPackage]="https://github.com/galacticusorg/libmatheval/releases/download/latest/libmatheval-1.1.13.tar.gz"
+buildEnvironment[$iPackage]=""
+   buildInOwnDir[$iPackage]=0
+   configOptions[$iPackage]="--prefix=$toolInstallPath"
+        makeTest[$iPackage]="check"
+     makeInstall[$iPackage]="install"
+   parallelBuild[$iPackage]=1
+
 # FoX
 iPackage=$(expr $iPackage + 1)
          package[$iPackage]="FoX"
