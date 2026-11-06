@@ -455,7 +455,8 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="coreutils"
       aptInstall[$iPackage]="coreutils"
        sourceURL[$iPackage]="http://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.gz"
-buildEnvironment[$iPackage]=""
+# The coreutils configure script refuses to run as root unless this is set.
+buildEnvironment[$iPackage]="export FORCE_UNSAFE_CONFIGURE=1"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]=""
