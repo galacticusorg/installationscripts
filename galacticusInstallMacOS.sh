@@ -56,6 +56,9 @@ elif [[ "${ver}" -eq 14 ]]; then
 elif [[ "${ver}" -eq 15 ]]; then
     macportsversion=2.11.6
     macportsbase=2.11.6-15-Sequoia
+elif [[ "${ver}" -eq 26 ]]; then
+    macportsversion=2.12.7
+    macportsbase=2.12.7-26-Tahoe
 else
     echo Unknown MacOS version: ${os_ver}
     exit 1
