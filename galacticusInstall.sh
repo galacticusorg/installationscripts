@@ -22,6 +22,17 @@ function isForced() {
     [ "$(contains "${forcedPackages[@]}" "$1")" == "y" ]
 }
 
+# Test whether any entry for the named package can be installed from source.
+function hasSourceBuild() {
+    local j
+    for (( j = 0 ; j < ${#package[@]} ; j++ )); do
+	if [[ "${package[$j]}" == "$1" && "${sourceURL[$j]}" != "null" && ! "${sourceURL[$j]}" =~ "fail:" ]]; then
+	    return 0
+	fi
+    done
+    return 1
+}
+
 # Test whether a suitable version of the compiler with the given package index and name is available for use. A compiler whose
 # installation has been forced is never considered to be available.
 function compilerAvailable() {
@@ -1122,8 +1133,17 @@ do
 	    echo ${package[$i]} - not found - will be installed
 	    echo ${package[$i]} - not found - will be installed >> $glcLogFile
 	    installDone=0
+	    # A package whose installation is forced is built from source if it can be, since the package manager would not
+	    # reinstall a package that is already installed. This applies to every entry for the package, so that (for example)
+	    # forcing gcc skips the package-manager entry for gcc and builds it with the source entry.
+	    skipPackageManager=0
+	    if isForced "${package[$i]}" && hasSourceBuild "${package[$i]}"; then
+		skipPackageManager=1
+		echo "   installation is forced - will install from source"
+		echo "   installation is forced - will install from source" >> $glcLogFile
+	    fi
 	    # Try installing via yum.
-	    if [[ $installDone -eq 0 && $installViaYum -eq 1 && ${yumInstall[$i]} != "null" ]]; then
+	    if [[ $installDone -eq 0 && $skipPackageManager -eq 0 && $installViaYum -eq 1 && ${yumInstall[$i]} != "null" ]]; then
                 # Check for presence in yum repos.
 		for yumPackage in ${yumInstall[$i]}
 		do
@@ -1155,7 +1175,7 @@ do
 		done
             fi 
 	    # Try installing via apt-get.
-	    if [[ $installDone -eq 0 &&  $installViaApt -eq 1 && ${aptInstall[$i]} != "null" ]]; then
+	    if [[ $installDone -eq 0 && $skipPackageManager -eq 0 && $installViaApt -eq 1 && ${aptInstall[$i]} != "null" ]]; then
                 # Check for presence in apt repos.
 		aptPackages=(${aptInstall[$i]})
 		for aptPackage in ${aptInstall[$i]}
@@ -1614,8 +1634,10 @@ EOF
 	    # No install methods worked - nothing else we can do (unless this was an
 	    # initial attempt at installed a GNU compiler).
 	    if [[ $installDone -eq 0 ]]; then
-		echo "   no installation method exists"
-		echo "   no installation method exists" >>$glcLogFile
+		if [[ $skipPackageManager -eq 0 ]]; then
+		    echo "   no installation method exists"
+		    echo "   no installation method exists" >>$glcLogFile
+		fi
 		if [[ $i -eq $iFortran || $i -eq $iGCC || $i -eq $iGPP ]]; then
 		    echo "      postponing"
 		    echo "      postponing" >>$glcLogFile
