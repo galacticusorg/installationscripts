@@ -22,6 +22,24 @@ function isForced() {
     [ "$(contains "${forcedPackages[@]}" "$1")" == "y" ]
 }
 
+# Test whether any entry for the named package can be installed from source.
+function hasSourceBuild() {
+    local j
+    for (( j = 0 ; j < ${#package[@]} ; j++ )); do
+	if [[ "${package[$j]}" == "$1" && "${sourceURL[$j]}" != "null" && ! "${sourceURL[$j]}" =~ "fail:" ]]; then
+	    return 0
+	fi
+    done
+    return 1
+}
+
+# Exit when a prompt finds no input to read, rather than asking the same question forever.
+function noInput() {
+    echo
+    echo "No input is available to answer this question - please answer it using a command line option (see README.md)"
+    exit 1
+}
+
 # Test whether a suitable version of the compiler with the given package index and name is available for use. A compiler whose
 # installation has been forced is never considered to be available.
 function compilerAvailable() {
@@ -60,7 +78,15 @@ for argument in "$@"; do
 	* ) getoptArguments+=("$argument") ;;
     esac
 done
+if ! hash getopt >& /dev/null; then
+    echo "The getopt command (part of util-linux) is required to read the command line options - please install it and re-run this installer"
+    exit 1
+fi
 TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError::,cleanUp:: -- "${getoptArguments[@]}"`
+if [ $? -ne 0 ]; then
+    echo "Failed to read the command line options"
+    exit 1
+fi
 eval set -- "$TEMP"
 cmdToolPrefix=
 cmdAsRoot=
@@ -151,8 +177,8 @@ if [ ! -z ${cmdInstallLevel} ]; then
     fi
 fi
 if [ ! -z ${cmdCores} ]; then
-    if [[ ! ${cmdCores} =~ ^[0-9]+$ ]]; then
-	logmessage "cores option should be an integer"
+    if [[ ! ${cmdCores} =~ ^[0-9]+$ || ${cmdCores} -lt 1 ]]; then
+	logmessage "cores option should be an integer greater than 0"
 	exit 1
     fi
 fi
@@ -205,7 +231,7 @@ fi
 while [ $installAsRoot -eq -1 ]
 do
     if [ -z ${cmdAsRoot} ]; then
-	read -p "Install required libraries as root (requires root password)? [no/yes]: " RESPONSE
+	read -p "Install required libraries as root (requires root password)? [no/yes]: " RESPONSE || [ -n "$RESPONSE" ] || noInput
     else
 	RESPONSE=${cmdAsRoot}
     fi
@@ -218,7 +244,7 @@ do
         while [[ $suCommand == "null" ]]
         do
 	    if [ -z ${cmdSuMethod} ]; then
-		read -p "Use sudo or su for root installs:" suMethod
+		read -p "Use sudo or su for root installs:" suMethod || [ -n "$suMethod" ] || noInput
 	    else
 		suMethod=$cmdSuMethod
 	    fi
@@ -322,7 +348,7 @@ if [ $installAsRoot -eq 1 ]; then
     while [ $usePackageManager -eq -1 ]
     do
 	if [ -z $cmdPackageManager ]; then
-	    read -p "Use package manager for install (if available)?: " RESPONSE
+	    read -p "Use package manager for install (if available)?: " RESPONSE || [ -n "$RESPONSE" ] || noInput
 	else
 	    RESPONSE=$cmdPackageManager
 	fi
@@ -347,7 +373,7 @@ installLevel=-2
 while [ $installLevel -eq -2 ]
 do
     if [ -z ${cmdInstallLevel} ]; then
-	read -p "Binary, minimal, or full install?: " RESPONSE
+	read -p "Binary, minimal, or full install?: " RESPONSE || [ -n "$RESPONSE" ] || noInput
     else
 	RESPONSE=$cmdInstallLevel
     fi
@@ -375,14 +401,14 @@ coreCount=-1
 while [ $coreCount -eq -1 ]
 do
     if [ -z ${cmdCores} ]; then
-	read -p "How many cores should I use when compiling? ($coresAvailable available): " RESPONSE
+	read -p "How many cores should I use when compiling? ($coresAvailable available): " RESPONSE || [ -n "$RESPONSE" ] || noInput
     else
 	RESPONSE=$cmdCores
     fi
     if ! [[ "$RESPONSE" =~ ^[0-9]+$ ]] ; then
 	    echo "Please enter an integer"
     else
-	if [ "$RESPONSE" > 0 ] ; then
+	if [ "$RESPONSE" -gt 0 ] ; then
             coreCount=$RESPONSE
 	    echo "Will use $coreCount cores for compiling"
 	    echo "Will use $coreCount cores for compiling" >> $glcLogFile
@@ -444,7 +470,8 @@ iPackage=$(expr $iPackage + 1)
       yumInstall[$iPackage]="coreutils"
       aptInstall[$iPackage]="coreutils"
        sourceURL[$iPackage]="http://ftp.gnu.org/gnu/coreutils/coreutils-9.12.tar.gz"
-buildEnvironment[$iPackage]=""
+# The coreutils configure script refuses to run as root unless this is set.
+buildEnvironment[$iPackage]="export FORCE_UNSAFE_CONFIGURE=1"
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
         makeTest[$iPackage]=""
@@ -651,7 +678,7 @@ iPackage=$(expr $iPackage + 1)
       maxVersion[$iPackage]="9.9.9"
       yumInstall[$iPackage]="zlib-devel"
       aptInstall[$iPackage]="zlib1g-dev"
-       sourceURL[$iPackage]="http://zlib.net/zlib-1.3.2.tar.gz"
+       sourceURL[$iPackage]="https://zlib.net/fossils/zlib-1.3.2.tar.gz"
 buildEnvironment[$iPackage]=""
    buildInOwnDir[$iPackage]=0
    configOptions[$iPackage]="--prefix=$toolInstallPath"
@@ -1122,8 +1149,17 @@ do
 	    echo ${package[$i]} - not found - will be installed
 	    echo ${package[$i]} - not found - will be installed >> $glcLogFile
 	    installDone=0
+	    # A package whose installation is forced is built from source if it can be, since the package manager would not
+	    # reinstall a package that is already installed. This applies to every entry for the package, so that (for example)
+	    # forcing gcc skips the package-manager entry for gcc and builds it with the source entry.
+	    skipPackageManager=0
+	    if isForced "${package[$i]}" && hasSourceBuild "${package[$i]}"; then
+		skipPackageManager=1
+		echo "   installation is forced - will install from source"
+		echo "   installation is forced - will install from source" >> $glcLogFile
+	    fi
 	    # Try installing via yum.
-	    if [[ $installDone -eq 0 && $installViaYum -eq 1 && ${yumInstall[$i]} != "null" ]]; then
+	    if [[ $installDone -eq 0 && $skipPackageManager -eq 0 && $installViaYum -eq 1 && ${yumInstall[$i]} != "null" ]]; then
                 # Check for presence in yum repos.
 		for yumPackage in ${yumInstall[$i]}
 		do
@@ -1155,7 +1191,7 @@ do
 		done
             fi 
 	    # Try installing via apt-get.
-	    if [[ $installDone -eq 0 &&  $installViaApt -eq 1 && ${aptInstall[$i]} != "null" ]]; then
+	    if [[ $installDone -eq 0 && $skipPackageManager -eq 0 && $installViaApt -eq 1 && ${aptInstall[$i]} != "null" ]]; then
                 # Check for presence in apt repos.
 		aptPackages=(${aptInstall[$i]})
 		for aptPackage in ${aptInstall[$i]}
@@ -1373,16 +1409,14 @@ EOF
 			    # Try installing via yum.
 			    if [[ $m4InstallDone -eq 0 && $installViaYum -eq 1 ]]; then
 				echo "$rootPassword" | $suCommand yum -y install m4 $suClose >>$glcLogFile 2>&1
-				hash m4 >& /dev/null
-				if [ $? -ne 0 ]; then
+				if hash m4 >& /dev/null; then
 				    m4InstallDone=1
 				fi
 			    fi
 			    # Try installing via apt-get.
 			    if [[ $m4InstallDone -eq 0 && $installViaApt -eq 1 ]]; then
 				echo "$rootPassword" | $suCommand apt-get -y install m4 $suClose >>$glcLogFile 2>&1
-				hash m4 >& /dev/null
-				if [ $? -ne 0 ]; then
+				if hash m4 >& /dev/null; then
 				    m4InstallDone=1
 				fi
 			    fi
@@ -1390,7 +1424,8 @@ EOF
 			    if [[ $m4InstallDone -eq 0 ]]; then
 				currentDir=`pwd`
 				cd ..
-				wget http://ftp.gnu.org/gnu/m4/m4-1.4.17.tar.gz >>$glcLogFile 2>&1
+				m4Version=1.4.21
+				wget http://ftp.gnu.org/gnu/m4/m4-$m4Version.tar.gz >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to download m4 source"
 				    if [ "$catLogOnError" = yes ]; then
@@ -1398,7 +1433,7 @@ EOF
 				    fi
 				    exit 1
 				fi
-				tar xvfz m4-1.4.17.tar.gz >>$glcLogFile 2>&1
+				tar xvfz m4-$m4Version.tar.gz >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to unpack m4 source"
 				    if [ "$catLogOnError" = yes ]; then
@@ -1406,7 +1441,7 @@ EOF
 				    fi
 				    exit 1
 				fi
-				cd m4-1.4.17
+				cd m4-$m4Version
 				./configure --prefix=$toolInstallPath >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
 				    logmessage "Failed to configure m4 source"
@@ -1423,13 +1458,11 @@ EOF
 				    fi
 				    exit 1
 				fi
+				# Some of m4's own tests fail in some environments (e.g. test-execute.sh in containers) even though m4
+				# works, so a test failure is reported but does not stop the install.
 				make check >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
-				    logmessage "Failed to check m4"
-				    if [ "$catLogOnError" = yes ]; then
-					cat $glcLogFile
-				    fi
-				    exit 1
+				    logmessage "Some m4 tests failed (see $glcLogFile) - continuing with the install"
 				fi
 				make install >>$glcLogFile 2>&1
 				if [ $? -ne 0 ]; then
@@ -1614,8 +1647,10 @@ EOF
 	    # No install methods worked - nothing else we can do (unless this was an
 	    # initial attempt at installed a GNU compiler).
 	    if [[ $installDone -eq 0 ]]; then
-		echo "   no installation method exists"
-		echo "   no installation method exists" >>$glcLogFile
+		if [[ $skipPackageManager -eq 0 ]]; then
+		    echo "   no installation method exists"
+		    echo "   no installation method exists" >>$glcLogFile
+		fi
 		if [[ $i -eq $iFortran || $i -eq $iGCC || $i -eq $iGPP ]]; then
 		    echo "      postponing"
 		    echo "      postponing" >>$glcLogFile

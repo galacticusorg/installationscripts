@@ -54,7 +54,7 @@ Options use the form `--option=value` (note the `=`; a space will not work). All
 | `--ignoreFailures=`       | `yes` \| `no`              | If a package cannot be installed from source, continue anyway (`yes`) rather than aborting (`no`). Continuing may lead to later errors.     |
 | `--catLogOnError=`        | `yes` \| `no`              | On error, print the full install log to standard output. Useful in CI where the log file is otherwise inaccessible. Default `no`.           |
 | `--cleanUp=`              | `yes` \| `no`              | After each successful install from source, remove the downloaded tarball (or cloned repo) and the unpacked source/build directories to reduce disk-space usage. Default `no` (keep them). |
-| `--force-PACKAGE`         | (flag)                     | Force (re)installation of a specific package even if a suitable version is already present, e.g. `--force-hdf5`, `--force-gsl`, `--force-gcc`. Names are case-sensitive, and an unknown name is an error. |
+| `--force-PACKAGE`         | (flag)                     | Force (re)installation of a specific package even if a suitable version is already present, e.g. `--force-hdf5`, `--force-gsl`, `--force-gcc`. A forced package is installed from source whenever the installer can build it, since a package manager would not reinstall an existing package; packages it cannot build from source still go through the package manager. Names are case-sensitive, and an unknown name is an error. |
 
 ### Install levels
 
