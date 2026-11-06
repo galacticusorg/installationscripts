@@ -33,6 +33,13 @@ function hasSourceBuild() {
     return 1
 }
 
+# Exit when a prompt finds no input to read, rather than asking the same question forever.
+function noInput() {
+    echo
+    echo "No input is available to answer this question - please answer it using a command line option (see README.md)"
+    exit 1
+}
+
 # Test whether a suitable version of the compiler with the given package index and name is available for use. A compiler whose
 # installation has been forced is never considered to be available.
 function compilerAvailable() {
@@ -71,7 +78,15 @@ for argument in "$@"; do
 	* ) getoptArguments+=("$argument") ;;
     esac
 done
+if ! hash getopt >& /dev/null; then
+    echo "The getopt command (part of util-linux) is required to read the command line options - please install it and re-run this installer"
+    exit 1
+fi
 TEMP=`getopt -o t --long toolPrefix::,asRoot::,rootPwd::,suMethod::,installLevel::,packageManager::,cores::,galacticusPrefix::,setCShell::,setBash::,ignoreFailures::,catLogOnError::,cleanUp:: -- "${getoptArguments[@]}"`
+if [ $? -ne 0 ]; then
+    echo "Failed to read the command line options"
+    exit 1
+fi
 eval set -- "$TEMP"
 cmdToolPrefix=
 cmdAsRoot=
@@ -162,8 +177,8 @@ if [ ! -z ${cmdInstallLevel} ]; then
     fi
 fi
 if [ ! -z ${cmdCores} ]; then
-    if [[ ! ${cmdCores} =~ ^[0-9]+$ ]]; then
-	logmessage "cores option should be an integer"
+    if [[ ! ${cmdCores} =~ ^[0-9]+$ || ${cmdCores} -lt 1 ]]; then
+	logmessage "cores option should be an integer greater than 0"
 	exit 1
     fi
 fi
@@ -216,7 +231,7 @@ fi
 while [ $installAsRoot -eq -1 ]
 do
     if [ -z ${cmdAsRoot} ]; then
-	read -p "Install required libraries as root (requires root password)? [no/yes]: " RESPONSE
+	read -p "Install required libraries as root (requires root password)? [no/yes]: " RESPONSE || [ -n "$RESPONSE" ] || noInput
     else
 	RESPONSE=${cmdAsRoot}
     fi
@@ -229,7 +244,7 @@ do
         while [[ $suCommand == "null" ]]
         do
 	    if [ -z ${cmdSuMethod} ]; then
-		read -p "Use sudo or su for root installs:" suMethod
+		read -p "Use sudo or su for root installs:" suMethod || [ -n "$suMethod" ] || noInput
 	    else
 		suMethod=$cmdSuMethod
 	    fi
@@ -333,7 +348,7 @@ if [ $installAsRoot -eq 1 ]; then
     while [ $usePackageManager -eq -1 ]
     do
 	if [ -z $cmdPackageManager ]; then
-	    read -p "Use package manager for install (if available)?: " RESPONSE
+	    read -p "Use package manager for install (if available)?: " RESPONSE || [ -n "$RESPONSE" ] || noInput
 	else
 	    RESPONSE=$cmdPackageManager
 	fi
@@ -358,7 +373,7 @@ installLevel=-2
 while [ $installLevel -eq -2 ]
 do
     if [ -z ${cmdInstallLevel} ]; then
-	read -p "Binary, minimal, or full install?: " RESPONSE
+	read -p "Binary, minimal, or full install?: " RESPONSE || [ -n "$RESPONSE" ] || noInput
     else
 	RESPONSE=$cmdInstallLevel
     fi
@@ -386,14 +401,14 @@ coreCount=-1
 while [ $coreCount -eq -1 ]
 do
     if [ -z ${cmdCores} ]; then
-	read -p "How many cores should I use when compiling? ($coresAvailable available): " RESPONSE
+	read -p "How many cores should I use when compiling? ($coresAvailable available): " RESPONSE || [ -n "$RESPONSE" ] || noInput
     else
 	RESPONSE=$cmdCores
     fi
     if ! [[ "$RESPONSE" =~ ^[0-9]+$ ]] ; then
 	    echo "Please enter an integer"
     else
-	if [ "$RESPONSE" > 0 ] ; then
+	if [ "$RESPONSE" -gt 0 ] ; then
             coreCount=$RESPONSE
 	    echo "Will use $coreCount cores for compiling"
 	    echo "Will use $coreCount cores for compiling" >> $glcLogFile
