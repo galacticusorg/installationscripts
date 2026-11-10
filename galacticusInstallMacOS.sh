@@ -98,10 +98,10 @@ sudo port install gsl
 # so HDF5 is now built with CMake.
 sudo port install cmake
 
-# Install libmatheval v1.1.13 from source.
-curl -fL --retry 3 https://github.com/galacticusorg/libmatheval/releases/download/latest/libmatheval-1.1.13.tar.gz --output libmatheval-1.1.13.tar.gz
-tar xvfz libmatheval-1.1.13.tar.gz
-cd libmatheval-1.1.13
+# Install libmatheval v1.1.14 from source.
+curl -fL --retry 3 https://github.com/galacticusorg/libmatheval/releases/download/latest/libmatheval-1.1.14.tar.gz --output libmatheval-1.1.14.tar.gz
+tar xvfz libmatheval-1.1.14.tar.gz
+cd libmatheval-1.1.14
 # Patch following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
 sed -E -i~ s/"#undef HAVE_SCM_T_BITS"/"#define HAVE_SCM_T_BITS 1"/ config.h.in
 # Set guile paths following the approach used in MacPorts (https://github.com/macports/macports-ports/tree/master/math/libmatheval).
@@ -109,7 +109,7 @@ CC=gcc-16 PKG_CONFIG=/opt/local/bin/pkg-config GUILE=/opt/local/bin/guile-3.0 GU
 make -j${countCPUs}
 sudo make install
 cd ..
-rm -rf libmatheval-1.1.13.tar.gz libmatheval-1.1.13
+rm -rf libmatheval-1.1.14.tar.gz libmatheval-1.1.14
 
 # Install qhull from source.
 curl -fL --retry 3 http://www.qhull.org/download/qhull-2020-src-8.0.2.tgz --output qhull-2020-src-8.0.2.tgz
